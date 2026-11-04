@@ -70,8 +70,9 @@
     <div class="q"><div class="lb">성별</div><small>&nbsp;</small><div class="opts" data-name="gender" data-opts="남,여"></div></div>
   </div>
   <div class="q"><label for="phone">연락처</label><input type="tel" id="phone" maxlength="20" placeholder="010-0000-0000"></div>
-  <div class="q"><label for="dong">동</label><select id="dong"><option value="">선택</option><option>안양1동</option><option>안양2동</option><option>안양3동</option><option>안양4동</option><option>안양5동</option><option>안양6동</option><option>안양7동</option><option>안양8동</option><option>안양9동</option><option>석수1동</option><option>석수2동</option><option>석수3동</option><option>박달1동</option><option>박달2동</option><option>기타</option></select></div>
-  <div class="q"><label for="address">주소</label><input type="text" id="address" maxlength="120" placeholder="도로명 주소, 동·호수"></div>
+  <div class="q"><label for="addr1">주소</label><div class="pinrow"><input type="text" id="addr1" maxlength="100" placeholder="주소 검색을 눌러 주세요" readonly><button class="btn sec" id="addrbtn" type="button" style="width:auto;white-space:nowrap;padding:10px 14px">주소 검색</button></div>
+    <input type="text" id="addr2" maxlength="40" placeholder="상세주소 (동·호수)" style="margin-top:8px" aria-label="상세주소"></div>
+  <div class="q"><label for="dong">거주동</label><small>주소를 검색하면 자동으로 골라져요</small><select id="dong"><option value="">선택</option><optgroup label="만안구"><option>안양1동</option><option>안양2동</option><option>안양3동</option><option>안양4동</option><option>안양5동</option><option>안양6동</option><option>안양7동</option><option>안양8동</option><option>안양9동</option><option>석수1동</option><option>석수2동</option><option>석수3동</option><option>박달1동</option><option>박달2동</option></optgroup><optgroup label="동안구"><option>비산1동</option><option>비산2동</option><option>비산3동</option><option>부흥동</option><option>달안동</option><option>관양1동</option><option>관양2동</option><option>부림동</option><option>평촌동</option><option>평안동</option><option>귀인동</option><option>호계1동</option><option>호계2동</option><option>호계3동</option><option>범계동</option><option>신촌동</option><option>갈산동</option></optgroup><option>안양시 외</option></select></div>
 </section>
 
 <section class="card">
@@ -230,8 +231,10 @@
   <p class="hint" style="margin-top:10px">근무시간에는 사무실 직통으로, 급할 때는 휴대폰으로 연락해 주세요. 문자도 괜찮아요.</p>
 </section>
 </div>
+<div id="addrlayer" hidden style="position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center"><div style="background:var(--surface);width:100%;max-width:640px;height:85vh;border-radius:14px 14px 0 0;display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)"><b>주소 검색</b><button class="linkbtn" id="addrclose" type="button">닫기</button></div><div id="addrwrap" style="flex:1;overflow:hidden"></div></div></div>
 <p class="foot">입력한 내용은 복지관 담당자와 추천한 본인만 볼 수 있어요.</p>
 </div>
+<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const DEMO=new URLSearchParams(location.search).has("demo");
@@ -286,6 +289,7 @@ const phoneNorm=s=>s.replace(/[^0-9]/g,"");
 function resetLogin(){$("#codeq").hidden=true;$("#jcode").value="";$("#pinq").hidden=true;$("#pin2q").hidden=true;$("#pin").value="";$("#pin2").value="";$("#lbtn").textContent="다음";$("#wn").disabled=false;$("#wp").disabled=false;showErr($("#lerr"),"")}
 $("#wp").addEventListener("input",e=>{const d=phoneNorm(e.target.value).slice(0,11);e.target.value=d.length>7?d.replace(/(\d{3})(\d{4})(\d+)/,"$1-$2-$3"):d.length>3?d.replace(/(\d{3})(\d+)/,"$1-$2"):d});
 $("#lbtn").onclick=async()=>{
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
   const err=$("#lerr");showErr(err,"");const name=$("#wn").value.trim(),phone=phoneNorm($("#wp").value);
   if(!name||phone.length<10){showErr(err,"이름과 휴대폰 번호를 확인해 주세요.");return}
   $("#lbtn").disabled=true;
@@ -307,7 +311,7 @@ $("#lbtn").onclick=async()=>{
   }catch(e){showErr(err,"연결이 안 돼요. 인터넷 연결을 확인하고 다시 눌러 주세요.")}
   finally{$("#lbtn").disabled=false}
 };
-["wn","wp","pin","pin2"].forEach(i=>$("#"+i).addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("#lbtn").click()}}));
+["wn","wp","pin","pin2","jcode"].forEach(i=>$("#"+i).addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing&&e.keyCode!==229){e.preventDefault();$("#lbtn").click()}}));
 
 /* 내 목록 */
 $("#golist").onclick=async()=>{view("list");$("#mine").innerHTML='<p class="hint">불러오는 중…</p>';
@@ -317,12 +321,27 @@ $("#golist").onclick=async()=>{view("list");$("#mine").innerHTML='<p class="hint
 $("#mine").addEventListener("click",async e=>{const b=e.target.closest("[data-edit]");if(!b)return;
   const r=MINE.find(x=>x.id===b.dataset.edit);if(!r)return;openForm(r)});
 
+/* 주소 검색 (카카오 우편번호 서비스) */
+function closeAddr(){$("#addrlayer").hidden=true;$("#addrwrap").innerHTML=""}
+$("#addrclose").onclick=closeAddr;
+$("#addrbtn").onclick=()=>{
+  if(!(window.daum&&daum.Postcode)){$("#addr1").readOnly=false;$("#addr1").placeholder="검색이 안 되면 주소를 직접 적어 주세요";$("#addr1").focus();return}
+  $("#addrlayer").hidden=false;
+  new daum.Postcode({width:"100%",height:"100%",oncomplete:d=>{
+    let a=d.roadAddress||d.jibunAddress||d.address;if(d.buildingName)a+=` (${d.buildingName})`;
+    $("#addr1").value=a;
+    const hn=(d.hname||"").trim(),bn=(d.bname||"").trim(),opts=[...$("#dong").options].map(o=>o.value);
+    if(d.sigungu&&!/^안양/.test(d.sigungu))$("#dong").value="안양시 외";
+    else if(opts.includes(hn))$("#dong").value=hn;else if(opts.includes(bn))$("#dong").value=bn;
+    closeAddr();$("#addr2").focus()}}).embed($("#addrwrap"));
+};
 /* 추천서 */
-const TXT=["elder_name","birth","phone","address","head_name","head_birth","live_with","reason","risk_note","other_support"];
+const TXT=["elder_name","birth","phone","head_name","head_birth","live_with","reason","risk_note","other_support"];
 const RAD=["gender","is_head","household_size","income","voucher","heating","account","bill_photo","housing_tenure","heater_broken","urgency"];
 const MUL=["recipient_kinds","housing_risk","arrears"];
 function openForm(r){EDIT=r?r.id:null;$("#f").reset();
-  if(r){TXT.forEach(k=>$("#"+k).value=r[k]??"");RAD.forEach(k=>setv(k,r[k]));MUL.forEach(k=>setv(k,r[k]||[]));$("#dong").value=r.dong||"";$("#consent").checked=true}
+  $("#addr1").value="";$("#addr2").value="";
+  if(r){TXT.forEach(k=>$("#"+k).value=r[k]??"");const ad=(r.address||"").split(" | ");$("#addr1").value=ad[0]||"";$("#addr2").value=ad[1]||"";RAD.forEach(k=>setv(k,r[k]));MUL.forEach(k=>setv(k,r[k]||[]));$("#dong").value=r.dong||"";$("#consent").checked=true}
   $("#ftitle").textContent=r?`${r.elder_name} 님 내용 고치기`:"새로 추천하기";$("#sbtn").textContent=r?"고친 내용 저장":"추천 보내기";
   sync();showErr($("#ferr"),"");view("f")}
 $("#gonew").onclick=()=>openForm(null);
@@ -332,7 +351,7 @@ $("#f").addEventListener("submit",async e=>{
   if(!$("#consent").checked){showErr(err,"대상자 동의 확인에 체크해 주세요.");$("#consent").focus();return}
   if(!g("elder_name")){showErr(err,"대상자 성함을 적어 주세요.");$("#elder_name").focus();return}
   if(g("birth")&&!/^[0-9]{6}$/.test(g("birth"))){showErr(err,"생년월일은 숫자 6자리로 적어 주세요.");$("#birth").focus();return}
-  const p={consent:true,dong:$("#dong").value};TXT.forEach(k=>p[k]=g(k));RAD.forEach(k=>p[k]=val(k));MUL.forEach(k=>p[k]=vals(k));
+  const p={consent:true,dong:$("#dong").value,address:[g("addr1"),g("addr2")].filter(Boolean).join(" | ")};TXT.forEach(k=>p[k]=g(k));RAD.forEach(k=>p[k]=val(k));MUL.forEach(k=>p[k]=vals(k));
   if(p.is_head!=="아니오"){p.head_name="";p.head_birth=""}if(p.income!=="기초생활수급자")p.recipient_kinds=[];
   $("#sbtn").disabled=true;const lbl=$("#sbtn").textContent;$("#sbtn").textContent="보내는 중…";
   try{const r=EDIT?await rpc("oncool_w_update",{p_token:TOKEN,p_id:EDIT,p}):await rpc("oncool_w_submit",{p_token:TOKEN,p});
