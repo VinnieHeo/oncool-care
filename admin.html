@@ -66,6 +66,9 @@ tbody tr{cursor:pointer} tbody tr:hover{background:var(--bg)} tbody tr.sel{backg
     <textarea id="roster" placeholder="홍길동, 010-1234-5678, 노인맞춤돌봄"></textarea>
     <div class="acts"><button class="sbtn pri" id="rsave" type="button">명단 추가</button><span class="msg" id="rmsg"></span></div>
     <div class="tw" style="margin-top:12px"><table style="min-width:620px"><thead><tr><th>이름</th><th>연락처</th><th>소속</th><th>가입</th><th>비밀번호</th><th>상태</th><th></th></tr></thead><tbody id="wtb"></tbody></table></div>
+    <h2 style="margin-top:20px">열람 비밀번호 (복지관 내부 공유용)</h2>
+    <p class="hint">로드맵의 ‘추천 현황’과 <a href="staff.html" target="_blank" rel="noopener">열람 페이지</a>에서 명단을 볼 때 쓰는 공용 비밀번호예요. 보기만 할 수 있어요. 6자리 이상.</p>
+    <div class="acts"><input type="text" id="spw" maxlength="30" style="max-width:240px" aria-label="새 열람 비밀번호"><button class="sbtn pri" id="spsave" type="button">바꾸기</button><span class="msg" id="spmsg"></span></div>
     <h2 style="margin-top:20px">기관 가입 코드</h2>
     <p class="hint">명단에 없는 기관 담당자는 이 코드로 직접 가입해요. 기관마다 다른 코드를 주면 소속이 자동으로 붙어요. 코드는 저장 후 다시 볼 수 없으니 따로 적어 두세요.</p>
     <div class="row2"><div class="q"><label for="oname">기관 이름</label><input type="text" id="oname" maxlength="40" placeholder="예: 안양5동 행정복지센터"></div><div class="q"><label for="ocode">가입 코드 (4자리 이상)</label><input type="text" id="ocode" maxlength="20"></div></div>
@@ -161,6 +164,8 @@ $("#wtb").addEventListener("click",async e=>{const r=e.target.closest("[data-wr]
   if(r){await sb.from("oncool_workers").update({pin_hash:null,fails:0,locked_until:null}).eq("id",r.dataset.wr);loadW()}
   if(a){const x=W.find(w=>w.id===a.dataset.wa);await sb.from("oncool_workers").update({active:!x.active}).eq("id",x.id);loadW()}});
 $("#otb").addEventListener("click",async e=>{const a=e.target.closest("[data-oa]");if(!a)return;const x=O.find(o=>o.id===a.dataset.oa);await sb.from("oncool_orgs").update({active:!x.active}).eq("id",x.id);loadW()});
+$("#spsave").onclick=async()=>{const v=$("#spw").value.trim();if(v.length<6){$("#spmsg").textContent="6자리 이상으로 넣어 주세요";return}
+  const {error}=await sb.rpc("oncool_admin_set_staff_pass",{p_new:v});$("#spmsg").textContent=error?"바꾸지 못했어요":"바꿨어요. 함께 보는 분들께 새 비밀번호를 알려 주세요.";if(!error)$("#spw").value=""};
 $("#osave").onclick=async()=>{const n=$("#oname").value.trim(),c=$("#ocode").value.trim();if(!n||c.length<4){$("#omsg").textContent="기관 이름과 4자리 이상 코드를 넣어 주세요";return}
   const {error}=await sb.rpc("oncool_admin_set_org",{p_name:n,p_code:c});$("#omsg").textContent=error?"저장하지 못했어요":`저장했어요. ${n}에 코드 ${c}를 알려 주세요.`;if(!error){$("#ocode").value="";loadW()}};
 boot();

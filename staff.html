@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>온앤쿨케어 추천 현황</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="common.css">
+<style>
+.wrap{max-width:1180px}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.st{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;flex:1 1 110px}
+.st b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.st span{font-size:12.5px;color:var(--mute)}
+.st.w b{color:var(--warm)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.bar select,.bar input{width:auto;font-size:14px;padding:7px 10px}
+.bar .sp{flex:1}
+.sbtn{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 12px;cursor:pointer}
+.sbtn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.sbtn.dan{color:var(--warm);border-color:var(--warm)}
+.tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:980px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:var(--bg);font-size:12.5px;color:var(--mute);position:sticky;top:0}
+tbody tr{cursor:pointer} tbody tr:hover{background:var(--bg)} tbody tr.sel{background:var(--cool-soft)}
+.pill{display:inline-block;font-size:12px;border-radius:999px;padding:1px 8px;background:var(--bg);border:1px solid var(--line)}
+.t1{background:var(--cool-soft);color:var(--cool);border-color:transparent}.t2{background:var(--amber-soft);color:var(--amber);border-color:transparent}.t3{background:var(--green-soft);color:var(--green);border-color:transparent}.t4{background:var(--warm-soft);color:var(--warm);border-color:transparent}
+.flag{color:var(--warm);font-weight:600}
+.panel{margin-top:14px}
+.dl{display:grid;grid-template-columns:150px minmax(0,1fr);gap:4px 12px;font-size:14px}
+.dl dt{color:var(--mute)} .dl dd{margin:0;white-space:pre-wrap}
+.ed{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.ed label{font-size:13px;color:var(--mute);display:flex;flex-direction:column;gap:4px}
+.ed .full{grid-column:1/-1}
+.acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.msg{font-size:13.5px;color:var(--green)}
+@media (max-width:640px){.ed{grid-template-columns:1fr}.dl{grid-template-columns:110px minmax(0,1fr)}}
+</style>
+</head><body><div class="wrap">
+<div class="eyebrow">온앤쿨케어 · 복지관 내부 열람용</div>
+<h1>대상가구 추천 현황</h1>
+<section class="card" id="login" style="max-width:420px">
+  <h2>열람 비밀번호</h2>
+  <p class="hint">추천받은 가구의 개인정보가 있어서 비밀번호를 넣어야 볼 수 있어요. 이 화면은 보기 전용이에요.</p>
+  <div class="q"><input type="password" id="pw" autocomplete="current-password" aria-label="열람 비밀번호"></div>
+  <p class="err" id="lerr" hidden></p>
+  <div style="margin-top:12px"><button class="btn" id="lbtn" type="button">보기</button></div>
+</section>
+<div id="app" hidden>
+  <div class="stats" id="stats"></div>
+  <div class="bar">
+    <select id="fs" aria-label="상태"><option value="">상태 전체</option><option>접수</option><option>검토중</option><option>선정</option><option>보류</option><option>제외</option></select>
+    <select id="ft" aria-label="예상 유형"><option value="">유형 전체</option><option value="1">1유형</option><option value="2">2유형</option><option value="3">3유형</option><option value="?">유형 미확인</option><option value="4">4유형 후보</option></select>
+    <input type="text" id="fq" placeholder="이름·추천자·거주동 검색" aria-label="검색">
+    <span class="sp"></span>
+    <button class="sbtn" id="reload" type="button">새로고침</button>
+    <button class="sbtn" id="csv" type="button">엑셀(CSV) 받기</button>
+    <button class="sbtn" id="out" type="button">닫기</button>
+  </div>
+  <div class="tw"><table><thead><tr><th>번호</th><th>접수</th><th>대상자</th><th>거주동</th><th>가구원</th><th>소득</th><th>예상 유형</th><th>난방</th><th>통장</th><th>긴급</th><th>추천자</th><th>상태</th><th>가구코드</th></tr></thead><tbody id="tb"></tbody></table></div>
+  <p class="hint" id="cnt" style="margin:8px 2px"></p>
+  <section class="card panel" id="detail" hidden></section>
+</div>
+<p class="foot">이 화면의 내용은 외부에 공유하지 말아 주세요. 상태·메모 변경은 담당자 관리 페이지에서 해요.</p>
+</div>
+<script>
+const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let PASS="",rows=[],selId=null;
+const typeOf=r=>r.voucher==="안 받음"?"1":r.voucher==="받았는데 다 씀"?"2":r.voucher==="받는 중"?"3":"?";
+const is4=r=>["기름(등유) 보일러","LPG","연탄"].includes(r.heating);
+const tpill=r=>{const t=typeOf(r);return (t==="?"?'<span class="pill">미확인</span>':`<span class="pill t${t}">${t}유형</span>`)+(is4(r)?' <span class="pill t4">4유형 후보</span>':"")};
+const d=s=>{const x=new Date(s);return `${x.getMonth()+1}/${x.getDate()} ${String(x.getHours()).padStart(2,"0")}:${String(x.getMinutes()).padStart(2,"0")}`};
+async function fetchList(p){const r=await fetch(SB+"/rest/v1/rpc/oncool_staff_list",{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify({p_pass:p})});if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}
+async function load(p){const res=await fetchList(p);
+  if(!res.ok){$("#lerr").textContent=res.reason==="locked"?"틀린 비밀번호가 많아 잠시 잠겼어요. 15분 뒤에 다시 해 주세요.":"비밀번호가 맞지 않아요.";$("#lerr").hidden=false;return false}
+  PASS=p;rows=res.rows||[];renderStats(res.stats);render();$("#login").hidden=true;$("#app").hidden=false;return true}
+$("#lbtn").onclick=async()=>{$("#lerr").hidden=true;$("#lbtn").disabled=true;try{const ok=await load($("#pw").value);if(ok)$("#pw").value=""}catch(e){$("#lerr").textContent="연결이 안 돼요. 잠시 뒤에 다시 해 주세요.";$("#lerr").hidden=false}finally{$("#lbtn").disabled=false}};
+$("#pw").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing)$("#lbtn").click()});
+$("#reload").onclick=()=>load(PASS).catch(()=>{});
+$("#out").onclick=()=>{PASS="";rows=[];$("#tb").innerHTML="";$("#detail").hidden=true;$("#app").hidden=true;$("#login").hidden=false};
+function renderStats(s){if(!s)return;
+  const it=[["추천",s.total],["1유형",s.type1],["2유형",s.type2],["3유형",s.type3],["유형 미확인",s.type_unknown,1],["4유형 후보",s.type4_candidates],["통장 없음·압류",s.no_account,1],["긴급 ‘상’",s.urgent,1],["선정",s.selected],["추천한 사람",s.workers]];
+  $("#stats").innerHTML=it.map(([l,v,w])=>`<div class="st${w&&v?" w":""}"><b>${v??0}</b><span>${l}</span></div>`).join("");
+}
+function filtered(){const s=$("#fs").value,t=$("#ft").value,q=$("#fq").value.trim();
+  return rows.filter(r=>(!s||r.status===s)&&(!t||(t==="4"?is4(r):typeOf(r)===t))&&(!q||[r.elder_name,r.worker_name,r.dong].some(x=>(x||"").includes(q))))}
+function render(){const f=filtered();
+  $("#tb").innerHTML=f.map(r=>`<tr data-id="${r.id}" class="${r.id===selId?"sel":""}" tabindex="0"><td>${r.receipt_no}</td><td>${d(r.created_at)}</td><td><b>${esc(r.elder_name)}</b></td><td>${esc(r.dong)}</td><td>${r.household_size?r.household_size+"명":""}</td><td>${esc(r.income)}</td><td>${tpill(r)}</td><td>${esc(r.heating)}</td><td class="${["없음","압류 우려"].includes(r.account)?"flag":""}">${esc(r.account)}</td><td class="${r.urgency==="상"?"flag":""}">${esc(r.urgency)}</td><td>${esc(r.worker_name)}</td><td>${esc(r.status)}</td><td>${esc(r.household_code)}</td></tr>`).join("")||'<tr><td colspan="13" style="color:var(--mute)">아직 추천이 없어요.</td></tr>';
+  $("#cnt").textContent=`${f.length}건 표시 · 전체 ${rows.length}건`;
+}
+["fs","ft"].forEach(i=>$("#"+i).onchange=render);$("#fq").oninput=render;$("#reload").onclick=load;
+$("#tb").addEventListener("click",e=>{const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id)});
+$("#tb").addEventListener("keydown",e=>{if(e.key==="Enter"){const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id)}});
+const F=[["접수 번호","receipt_no"],["접수 일시","created_at",d],["추천자","worker_name"],["추천자 소속","worker_org"],["대상자","elder_name"],["생년월일","birth"],["성별","gender"],["연락처","phone"],["거주동","dong"],["주소","address"],["세대주 본인","is_head"],["세대주 성함","head_name"],["세대주 생년월일","head_birth"],["가구원 수","household_size"],["실제 동거","live_with"],["소득 구분","income"],["수급 종류","recipient_kinds",a=>(a||[]).join(", ")],["에너지바우처","voucher"],["난방 방식","heating"],["본인 명의 통장","account"],["고지서 사진","bill_photo"],["집","housing_tenure"],["주거 위험","housing_risk",a=>(a||[]).join(", ")],["난방기구 고장","heater_broken"],["요금 체납","arrears",a=>(a||[]).join(", ")],["긴급도","urgency"],["추천 사유","reason"],["건강·생활 위험","risk_note"],["다른 지원","other_support"]];
+function openD(id){selId=id;render();const r=rows.find(x=>x.id===id);if(!r)return;
+  $("#detail").hidden=false;
+  $("#detail").innerHTML=`<h2>${esc(r.elder_name)} <span style="font-weight:400;color:var(--mute)">· ${tpill(r)}</span></h2>
+  <dl class="dl">${F.map(([l,k,fn])=>`<dt>${l}</dt><dd>${esc(fn?fn(r[k]):r[k])}</dd>`).join("")}<dt>상태</dt><dd>${esc(r.status)}</dd><dt>가구코드</dt><dd>${esc(r.household_code)}</dd><dt>담당자 메모</dt><dd>${esc(r.staff_memo)}</dd></dl>
+  <div class="acts"><button class="sbtn" id="e_close" type="button">닫기</button></div>`;
+  $("#e_close").onclick=()=>{selId=null;$("#detail").hidden=true;render()};
+  $("#detail").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("#csv").onclick=()=>{const cols=[...F.map(f=>f[0]),"예상 유형","4유형 후보","상태","가구코드","메모"];
+  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const lines=[cols.map(q).join(",")].concat(filtered().map(r=>[...F.map(([l,k,fn])=>fn?fn(r[k]):r[k]),typeOf(r)==="?"?"미확인":typeOf(r)+"유형",is4(r)?"예":"",r.status,r.household_code,r.staff_memo].map(q).join(",")));
+  const b=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`온앤쿨_추천명단_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href)};
+$("#reload").onclick=()=>load(PASS).catch(()=>{});
+</script>
+</body></html>
