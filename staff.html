@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="common.css?v=5">
 <style>
 .wrap{max-width:1180px}
-.stats{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin:10px 0 14px}
 .st{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;flex:1 1 110px}
 .st b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
 .st span{font-size:12.5px;color:var(--mute)}
@@ -82,7 +82,7 @@ body.embed #login .err{width:100%}
   <section class="card panel" id="detail" hidden></section>
   </div>
 </div>
-<p class="foot">이 화면의 내용은 외부에 공유하지 말아 주세요. 상태·메모 변경은 담당자 관리 페이지에서 해요.</p>
+<p class="foot">이 화면은 보기 전용이에요. 가정방문 기록·상태 변경·증빙 파일은 담당자 관리 페이지에서 해요. 내용은 외부에 공유하지 말아 주세요.</p>
 </div>
 <script src="detail.js?v=5"></script>
 <script src="cases.js?v=5"></script>
