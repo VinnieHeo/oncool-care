@@ -4,7 +4,7 @@
 <title>온앤쿨케어 추천 현황</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="common.css?v=4">
+<link rel="stylesheet" href="common.css?v=5">
 <style>
 .wrap{max-width:1180px}
 .stats{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
@@ -59,6 +59,14 @@ body.embed #login .err{width:100%}
   <div style="margin-top:12px"><button class="btn" id="lbtn" type="button">보기</button></div>
 </section>
 <div id="app" hidden>
+  <div class="vtabs" role="tablist"><button role="tab" id="vt-ref" aria-selected="true" type="button">추천 접수</button><button role="tab" id="vt-case" aria-selected="false" type="button">선정 심사 <span id="ccnt"></span></button></div>
+  <div id="vw-case" hidden>
+    <div id="cgoal"></div>
+    <div class="bar"><select id="cfs" aria-label="단계"><option value="">단계 전체</option><option>조사중</option><option>서류완비</option><option>위원회상정</option><option>선정</option><option>보류</option><option>탈락</option></select><span class="sp"></span><button class="sbtn" id="ccsv" type="button">위원회 자료 받기 (엑셀)</button></div>
+    <div id="clist"></div>
+    <section class="card panel" id="cview" hidden></section>
+  </div>
+  <div id="vw-ref">
   <div class="stats" id="stats"></div>
   <div class="bar">
     <select id="fs" aria-label="상태"><option value="">상태 전체</option><option>접수</option><option>검토중</option><option>선정</option><option>보류</option><option>제외</option></select>
@@ -72,10 +80,12 @@ body.embed #login .err{width:100%}
   <div class="tw"><table><thead><tr><th>번호</th><th>접수</th><th>대상자</th><th>거주동</th><th>가구원</th><th>소득</th><th>예상 유형</th><th>난방</th><th>통장</th><th>긴급</th><th>추천자</th><th>상태</th><th>가구코드</th></tr></thead><tbody id="tb"></tbody></table></div>
   <p class="hint" id="cnt" style="margin:8px 2px"></p>
   <section class="card panel" id="detail" hidden></section>
+  </div>
 </div>
 <p class="foot">이 화면의 내용은 외부에 공유하지 말아 주세요. 상태·메모 변경은 담당자 관리 페이지에서 해요.</p>
 </div>
-<script src="detail.js?v=4"></script>
+<script src="detail.js?v=5"></script>
+<script src="cases.js?v=5"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const $=s=>document.querySelector(s);
@@ -89,7 +99,7 @@ const d=s=>{const x=new Date(s);return `${x.getMonth()+1}/${x.getDate()} ${Strin
 async function fetchList(p){const r=await fetch(SB+"/rest/v1/rpc/oncool_staff_list",{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify({p_pass:p})});if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}
 async function load(p){const res=await fetchList(p);
   if(!res.ok){$("#lerr").textContent=res.reason==="locked"?"틀린 비밀번호가 많아 잠시 잠겼어요. 15분 뒤에 다시 해 주세요.":"비밀번호가 맞지 않아요.";$("#lerr").hidden=false;return false}
-  PASS=p;rows=res.rows||[];renderStats(res.stats);render();$("#login").hidden=true;$("#pstats").hidden=true;$("#app").hidden=false;return true}
+  PASS=p;rows=res.rows||[];CASES=res.cases||[];$("#ccnt").textContent=CASES.length?`(${CASES.length})`:"";renderCases();renderStats(res.stats);render();$("#login").hidden=true;$("#pstats").hidden=true;$("#app").hidden=false;return true}
 $("#lbtn").onclick=async()=>{$("#lerr").hidden=true;$("#lbtn").disabled=true;try{const ok=await load($("#pw").value);if(ok)$("#pw").value=""}catch(e){$("#lerr").textContent="연결이 안 돼요. 잠시 뒤에 다시 해 주세요.";$("#lerr").hidden=false}finally{$("#lbtn").disabled=false}};
 $("#pw").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing)$("#lbtn").click()});
 $("#reload").onclick=()=>load(PASS).catch(()=>{});
@@ -119,9 +129,17 @@ $("#csv").onclick=()=>{const cols=[...F.map(f=>f[0]),"예상 유형","4유형 �
   const lines=[cols.map(q).join(",")].concat(filtered().map(r=>[...F.map(([l,k,fn])=>fn?fn(r[k]):r[k]),typeOf(r)==="?"?"미확인":typeOf(r)+"유형",is4(r)?"예":"",r.status,r.household_code,r.staff_memo].map(q).join(",")));
   const b=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`온앤쿨_추천명단_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href)};
 $("#reload").onclick=()=>load(PASS).catch(()=>{});
+/* 선정 심사 (보기 전용) */
+let CASES=[];
+function vtab(w){$("#vt-ref").setAttribute("aria-selected",w==="ref");$("#vt-case").setAttribute("aria-selected",w==="case");$("#vw-ref").hidden=w!=="ref";$("#vw-case").hidden=w!=="case"}
+$("#vt-ref").onclick=()=>vtab("ref");$("#vt-case").onclick=()=>{vtab("case");renderCases()};
+function renderCases(){const f=$("#cfs").value;$("#cgoal").innerHTML=CS.goal(CASES);$("#clist").innerHTML=CS.listHTML(CASES.filter(c=>!f||c.stage===f),rows)}
+$("#cfs").onchange=renderCases;$("#ccsv").onclick=()=>CS.csv(CASES,rows);
+$("#clist").addEventListener("click",e=>{const tr=e.target.closest("tr[data-cid]");if(!tr)return;const c=CASES.find(x=>x.id===tr.dataset.cid);const r=rows.find(x=>x.id===c.referral_id)||{};
+  $("#cview").hidden=false;$("#cview").innerHTML=CS.viewHTML(c,r)+'<p class="hint" style="margin-top:10px">증빙 파일 원본은 담당자 관리 페이지에서만 열 수 있어요.</p><div class="acts"><button class="sbtn" type="button" id="cvclose">닫기</button></div>';$("#cvclose").onclick=()=>$("#cview").hidden=true;$("#cview").scrollIntoView({behavior:"smooth",block:"start"})});
 /* 공개 숫자 (이름 없음) */
 function pub(){fetch(SB+"/rest/v1/rpc/oncool_stats",{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:"{}"}).then(r=>r.json()).then(st=>{
-  const it=[["추천",st.total],["1유형",st.type1],["2유형",st.type2],["3유형",st.type3],["4유형 후보",st.type4_candidates],["유형 미확인",st.type_unknown,1],["통장 없음·압류",st.no_account,1],["긴급 ‘상’",st.urgent,1],["선정",st.selected],["추천한 사람",st.workers]];
+  const it=[["추천",st.total],["방문",st.visited],["서류 완비",st.docs_done],["1유형",st.type1],["2유형",st.type2],["3유형",st.type3],["4유형 후보",st.type4_candidates],["유형 미확인",st.type_unknown,1],["통장 없음·압류",st.no_account,1],["긴급 ‘상’",st.urgent,1],["선정",st.selected],["추천한 사람",st.workers]];
   $("#pstats").innerHTML=it.map(([l,v,w])=>`<div class="st${w&&v?" w":""}"><b>${v??0}</b><span>${l}</span></div>`).join("")}).catch(()=>{})}
 pub();
 /* 로드맵 안에 넣을 때: 머리말 숨기고 높이를 바깥으로 알려 줌 */

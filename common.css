@@ -100,3 +100,48 @@ textarea{min-height:76px;resize:vertical}
 .dv-row span:last-child{font-weight:600;overflow-wrap:anywhere}
 .dv-quote{background:var(--surface);border-left:3px solid var(--cool);border-radius:6px;padding:8px 10px;font-size:14px;margin-top:4px;white-space:pre-wrap}
 .dv-empty{color:var(--mute);font-size:13px}
+/* 선정 심사 */
+.vtabs{display:flex;gap:6px;margin:6px 0 14px;border-bottom:1px solid var(--line)}
+.vtabs button{font:inherit;font-size:15px;font-weight:700;background:none;border:0;border-bottom:3px solid transparent;color:var(--mute);padding:10px 14px;cursor:pointer}
+.vtabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--cool)}
+.vtabs button:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+.goal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.goal .bar2{height:10px;border-radius:5px;background:var(--line);overflow:hidden;margin:8px 0 6px;display:flex}
+.goal .bar2 i{display:block;height:100%}
+.goal small{color:var(--mute);font-size:13px}
+.goal .tcount{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cs-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-top:10px}
+.cs-card{background:var(--bg);border-radius:12px;padding:12px 14px;min-width:0}
+.cs-card h3{font-size:13.5px;margin:0 0 8px;color:var(--ink)}
+.cs-card label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--mute);margin-bottom:8px}
+.cs-card input,.cs-card select,.cs-card textarea{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:7px;padding:7px 9px;background:var(--surface);color:var(--ink);width:100%}
+.cs-card textarea{min-height:64px}
+.cs-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cs-checks{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:14px;color:var(--ink)}
+.cs-checks label{flex-direction:row;align-items:center;gap:5px;color:var(--ink);font-size:14px;margin:0}
+.cs-checks input{width:auto}
+.doc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.doc-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.doc-top b{font-size:14px;flex:1 1 140px}
+.doc-top label{flex-direction:row;align-items:center;gap:5px;margin:0;color:var(--ink);font-size:13.5px}
+.doc-top input[type=checkbox]{width:18px;height:18px}
+.doc-top input[type=date]{width:auto;padding:4px 7px;font-size:13px}
+.doc small{display:block;color:var(--mute);font-size:12px;margin-top:3px}
+.doc .files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.fpill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:3px 4px 3px 10px;background:var(--bg)}
+.fpill button{font:inherit;font-size:12px;border:0;background:none;color:var(--cool);cursor:pointer;padding:2px 6px}
+.fpill button.x{color:var(--warm)}
+.upl{font-size:12.5px;color:var(--cool);border:1px dashed var(--cool);border-radius:999px;padding:4px 10px;cursor:pointer;background:var(--surface)}
+.upl input{display:none}
+.amt-box{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.amt-box div{background:var(--surface);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--mute)}
+.amt-box b{display:block;font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
+.amt-box .tot{background:var(--cool-soft)} .amt-box .tot b{color:var(--cool)}
+.stg{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.stg-조사중{background:var(--bg);border:1px solid var(--line)}
+.stg-서류완비{background:var(--cool-soft);color:var(--cool)}
+.stg-위원회상정{background:var(--amber-soft);color:var(--amber)}
+.stg-선정{background:var(--green-soft);color:var(--green)}
+.stg-보류,.stg-탈락{background:var(--warm-soft);color:var(--warm)}
+.dchk{font-variant-numeric:tabular-nums}
+.dchk.full{color:var(--green);font-weight:700}
