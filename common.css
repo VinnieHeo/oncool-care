@@ -82,3 +82,21 @@ textarea{min-height:76px;resize:vertical}
 .mc.who svg{color:var(--cool)} .mc.about svg{color:var(--green)} .mc.call svg{color:var(--warm)}
 .mc.go svg{color:var(--warm)}
 @media (max-width:340px){.menu{grid-template-columns:1fr}.mc{min-height:110px}}
+/* 상세 카드 */
+.dv-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-bottom:4px}
+.dv-head h2{margin:0;font-size:20px}
+.dv-sub{color:var(--mute);font-size:13.5px;margin:0 0 12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip2{font-size:12.5px;font-weight:600;border-radius:999px;padding:3px 10px;background:var(--bg);border:1px solid var(--line);color:var(--ink)}
+.chip2.warn{background:var(--warm-soft);color:var(--warm);border-color:transparent}
+.chip2.ok{background:var(--green-soft);color:var(--green);border-color:transparent}
+.chip2.info{background:var(--cool-soft);color:var(--cool);border-color:transparent}
+.chip2.amber{background:var(--amber-soft);color:var(--amber);border-color:transparent}
+.dv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.dv-card{background:var(--bg);border-radius:12px;padding:12px 14px;min-width:0}
+.dv-card h3{font-size:13px;color:var(--mute);margin:0 0 8px;font-weight:700;letter-spacing:.02em}
+.dv-row{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;font-size:14px;padding:3px 0}
+.dv-row span:first-child{color:var(--mute)}
+.dv-row span:last-child{font-weight:600;overflow-wrap:anywhere}
+.dv-quote{background:var(--surface);border-left:3px solid var(--cool);border-radius:6px;padding:8px 10px;font-size:14px;margin-top:4px;white-space:pre-wrap}
+.dv-empty{color:var(--mute);font-size:13px}
