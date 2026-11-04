@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>온앤쿨케어 대상가구 추천</title>
+<link rel="stylesheet" href="common.css">
+</head><body><div class="wrap">
+<div class="eyebrow">안양시만안종합사회복지관 · 지역사회 맞춤형 에너지 돌봄 사업</div>
+<h1><span class="w">온(溫)</span> 앤 <span class="c">쿨(cool)</span> 케어</h1>
+
+<section id="v-menu">
+  <p class="lead" style="margin-top:8px">주변에 겨울 난방비가 부담되는 이웃이 있으면 추천해 주세요. 아래 기준에 해당하는 가구라면 누구나 추천할 수 있어요.</p>
+  <div class="menu">
+    <button class="mc go" type="button" data-view="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg><span><b>추천하기</b><small>가구 추천 · 내 추천 보기</small></span></button>
+    <button class="mc who" type="button" data-view="who"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span><b>신청대상</b><small>선정 기준 · 지원 내용</small></span></button>
+    <button class="mc about" type="button" data-view="about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span><b>사업정보</b><small>사업 소개 · 일정</small></span></button>
+    <button class="mc call" type="button" data-view="call"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/></svg><span><b>담당자 문의</b><small>사무실 · 휴대폰 전화 연결</small></span></button>
+  </div>
+</section>
+<div id="v-go" hidden>
+<button class="linkbtn back" data-view="menu" type="button">← 메뉴</button>
+
+<!-- 로그인 -->
+<section class="card" id="login" hidden>
+  <h2>추천하는 분 확인</h2>
+  <p class="hint">이름과 휴대폰 번호로 들어와요. 처음이면 비밀번호 4자리를 직접 정해요. 명단에 없는 기관 담당자는 기관 가입 코드로 가입해요.</p>
+  <div class="q"><label for="wn">이름</label><input type="text" id="wn" maxlength="30" autocomplete="name"></div>
+  <div class="q"><label for="wp">휴대폰 번호</label><input type="tel" id="wp" maxlength="13" placeholder="010-0000-0000" autocomplete="tel"></div>
+  <div id="codeq" hidden>
+    <div class="must2" style="margin-top:12px">등록된 명단에 없어요. <b>기관에서 받은 가입 코드</b>가 있으면 넣어 주세요. 이름과 번호가 맞는데도 이 화면이 나오면 복지관 담당자에게 문의해 주세요.</div>
+    <div class="q"><label for="jcode">가입 코드</label><input type="password" id="jcode" autocomplete="off" maxlength="20"></div>
+  </div>
+  <div class="q" id="pinq" hidden><label for="pin" id="pinl">비밀번호 4자리</label><small id="pinh"></small>
+    <input type="password" id="pin" inputmode="numeric" maxlength="4" autocomplete="current-password">
+    <div id="pin2q" hidden style="margin-top:8px"><input type="password" id="pin2" inputmode="numeric" maxlength="4" placeholder="한 번 더 입력" aria-label="비밀번호 확인"></div></div>
+  <p class="err" id="lerr" hidden></p>
+  <div style="margin-top:14px"><button class="btn" id="lbtn" type="button">다음</button></div>
+  <p class="hint" style="margin:12px 0 0"><button class="linkbtn" id="lreset" type="button" style="padding:0">이름·번호 다시 입력</button><br>비밀번호를 잊었으면 복지관 담당자에게 초기화를 요청해 주세요.</p>
+</section>
+
+<!-- 홈 -->
+<section id="home" hidden>
+  <div class="hello"><div><b id="hname"></b> 선생님<br><span class="hint" style="margin:0">해당되는 가구를 추천해 주세요.</span></div><button class="linkbtn" id="logout" type="button">나가기</button></div>
+  <div class="big">
+    <button class="btn" id="gonew" type="button">새로 추천하기</button>
+    <button class="btn sec" id="golist" type="button">내가 추천한 가구 <span id="mycnt"></span></button>
+  </div>
+  <div class="card" style="margin-top:14px"><p class="hint" style="margin:0">처음이라면 <b>신청대상</b> 메뉴에서 선정 기준을 먼저 확인해 주세요. 소득 기준과 유형 기준을 <b>둘 다</b> 맞아야 해요.</p></div>
+</section>
+
+<!-- 내 목록 -->
+<section id="list" hidden>
+  <button class="linkbtn back" data-go="home" type="button">← 처음으로</button>
+  <h2 style="font-size:17px;margin:0 0 8px">내가 추천한 가구</h2>
+  <p class="hint">‘접수’ 상태일 때만 고칠 수 있어요. 복지관이 검토를 시작하면 담당자에게 연락해 주세요.</p>
+  <div class="mine" id="mine"></div>
+</section>
+
+<!-- 추천서 -->
+<form id="f" hidden novalidate>
+<button class="linkbtn back" data-go="home" type="button">← 처음으로</button>
+<h2 style="font-size:17px;margin:0 0 8px" id="ftitle">새로 추천하기</h2>
+<section class="card">
+  <div class="consent"><input type="checkbox" id="consent"><label for="consent"><b>대상자께 이 사업 추천을 위해 복지관에 정보를 전달하는 것에 동의를 받았어요.</b><br><span style="font-size:13px">구두 동의면 돼요. 선정되면 가정방문 때 서면 동의서를 따로 받아요.</span></label></div>
+</section>
+<section class="card">
+  <h2>1. 대상자 기본 정보</h2>
+  <div class="q"><label for="elder_name">대상자 성함<span class="req">필수</span></label><input type="text" id="elder_name" maxlength="30"></div>
+  <div class="row2">
+    <div class="q"><label for="birth">생년월일</label><small>6자리 (예: 580512)</small><input type="text" id="birth" inputmode="numeric" maxlength="6" pattern="[0-9]*"></div>
+    <div class="q"><div class="lb">성별</div><small>&nbsp;</small><div class="opts" data-name="gender" data-opts="남,여"></div></div>
+  </div>
+  <div class="q"><label for="phone">연락처</label><input type="tel" id="phone" maxlength="20" placeholder="010-0000-0000"></div>
+  <div class="q"><label for="dong">동</label><select id="dong"><option value="">선택</option><option>안양1동</option><option>안양2동</option><option>안양3동</option><option>안양4동</option><option>안양5동</option><option>안양6동</option><option>안양7동</option><option>안양8동</option><option>안양9동</option><option>석수1동</option><option>석수2동</option><option>석수3동</option><option>박달1동</option><option>박달2동</option><option>기타</option></select></div>
+  <div class="q"><label for="address">주소</label><input type="text" id="address" maxlength="120" placeholder="도로명 주소, 동·호수"></div>
+</section>
+
+<section class="card">
+  <h2>2. 세대 구성</h2>
+  <p class="hint">선정은 주민등록상 세대주 기준이고, 가구원 수에 따라 지원 금액이 달라져요.</p>
+  <div class="q"><div class="lb">대상자가 세대주인가요?</div><div class="opts" data-name="is_head" data-opts="예,아니오,모름"></div></div>
+  <div id="headbox" hidden>
+    <div class="row2">
+      <div class="q"><label for="head_name">세대주 성함</label><input type="text" id="head_name" maxlength="30"></div>
+      <div class="q"><label for="head_birth">세대주 생년월일</label><input type="text" id="head_birth" inputmode="numeric" maxlength="6"></div>
+    </div>
+  </div>
+  <div class="q"><div class="lb">주민등록상 가구원 수</div><small>대상자 포함</small><div class="opts" data-name="household_size" data-opts="1,2,3,4,5,6"></div></div>
+  <div class="q"><label for="live_with">실제로 함께 사는 분</label><small>등본과 다를 때만 적어 주세요 (예: 등본은 1인, 실제 아들과 거주)</small><input type="text" id="live_with" maxlength="100"></div>
+</section>
+
+<section class="card">
+  <h2>3. 소득과 에너지바우처</h2>
+  <div class="q"><div class="lb">소득 구분</div><small>기초연금만 받으시면 ‘해당 없음’이에요</small><div class="opts" data-name="income" data-opts="기초생활수급자,차상위,해당 없음,모름"></div></div>
+  <div class="q" id="rkbox" hidden><div class="lb">수급 종류 (모두 선택)</div><div class="opts" data-name="recipient_kinds" data-multi="1" data-opts="생계,의료,주거,교육"></div></div>
+  <div class="q"><div class="lb">에너지바우처</div><small>유형을 나누는 가장 중요한 질문이에요</small><div class="opts" data-name="voucher" data-opts="안 받음,받았는데 다 씀,받는 중,모름"></div></div>
+</section>
+
+<section class="card">
+  <h2>4. 난방과 통장</h2>
+  <div class="q"><div class="lb">난방 방식</div><div class="opts" data-name="heating" data-opts="도시가스,기름(등유) 보일러,LPG,연탄,전기,기타"></div></div>
+  <div class="q"><div class="lb">대상자(세대주) 본인 명의 통장</div><small>난방비는 본인 명의 통장으로만 보내요</small><div class="opts" data-name="account" data-opts="있음,없음,압류 우려,모름"></div></div>
+  <div class="q"><div class="lb">매달 고지서·영수증 사진 확인</div><small>추천하신 분이나 복지관 활동가가 대신 찍어도 돼요</small><div class="opts" data-name="bill_photo" data-opts="가능,어려움"></div></div>
+</section>
+
+<section class="card">
+  <h2>5. 주거 상태</h2>
+  <div class="q"><div class="lb">집</div><div class="opts" data-name="housing_tenure" data-opts="자가,전세,월세,공공임대,기타"></div></div>
+  <div class="q"><div class="lb">해당하는 것 (모두 선택)</div><div class="opts" data-name="housing_risk" data-multi="1" data-opts="반지하,옥탑,노후주택,외풍,결로·곰팡이"></div></div>
+  <div class="q"><div class="lb">고장 난 난방기구가 있나요?</div><div class="opts" data-name="heater_broken" data-opts="예,아니오"></div></div>
+  <div class="q"><div class="lb">요금 체납 (모두 선택)</div><div class="opts" data-name="arrears" data-multi="1" data-opts="가스,전기,관리비,없음"></div></div>
+</section>
+
+<section class="card">
+  <h2>6. 추천 의견</h2>
+  <div class="q"><div class="lb">긴급도</div><div class="opts" data-name="urgency" data-opts="상,중,하"></div></div>
+  <div class="q"><label for="reason">추천 사유</label><textarea id="reason" maxlength="500" placeholder="예: 기름값이 부담돼 보일러를 거의 안 트심"></textarea></div>
+  <div class="q"><label for="risk_note">건강·생활 위험</label><small>진단명 대신 생활 모습으로 적어 주세요 (예: 거동 불편, 혼자 계실 때가 많음)</small><input type="text" id="risk_note" maxlength="300"></div>
+  <div class="q"><label for="other_support">다른 곳에서 받는 난방비·연료 지원</label><input type="text" id="other_support" maxlength="200" placeholder="없으면 비워 두세요"></div>
+</section>
+
+<p class="err" id="ferr" hidden></p>
+<button class="btn" id="sbtn" type="submit">추천 보내기</button>
+</form>
+
+<section class="card done" id="done" hidden>
+  <div>접수 번호</div><b id="rno"></b>
+  <p id="dmsg">추천이 접수됐어요. 고맙습니다.</p>
+  <div class="big"><button class="btn" id="again" type="button">다른 가구 추천하기</button><button class="btn sec" data-go="home" type="button">처음으로</button></div>
+</section>
+</div>
+
+<div id="v-who" hidden>
+<button class="linkbtn back" data-view="menu" type="button">← 메뉴</button>
+<section class="card info">
+  <h3>누가 받을 수 있나요?</h3>
+  <p><b>소득 기준</b>과 <b>유형 기준</b>을 <b>둘 다</b> 맞아야 해요. 주민등록상 <b>세대주</b>를 기준으로 봐요.</p>
+  <h3>① 소득 기준 · 기준 중위소득 150% 이하</h3>
+  <ul>
+    <li><b>기초생활수급자</b> (생계·의료·주거·교육)</li>
+    <li><b>차상위</b> (차상위 확인, 한부모, 장애수당, 의료급여 등)</li>
+    <li><b>그 밖의 저소득</b>: 건강보험료가 아래 금액 이하 (최근 3개월 평균)</li>
+  </ul>
+  <table class="tbl"><thead><tr><th>가구원</th><th>직장</th><th>지역</th></tr></thead><tbody>
+    <tr><td>1인</td><td class="n">138,780원</td><td class="n">68,641원</td></tr>
+    <tr><td>2인</td><td class="n">229,357원</td><td class="n">164,508원</td></tr>
+    <tr><td>3인</td><td class="n">290,169원</td><td class="n">240,352원</td></tr>
+    <tr><td>4인</td><td class="n">360,410원</td><td class="n">322,443원</td></tr>
+  </tbody></table>
+  <p class="hint" style="margin-top:6px">기초연금만 받는 걸로는 소득 기준이 확인되지 않아요. 이때는 건강보험료로 봐요.</p>
+  <h3>② 유형 기준 · 에너지바우처로 나눠요</h3>
+  <div class="types">
+    <div class="ty"><b><i>1</i>바우처 미수급</b>바우처를 받지 않는 저소득 가구</div>
+    <div class="ty"><b><i>2</i>바우처 소진</b>바우처를 받았지만 다 써서 부족한 가구</div>
+    <div class="ty"><b><i>3</i>바우처 수급</b>바우처를 받고 있지만 그래도 부족한 가구</div>
+    <div class="ty"><b><i>4</i>에너지 인프라 취약</b>도시가스가 안 들어와 기름·LPG·연탄을 쓰는 가구</div>
+  </div>
+  <p class="hint" style="margin-top:6px">어느 유형인지는 복지관 사례판정위원회가 최종으로 정해요.</p>
+  <div class="must2"><b>이런 경우는 어려워요</b><br>· 본인(세대주) 명의 통장이 없으면 먼저 복지관과 상의가 필요해요<br>· 냉·난방비 없이 물품·수리만 원하는 경우는 선정할 수 없어요</div>
+</section>
+<section class="card info">
+  <h3>무엇을 받나요?</h3>
+  <ul>
+    <li><b>난방비</b>: 11–2월에 4번 나눠 본인 명의 통장으로 입금 (첫 입금 11월 16일, 이후 매월 10일)</li>
+    <li><b>에너지 효율 진단과 개선</b>: 열화상 진단 후 방풍·단열·방한 물품, 난방기구 수리</li>
+    <li><b>예방교육과 안부 확인</b>: 바우처 사용법, 한파 예방 수칙, 한파 특보 때 안부 전화</li>
+    <li>여름(6–8월)에는 냉방비와 냉방 물품을 지원해요</li>
+  </ul>
+  <h3>동절기 난방비 (11–2월 합계)</h3>
+  <table class="tbl"><thead><tr><th>가구원</th><th>1·3유형</th><th>2유형</th><th>4유형</th></tr></thead><tbody>
+    <tr><td>1인</td><td class="n">330,000</td><td class="n">165,000</td><td class="n">412,500</td></tr>
+    <tr><td>2인</td><td class="n">470,000</td><td class="n">235,000</td><td class="n">587,500</td></tr>
+    <tr><td>3인</td><td class="n">620,000</td><td class="n">310,000</td><td class="n">775,000</td></tr>
+    <tr><td>4인</td><td class="n">800,000</td><td class="n">400,000</td><td class="n">1,000,000</td></tr>
+  </tbody></table>
+  <p class="hint" style="margin-top:6px">단위: 원. 매달 고지서·영수증으로 실제 난방에 썼는지 확인한 뒤 다음 달 금액을 보내요.</p>
+</section>
+<section class="card info">
+  <h3>추천한 뒤에는</h3>
+  <ol class="steps">
+    <li>복지관 담당자가 대상자께 연락하고 가정방문해요</li>
+    <li>서류를 받아요: 주민등록등본, 소득 증빙(3개월 이내), 바우처 확인, 통장 사본, 동의서</li>
+    <li>사례판정위원회에서 대상과 유형을 정해요</li>
+    <li>협회 승인 뒤 11월 16일 첫 난방비를 보내요</li>
+  </ol>
+  <p class="hint">올해 겨울은 <b>40가구 이상</b>을 선정해요. 일정이 빠듯해서 추천은 <b>11월 9일(월)까지</b> 부탁드려요.</p>
+</section>
+</div>
+
+<div id="v-about" hidden>
+<button class="linkbtn back" data-view="menu" type="button">← 메뉴</button>
+<section class="card info">
+  <h3>지역사회 맞춤형 에너지 돌봄 사업<br>‘온(溫) 앤 쿨(cool) 케어’</h3>
+  <dl class="kv">
+    <dt>사업 기간</dt><dd>2026년 11월 4일 – 2027년 8월 27일</dd>
+    <dt>지원</dt><dd>사회복지공동모금회(사랑의열매) 지원사업</dd>
+    <dt>주관</dt><dd>한국사회복지관협회</dd>
+    <dt>수행</dt><dd>안양시만안종합사회복지관</dd>
+    <dt>대상</dt><dd>안양시 만안구 에너지 취약계층 40가구 이상</dd>
+  </dl>
+  <h3>왜 하나요?</h3>
+  <p>폭염과 한파가 잦아지면서 난방비·냉방비가 부담돼 추위와 더위를 그냥 참는 가구가 늘고 있어요. 냉·난방비를 지원하고 집의 에너지 효율을 높여, 겨울철 한랭질환과 여름철 온열질환을 예방하려는 사업이에요.</p>
+  <h3>사업 구성</h3>
+  <ul>
+    <li><b>에너지 돌봄 사례관리</b>: 냉·난방비 지원, 효율 진단·개선, 예방교육, 특보 시 안부 확인</li>
+    <li><b>온·쿨 메이트</b>: 지역 주민 돌봄 활동가 10명이 담당 가구 안부 확인</li>
+    <li><b>기후위기 쉼터</b>: 복지관 1층 공감카페·프로그램실을 한파·폭염 쉼터로 운영</li>
+    <li><b>온·쿨 챌린지</b>: 고지서 읽기 교실과 에너지 절약 챌린지</li>
+  </ul>
+  <h3>일정</h3>
+  <dl class="kv">
+    <dt>11월</dt><dd>대상가구 추천·선정, 첫 난방비(11/16), 효율 진단</dd>
+    <dt>12–2월</dt><dd>매월 10일 난방비, 사용 확인, 물품·수리 지원</dd>
+    <dt>5월</dt><dd>하절기 대상 추가 선정</dd>
+    <dt>6–8월</dt><dd>냉방비와 냉방 물품 지원</dd>
+  </dl>
+  <h3>문의</h3>
+  <p>안양시만안종합사회복지관 온앤쿨케어 담당자<br>사무실 직통 <a href="tel:07089787710">070-8978-7710</a> · 휴대폰 <a href="tel:01083999293">010-8399-9293</a></p>
+</section>
+</div>
+
+<div id="v-call" hidden>
+<button class="linkbtn back" data-view="menu" type="button">← 메뉴</button>
+<section class="card info">
+  <h3>담당자 문의</h3>
+  <p>안양시만안종합사회복지관 온앤쿨케어 담당자에게 바로 전화가 연결돼요.</p>
+  <div class="big" style="margin-top:12px">
+    <a class="btn" href="tel:07089787710" style="display:block;text-align:center;text-decoration:none">사무실 직통 070-8978-7710</a>
+    <a class="btn sec" href="tel:01083999293" style="display:block;text-align:center;text-decoration:none">휴대폰 010-8399-9293</a>
+  </div>
+  <p class="hint" style="margin-top:10px">근무시간에는 사무실 직통으로, 급할 때는 휴대폰으로 연락해 주세요. 문자도 괜찮아요.</p>
+</section>
+</div>
+<p class="foot">입력한 내용은 복지관 담당자와 추천한 본인만 볼 수 있어요.</p>
+</div>
+<script>
+const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
+const DEMO=new URLSearchParams(location.search).has("demo");
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}}
+let TOKEN=ls("oc_tok")||"",ME=ls("oc_me")||"",MINE=[],EDIT=null,STEP="id";
+async function rpc(fn,args){
+  if(DEMO)return demo(fn,args);
+  const r=await fetch(SB+"/rest/v1/rpc/"+fn,{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify(args)});
+  if(!r.ok){let m="";try{m=(await r.json()).message||""}catch(e){}throw new Error(m||("HTTP "+r.status))}
+  return r.json();
+}
+/* 데모: 화면 미리보기용 가짜 응답 */
+const DM={rows:[{id:"d1",receipt_no:3,elder_name:"김○○",dong:"안양5동",status:"접수",created_at:new Date().toISOString(),voucher:"안 받음"},{id:"d2",receipt_no:7,elder_name:"이○○",dong:"박달1동",status:"검토중",created_at:new Date().toISOString(),voucher:"받는 중"}]};
+function demo(fn,a){return new Promise(r=>setTimeout(()=>{
+  if(fn==="oncool_w_check")r({state:a.p_name==="새선생"?"new":a.p_name==="외부"?"not_found":"pin"});
+  else if(fn==="oncool_w_join")r({ok:true,token:"demo",name:a.p_name});
+  else if(fn==="oncool_w_login"||fn==="oncool_w_setpin")r({ok:true,token:"demo",name:a.p_name});
+  else if(fn==="oncool_w_list")r(DM.rows);
+  else if(fn==="oncool_w_submit")r(12);
+  else r(true)},200))}
+
+/* 메뉴 */
+function mview(v){["menu","go","who","about","call"].forEach(x=>$("#v-"+x).hidden=x!==v);window.scrollTo(0,0);if(v==="go"){if(TOKEN)goHome();else view("login")}}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-view]");if(g)mview(g.dataset.view)});
+/* 선택지 만들기 */
+document.querySelectorAll(".opts").forEach(box=>{
+  const n=box.dataset.name,multi=!!box.dataset.multi;
+  box.setAttribute("role",multi?"group":"radiogroup");
+  box.innerHTML=box.dataset.opts.split(",").map(o=>`<label class="opt"><input type="${multi?"checkbox":"radio"}" name="${n}" value="${o}"><span>${o==="6"?"6명 이상":(/^[0-9]$/.test(o)?o+"명":o)}</span></label>`).join("");
+});
+const val=n=>{const c=document.querySelector(`input[name="${n}"]:checked`);return c?c.value:""};
+const vals=n=>[...document.querySelectorAll(`input[name="${n}"]:checked`)].map(c=>c.value);
+function setv(n,v){document.querySelectorAll(`input[name="${n}"]`).forEach(c=>c.checked=Array.isArray(v)?v.includes(c.value):c.value===String(v??""))}
+function sync(){$("#headbox").hidden=val("is_head")!=="아니오";$("#rkbox").hidden=val("income")!=="기초생활수급자"}
+document.addEventListener("change",e=>{
+  if(e.target.name==="arrears"&&e.target.checked){if(e.target.value==="없음")document.querySelectorAll('input[name="arrears"]').forEach(c=>{if(c.value!=="없음")c.checked=false});else document.querySelector('input[name="arrears"][value="없음"]').checked=false}
+  sync()});
+function showErr(el,m){el.textContent=m;el.hidden=!m}
+
+/* 화면 전환 */
+function view(v){["login","home","list","f","done"].forEach(x=>$("#"+x).hidden=x!==v);$("#v-go > .back").hidden=!(v==="login"||v==="home");window.scrollTo(0,0)}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g){if(g.dataset.go==="home")goHome();}});
+async function goHome(){$("#hname").textContent=ME;view("home");try{MINE=await rpc("oncool_w_list",{p_token:TOKEN});$("#mycnt").textContent=MINE.length?`(${MINE.length}건)`:""}catch(e){if(/session/.test(e.message))logout()}}
+function logout(){if(TOKEN&&!DEMO)rpc("oncool_w_logout",{p_token:TOKEN}).catch(()=>{});TOKEN="";ME="";ls("oc_tok",null);ls("oc_me",null);STEP="id";resetLogin();view("login")}
+$("#logout").onclick=logout;
+$("#lreset").onclick=()=>{STEP="id";resetLogin()};
+
+/* 로그인 */
+const phoneNorm=s=>s.replace(/[^0-9]/g,"");
+function resetLogin(){$("#codeq").hidden=true;$("#jcode").value="";$("#pinq").hidden=true;$("#pin2q").hidden=true;$("#pin").value="";$("#pin2").value="";$("#lbtn").textContent="다음";$("#wn").disabled=false;$("#wp").disabled=false;showErr($("#lerr"),"")}
+$("#wp").addEventListener("input",e=>{const d=phoneNorm(e.target.value).slice(0,11);e.target.value=d.length>7?d.replace(/(\d{3})(\d{4})(\d+)/,"$1-$2-$3"):d.length>3?d.replace(/(\d{3})(\d+)/,"$1-$2"):d});
+$("#lbtn").onclick=async()=>{
+  const err=$("#lerr");showErr(err,"");const name=$("#wn").value.trim(),phone=phoneNorm($("#wp").value);
+  if(!name||phone.length<10){showErr(err,"이름과 휴대폰 번호를 확인해 주세요.");return}
+  $("#lbtn").disabled=true;
+  try{
+    if(STEP==="id"){const r=await rpc("oncool_w_check",{p_name:name,p_phone:phone});
+      if(r.state==="busy"){showErr(err,"잠시 뒤에 다시 시도해 주세요.");return}
+      if(r.state==="not_found"){STEP="join";$("#wn").disabled=true;$("#wp").disabled=true;$("#codeq").hidden=false;$("#pinq").hidden=false;$("#pin2q").hidden=false;$("#pinl").textContent="사용할 비밀번호 4자리 정하기";$("#pinh").textContent="다음부터 이름·번호와 함께 이 비밀번호로 들어와요.";$("#lbtn").textContent="가입하고 시작하기";$("#jcode").focus();return}
+      if(r.state==="locked"){showErr(err,"비밀번호를 여러 번 틀려서 잠시 잠겼어요. 15분 뒤에 다시 해 주세요.");return}
+      $("#wn").disabled=true;$("#wp").disabled=true;$("#pinq").hidden=false;
+      if(r.state==="new"){STEP="new";$("#pinl").textContent="사용할 비밀번호 4자리 정하기";$("#pinh").textContent="다음부터 이름·번호와 함께 이 비밀번호로 들어와요.";$("#pin2q").hidden=false;$("#lbtn").textContent="비밀번호 정하고 시작하기"}
+      else{STEP="pin";$("#pinl").textContent="비밀번호 4자리";$("#pinh").textContent="";$("#lbtn").textContent="들어가기"}
+      $("#pin").focus();return}
+    const pin=$("#pin").value;if(!/^[0-9]{4}$/.test(pin)){showErr(err,"비밀번호는 숫자 4자리예요.");return}
+    if(STEP!=="pin"&&pin!==$("#pin2").value){showErr(err,"두 번 입력한 비밀번호가 달라요.");return}
+    if(STEP==="join"&&!$("#jcode").value.trim()){showErr(err,"가입 코드를 넣어 주세요.");$("#jcode").focus();return}
+    const r=STEP==="join"?await rpc("oncool_w_join",{p_name:name,p_phone:phone,p_code:$("#jcode").value.trim(),p_pin:pin}):await rpc(STEP==="new"?"oncool_w_setpin":"oncool_w_login",{p_name:name,p_phone:phone,p_pin:pin});
+    if(!r.ok){showErr(err,{locked:"비밀번호를 여러 번 틀려서 잠시 잠겼어요. 15분 뒤에 다시 해 주세요.",bad_code:"가입 코드가 맞지 않아요. 기관 담당자에게 다시 확인해 주세요.",exists:"이미 가입된 이름과 번호예요. 처음 화면에서 다시 들어와 주세요.",busy:"잠시 뒤에 다시 시도해 주세요."}[r.reason]||"비밀번호가 맞지 않아요.");return}
+    TOKEN=r.token;ME=r.name||name;ls("oc_tok",TOKEN);ls("oc_me",ME);resetLogin();STEP="id";goHome();
+  }catch(e){showErr(err,"연결이 안 돼요. 인터넷 연결을 확인하고 다시 눌러 주세요.")}
+  finally{$("#lbtn").disabled=false}
+};
+["wn","wp","pin","pin2"].forEach(i=>$("#"+i).addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("#lbtn").click()}}));
+
+/* 내 목록 */
+$("#golist").onclick=async()=>{view("list");$("#mine").innerHTML='<p class="hint">불러오는 중…</p>';
+  try{MINE=await rpc("oncool_w_list",{p_token:TOKEN});
+    $("#mine").innerHTML=MINE.length?MINE.map(r=>`<div class="mi"><div><b>${esc(r.elder_name)}</b> <small>· ${esc(r.dong||"")} · 접수 ${r.receipt_no}번</small></div><span class="st s-${esc(r.status)}">${esc(r.status)}</span>${r.status==="접수"?`<button class="btn sec edit" type="button" data-edit="${esc(r.id)}">내용 고치기</button>`:""}</div>`).join(""):'<p class="hint">아직 추천한 가구가 없어요.</p>'}
+  catch(e){$("#mine").innerHTML='<p class="err">불러오지 못했어요.</p>'}};
+$("#mine").addEventListener("click",async e=>{const b=e.target.closest("[data-edit]");if(!b)return;
+  const r=MINE.find(x=>x.id===b.dataset.edit);if(!r)return;openForm(r)});
+
+/* 추천서 */
+const TXT=["elder_name","birth","phone","address","head_name","head_birth","live_with","reason","risk_note","other_support"];
+const RAD=["gender","is_head","household_size","income","voucher","heating","account","bill_photo","housing_tenure","heater_broken","urgency"];
+const MUL=["recipient_kinds","housing_risk","arrears"];
+function openForm(r){EDIT=r?r.id:null;$("#f").reset();
+  if(r){TXT.forEach(k=>$("#"+k).value=r[k]??"");RAD.forEach(k=>setv(k,r[k]));MUL.forEach(k=>setv(k,r[k]||[]));$("#dong").value=r.dong||"";$("#consent").checked=true}
+  $("#ftitle").textContent=r?`${r.elder_name} 님 내용 고치기`:"새로 추천하기";$("#sbtn").textContent=r?"고친 내용 저장":"추천 보내기";
+  sync();showErr($("#ferr"),"");view("f")}
+$("#gonew").onclick=()=>openForm(null);
+$("#again").onclick=()=>openForm(null);
+$("#f").addEventListener("submit",async e=>{
+  e.preventDefault();const err=$("#ferr");showErr(err,"");const g=id=>$("#"+id).value.trim();
+  if(!$("#consent").checked){showErr(err,"대상자 동의 확인에 체크해 주세요.");$("#consent").focus();return}
+  if(!g("elder_name")){showErr(err,"대상자 성함을 적어 주세요.");$("#elder_name").focus();return}
+  if(g("birth")&&!/^[0-9]{6}$/.test(g("birth"))){showErr(err,"생년월일은 숫자 6자리로 적어 주세요.");$("#birth").focus();return}
+  const p={consent:true,dong:$("#dong").value};TXT.forEach(k=>p[k]=g(k));RAD.forEach(k=>p[k]=val(k));MUL.forEach(k=>p[k]=vals(k));
+  if(p.is_head!=="아니오"){p.head_name="";p.head_birth=""}if(p.income!=="기초생활수급자")p.recipient_kinds=[];
+  $("#sbtn").disabled=true;const lbl=$("#sbtn").textContent;$("#sbtn").textContent="보내는 중…";
+  try{const r=EDIT?await rpc("oncool_w_update",{p_token:TOKEN,p_id:EDIT,p}):await rpc("oncool_w_submit",{p_token:TOKEN,p});
+    if(EDIT){if(r===true){$("#rno").textContent="";$("#dmsg").textContent="고친 내용을 저장했어요.";view("done")}else showErr(err,"이미 복지관이 검토를 시작해서 고칠 수 없어요. 담당자에게 연락해 주세요.")}
+    else if(r>0){$("#rno").textContent=r;$("#dmsg").textContent="추천이 접수됐어요. 고맙습니다.";view("done")}
+    else showErr(err,"지금은 접수가 많아요. 잠시 뒤에 다시 보내 주세요.");
+  }catch(x){if(/session/.test(x.message)){showErr(err,"다시 로그인이 필요해요. 입력한 내용은 그대로 있으니, 새 창에서 로그인한 뒤 다시 보내 주세요.")}else showErr(err,"보내지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요. 입력한 내용은 그대로 있어요.")}
+  finally{$("#sbtn").disabled=false;$("#sbtn").textContent=lbl}
+});
+mview("menu");
+</script>
+</body></html>
