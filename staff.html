@@ -4,7 +4,7 @@
 <title>온앤쿨케어 추천·선정 관리</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="common.css?v=6">
+<link rel="stylesheet" href="common.css?v=7">
 <style>
 .wrap{max-width:1180px}
 .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin:10px 0 14px}
@@ -88,8 +88,8 @@ body.embed #login .err{width:100%}
 </div>
 <p class="foot">편집 비밀번호로 들어오면 가정방문 기록과 증빙 서류를 고칠 수 있고, 고친 사람 이름이 남아요. 내용은 외부에 공유하지 말아 주세요.</p>
 </div>
-<script src="detail.js?v=6"></script>
-<script src="cases.js?v=6"></script>
+<script src="detail.js?v=7"></script>
+<script src="cases.js?v=7"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const $=s=>document.querySelector(s);
@@ -161,8 +161,9 @@ CSE.init({
   async list(cid,k){return (await efn({action:"list",case_id:cid,doc:k})).files||[]},
   async upload(cid,k,b,type){const u=await efn({action:"upload_url",case_id:cid,doc:k,content_type:type});const r=await fetch(u.signedUrl,{method:"PUT",headers:{"Content-Type":type},body:b});if(!r.ok)throw new Error("업로드 실패 "+r.status)},
   async open(cid,path){return (await efn({action:"sign",case_id:cid,path})).url},
-  async remove(cid,path){await efn({action:"remove",case_id:cid,path})}
-},{saved(c){const r=rows.find(x=>x.id===c.referral_id);if(r){r.status={"선정":"선정","탈락":"제외","보류":"보류"}[c.stage]||"검토중";r.household_code=c.household_code}renderCases();render()}});
+  async remove(cid,path){await efn({action:"remove",case_id:cid,path})},
+  async revert(cid){try{await efn({action:"purge",case_id:cid})}catch(e){}await rpcS("oncool_ed_case_revert",{p_token:ETOK,p_case:cid})}
+},{reverted(c){CASES=CASES.filter(x=>x.id!==c.id);const r=rows.find(x=>x.id===c.referral_id);if(r){r.status="접수";r.household_code=null}$("#ccnt").textContent=CASES.length?`(${CASES.length})`:"";renderCases();render();vtab("ref");if(r)openD(r.id)},saved(c){const r=rows.find(x=>x.id===c.referral_id);if(r){r.status={"선정":"선정","탈락":"제외","보류":"보류"}[c.stage]||"검토중";r.household_code=c.household_code}renderCases();render()}});
 if(ETOK)loadEd().catch(()=>{ETOK="";try{sessionStorage.removeItem("oc_etok")}catch(e){}});
 /* 공개 숫자 (이름 없음) */
 function pub(){fetch(SB+"/rest/v1/rpc/oncool_stats",{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:"{}"}).then(r=>r.json()).then(st=>{

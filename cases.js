@@ -54,7 +54,7 @@ window.CS=(function(){
 /* 심사 카드 편집기 (백엔드 B, 훅 H 주입) */
 window.CSE=(function(){
 const $=s=>document.querySelector(s);
-let B=null,H={saved(){},deleted(){}},curCase=null;
+let B=null,H={saved(){},deleted(){},reverted(){}},curCase=null;
 const opt=(arr,v)=>arr.map(x=>`<option${x===v?" selected":""}>${x}</option>`).join("");
 function openCase(c,r){curCase=c;r=r||{};const e=CS.esc,d=c.docs||{};
   const prop=CS.proposed(c);
@@ -86,10 +86,12 @@ function openCase(c,r){curCase=c;r=r||{};const e=CS.esc,d=c.docs||{};
      <label>판정 메모<input type="text" id="c_committee_note" maxlength="300" value="${e(c.committee_note||"")}"></label>
      <label>협회 승인일<input type="date" id="c_kaswc_approved" value="${e(c.kaswc_approved||"")}"></label></div>
   </div>
-  <div class="acts"><button class="sbtn pri" id="c_save" type="button">저장</button><button class="sbtn" id="c_close" type="button">닫기</button>${B.del?'<button class="sbtn dan" id="c_del" type="button">심사 카드 삭제</button>':""}<span class="msg" id="c_msg"></span></div>`;
+  <div class="acts"><button class="sbtn pri" id="c_save" type="button">저장</button><button class="sbtn" id="c_close" type="button">닫기</button>${B.revert?'<button class="sbtn dan" id="c_rev" type="button">추천 접수로 되돌리기</button>':""}<span class="msg" id="c_msg"></span></div>`;
   refreshCalc();CS.DOCS.forEach(x=>listFiles(x.k));
   $("#cedit").oninput=$("#cedit").onchange=()=>{refreshCalc();$("#c_msg").textContent="저장 안 됨"};
   $("#c_save").onclick=saveCase;$("#c_close").onclick=()=>{$("#cedit").hidden=true;curCase=null};
+  let arm2=false;if($("#c_rev"))$("#c_rev").onclick=async()=>{if(!arm2){arm2=true;$("#c_rev").textContent="정말 되돌리기 (방문 기록·올린 서류가 지워져요)";return}
+    $("#c_rev").disabled=true;try{await B.revert(c.id);$("#cedit").hidden=true;H.reverted(c)}catch(x){$("#c_msg").textContent="되돌리지 못했어요: "+x.message;$("#c_rev").disabled=false}};
   let arm=false;if($("#c_del"))$("#c_del").onclick=async()=>{if(!arm){arm=true;$("#c_del").textContent="정말 삭제 (올린 파일은 남아요)";return}try{await B.del(c.id);$("#cedit").hidden=true;H.deleted(c.id)}catch(x){$("#c_msg").textContent="삭제하지 못했어요"}};
   $("#cedit").scrollIntoView({behavior:"smooth",block:"start"});
 }

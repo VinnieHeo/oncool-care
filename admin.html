@@ -4,7 +4,7 @@
 <title>온앤쿨케어 추천 관리</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="common.css?v=6">
+<link rel="stylesheet" href="common.css?v=7">
 <style>
 .wrap{max-width:1180px}
 .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin:10px 0 14px}
@@ -95,8 +95,8 @@ tbody tr{cursor:pointer} tbody tr:hover{background:var(--bg)} tbody tr.sel{backg
 </div>
 <p class="foot">이 페이지와 데이터는 담당자 계정으로 로그인해야만 볼 수 있어요. 로드맵에는 숫자만 보여요.</p>
 </div>
-<script src="detail.js?v=6"></script>
-<script src="cases.js?v=6"></script>
+<script src="detail.js?v=7"></script>
+<script src="cases.js?v=7"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
@@ -213,8 +213,9 @@ CSE.init({
   async upload(cid,k,b,type){const ext=type==="application/pdf"?"pdf":type==="image/png"?"png":type==="image/heic"?"heic":"jpg";const {error}=await sb.storage.from(BK).upload(`${cid}/${k}/${Date.now()}_${Math.random().toString(36).slice(2,6)}.${ext}`,b,{contentType:type});if(error)throw error},
   async open(cid,path){const {data,error}=await sb.storage.from(BK).createSignedUrl(path,120);if(error)throw error;return data.signedUrl},
   async remove(cid,path){const {error}=await sb.storage.from(BK).remove([path]);if(error)throw error},
-  async del(id){const {error}=await sb.from("oncool_cases").delete().eq("id",id);if(error)throw error}
-},{saved(){renderCases();render();sb.rpc("oncool_stats").then(({data})=>renderStats(data))},deleted(id){CASES=CASES.filter(x=>x.id!==id);renderCases()}});
+  async revert(id){const c=CASES.find(x=>x.id===id);const {data:fs}=await sb.storage.from(BK).list(id,{limit:100});for(const d of (fs||[])){const {data:in2}=await sb.storage.from(BK).list(`${id}/${d.name}`,{limit:100});const ps=(in2||[]).filter(f=>f.id).map(f=>`${id}/${d.name}/${f.name}`);if(ps.length)await sb.storage.from(BK).remove(ps)}
+    const {error}=await sb.from("oncool_cases").delete().eq("id",id);if(error)throw error;await sb.from("oncool_referrals").update({status:"접수",household_code:null}).eq("id",c.referral_id)}
+},{reverted(c){CASES=CASES.filter(x=>x.id!==c.id);const r=rows.find(x=>x.id===c.referral_id);if(r){r.status="접수";r.household_code=null}renderCases();render();vtab("ref")},saved(){renderCases();render();sb.rpc("oncool_stats").then(({data})=>renderStats(data))},deleted(id){CASES=CASES.filter(x=>x.id!==id);renderCases()}});
 boot();
 </script>
 </body></html>
