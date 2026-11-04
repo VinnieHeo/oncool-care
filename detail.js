@@ -21,7 +21,7 @@ window.DV=(function(){
   function html(r,opts){opts=opts||{};
     const when=r.created_at?new Date(r.created_at).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}):"";
     const head=`<div class="dv-head"><h2>${esc(r.elder_name)}</h2>${chips(r)}</div>
-      <p class="dv-sub">접수 ${esc(r.receipt_no)}번 · ${esc(when)} · 추천 ${esc(r.worker_name||"")}${r.worker_org?" ("+esc(r.worker_org)+")":""}</p>`;
+      <p class="dv-sub">접수 ${esc(r.receipt_no)}번 · ${esc(when)} · 추천 ${esc(r.worker_org||"생활지원사")} · ${esc(r.worker_name||"")}</p>`;
     const cards=[
       card("대상자",[row("생년월일",has(r.birth)?r.birth+age(r.birth):""),row("성별",r.gender),row("연락처",has(r.phone)?phone(r.phone):""),row("거주동",r.dong),row("주소",(r.address||"").replace(" | ",", "))]),
       card("세대",[row("세대주 본인",r.is_head),row("세대주",[r.head_name,r.head_birth].filter(Boolean).join(" · ")),row("가구원 수",has(r.household_size)?r.household_size+"명":""),row("실제 동거",r.live_with)]),

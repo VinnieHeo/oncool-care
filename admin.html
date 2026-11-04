@@ -4,7 +4,7 @@
 <title>온앤쿨케어 추천 관리</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="common.css?v=4">
 <style>
 .wrap{max-width:1180px}
 .stats{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
@@ -81,7 +81,7 @@ tbody tr{cursor:pointer} tbody tr:hover{background:var(--bg)} tbody tr.sel{backg
 </div>
 <p class="foot">이 페이지와 데이터는 담당자 계정으로 로그인해야만 볼 수 있어요. 로드맵에는 숫자만 보여요.</p>
 </div>
-<script src="detail.js"></script>
+<script src="detail.js?v=4"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
@@ -89,6 +89,7 @@ const sb=supabase.createClient(SB,KEY,{auth:{storageKey:"oncool-admin"}});
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let rows=[],selId=null,delArm=false;
+const who=r=>`${r.worker_org||"생활지원사"} · ${r.worker_name||""}`;
 const typeOf=r=>r.voucher==="안 받음"?"1":r.voucher==="받았는데 다 씀"?"2":r.voucher==="받는 중"?"3":"?";
 const is4=r=>["기름(등유) 보일러","LPG","연탄"].includes(r.heating);
 const tpill=r=>{const t=typeOf(r);return (t==="?"?'<span class="pill">미확인</span>':`<span class="pill t${t}">${t}유형</span>`)+(is4(r)?' <span class="pill t4">4유형 후보</span>':"")};
@@ -121,7 +122,7 @@ function renderStats(s){if(!s)return;
 function filtered(){const s=$("#fs").value,t=$("#ft").value,q=$("#fq").value.trim();
   return rows.filter(r=>(!s||r.status===s)&&(!t||(t==="4"?is4(r):typeOf(r)===t))&&(!q||[r.elder_name,r.worker_name,r.dong].some(x=>(x||"").includes(q))))}
 function render(){const f=filtered();
-  $("#tb").innerHTML=f.map(r=>`<tr data-id="${r.id}" class="${r.id===selId?"sel":""}" tabindex="0"><td>${r.receipt_no}</td><td>${d(r.created_at)}</td><td><b>${esc(r.elder_name)}</b></td><td>${esc(r.dong)}</td><td>${r.household_size?r.household_size+"명":""}</td><td>${esc(r.income)}</td><td>${tpill(r)}</td><td>${esc(r.heating)}</td><td class="${["없음","압류 우려"].includes(r.account)?"flag":""}">${esc(r.account)}</td><td class="${r.urgency==="상"?"flag":""}">${esc(r.urgency)}</td><td>${esc(r.worker_name)}</td><td>${esc(r.status)}</td><td>${esc(r.household_code)}</td></tr>`).join("")||'<tr><td colspan="13" style="color:var(--mute)">아직 추천이 없어요.</td></tr>';
+  $("#tb").innerHTML=f.map(r=>`<tr data-id="${r.id}" class="${r.id===selId?"sel":""}" tabindex="0"><td>${r.receipt_no}</td><td>${d(r.created_at)}</td><td><b>${esc(r.elder_name)}</b></td><td>${esc(r.dong)}</td><td>${r.household_size?r.household_size+"명":""}</td><td>${esc(r.income)}</td><td>${tpill(r)}</td><td>${esc(r.heating)}</td><td class="${["없음","압류 우려"].includes(r.account)?"flag":""}">${esc(r.account)}</td><td class="${r.urgency==="상"?"flag":""}">${esc(r.urgency)}</td><td>${esc(who(r))}</td><td>${esc(r.status)}</td><td>${esc(r.household_code)}</td></tr>`).join("")||'<tr><td colspan="13" style="color:var(--mute)">아직 추천이 없어요.</td></tr>';
   $("#cnt").textContent=`${f.length}건 표시 · 전체 ${rows.length}건`;
 }
 ["fs","ft"].forEach(i=>$("#"+i).onchange=render);$("#fq").oninput=render;$("#reload").onclick=load;
