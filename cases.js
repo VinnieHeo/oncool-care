@@ -22,9 +22,10 @@ window.CS=(function(){
     const tot=W[t][n-1],ms=MONTHS[c.start_month||11]||MONTHS[11],k=ms.length,per=Math.ceil(tot/k/1000)*1000;
     return {tot,list:ms.map((m,i)=>[m,i<k-1?per:tot-per*(k-1)])}}
   const fmt=n=>Number(n).toLocaleString("ko-KR");
-  function docState(c){const d=c.docs||{},t=typeOf(c),today=new Date();let need=0,ok=0,stale=[];
+  /* 안내문 1쪽: 증빙은 "신청일 기준 3개월 이내 발급" → 기준일 = 가정방문일(신청서 받는 날), 없으면 심사 카드 만든 날 */
+  function docState(c){const d=c.docs||{},t=typeOf(c),today=c.visit_date?new Date(c.visit_date):c.created_at?new Date(c.created_at):new Date();let need=0,ok=0,stale=[];
     DOCS.forEach(x=>{const req=x.req==="t23"?(t==="2"||t==="3"):!!x.req;if(!req)return;need++;const v=d[x.k]||{};
-      let good=!!v.got;if(good&&x.dated){if(!v.date){good=false}else{const dt=new Date(v.date);const lim=new Date(today);lim.setMonth(lim.getMonth()-3);if(dt<lim){good=false;stale.push(x.l)}}}
+      let good=!!v.got;if(good&&x.dated){if(!v.date){good=false}else{const dt=new Date(v.date);const lim=new Date(today);lim.setMonth(lim.getMonth()-3);if(dt<lim||dt>new Date()){good=false;stale.push(x.l)}}}
       if(good)ok++});
     return {need,ok,full:need>0&&ok===need,stale}}
   function goal(cases){const sel=cases.filter(c=>["선정","위원회상정","서류완비"].includes(c.stage));
@@ -38,7 +39,7 @@ window.CS=(function(){
       cases.map(c=>{const r=R[c.referral_id]||{},a=amounts(c),ds=docState(c);return `<tr data-cid="${c.id}" tabindex="0"><td>${esc(c.household_code)}</td><td><b>${esc(r.elder_name)}</b></td><td>${esc(r.dong)}</td><td>${c.v_household_size?c.v_household_size+"명":""}</td><td>${typeOf(c)?typeOf(c)+"유형"+(c.type_final?"":" (안)"):""}</td><td>${a?fmt(a.tot)+"원":""}</td><td class="dchk${ds.full?" full":""}">${ds.ok}/${ds.need}${ds.stale.length?" ⚠":""}</td><td>${esc(c.visit_date||"")}</td><td><span class="stg stg-${esc(c.stage)}">${esc(c.stage)}</span></td></tr>`}).join("")||'<tr><td colspan="9" style="color:var(--mute)">아직 방문 기록이 없어요. 추천 접수에서 가구를 열고 ‘가정방문 기록 시작’을 눌러 주세요.</td></tr>'}</tbody></table></div>`}
   function viewHTML(c,r){const a=amounts(c),ds=docState(c),d=c.docs||{};
     const row=(l,v)=>v!==null&&v!==undefined&&String(v).trim()!==""&&!(Array.isArray(v)&&!v.length)?`<div class="dv-row"><span>${l}</span><span>${esc(Array.isArray(v)?v.join(", "):v)}</span></div>`:"";
-    return `<div class="dv-head"><h2>${esc(r.elder_name||"")}</h2><div class="chips"><span class="stg stg-${esc(c.stage)}">${esc(c.stage)}</span>${typeOf(c)?`<span class="chip2 info">${typeOf(c)}유형 ${TYPES[typeOf(c)]}${c.type_final?"":" (안)"}</span>`:""}<span class="chip2 ${ds.full?"ok":"amber"}">서류 ${ds.ok}/${ds.need}</span>${ds.stale.length?`<span class="chip2 warn">3개월 지남: ${esc(ds.stale.join(", "))}</span>`:""}</div></div>
+    return `<div class="dv-head"><h2>${esc(r.elder_name||"")}</h2><div class="chips"><span class="stg stg-${esc(c.stage)}">${esc(c.stage)}</span>${typeOf(c)?`<span class="chip2 info">${typeOf(c)}유형 ${TYPES[typeOf(c)]}${c.type_final?"":" (안)"}</span>`:""}<span class="chip2 ${ds.full?"ok":"amber"}">서류 ${ds.ok}/${ds.need}</span>${ds.stale.length?`<span class="chip2 warn">신청일 기준 3개월 넘음: ${esc(ds.stale.join(", "))}</span>`:""}</div></div>
     <p class="dv-sub">${c.household_code?esc(c.household_code)+" · ":""}방문 ${esc(c.visit_date||"미정")}${c.visitor?" · "+esc(c.visitor):""}</p>
     <div class="dv-grid">
       <div class="dv-card"><h3>협회 시스템 입력 항목</h3>${row("성별",c.v_gender)}${row("생년월일",c.v_birth)}${row("지원 기간",c.period)}${row("사업 참여 이력",c.participation)}${row("돌봄단 발굴",c.care_found)}</div>
@@ -117,7 +118,7 @@ function formCase(){const c=curCase,g=id=>$("#c_"+id),docs={};
 function refreshCalc(){if(!curCase)return;const t=Object.assign({},curCase,formCase());const a=CS.amounts(t),ds=CS.docState(t);
   $("#c_prop").textContent=CS.proposed(t)||"정보 부족";
   $("#c_amt").innerHTML=a?`<div class="amt-box">${a.list.map(([m,v])=>`<div>${m}<b>${CS.fmt(v)}</b></div>`).join("")}<div class="tot">동절기 합계<b>${CS.fmt(a.tot)}</b></div></div>`:'<p class="dv-empty">유형과 가구원 수를 넣으면 계산돼요</p>';
-  $("#c_chips").innerHTML=`<span class="stg stg-${CS.esc(t.stage)}">${CS.esc(t.stage)}</span><span class="chip2 ${ds.full?"ok":"amber"}">서류 ${ds.ok}/${ds.need}</span>${ds.stale.length?`<span class="chip2 warn">3개월 지남: ${CS.esc(ds.stale.join(", "))}</span>`:""}${ds.full&&t.stage==="조사중"?'<span class="chip2 info">서류가 다 모였어요 → 단계를 ‘서류완비’로</span>':""}`}
+  $("#c_chips").innerHTML=`<span class="stg stg-${CS.esc(t.stage)}">${CS.esc(t.stage)}</span><span class="chip2 ${ds.full?"ok":"amber"}">서류 ${ds.ok}/${ds.need}</span>${ds.stale.length?`<span class="chip2 warn">신청일 기준 3개월 넘음: ${CS.esc(ds.stale.join(", "))}</span>`:""}${ds.full&&t.stage==="조사중"?'<span class="chip2 info">서류가 다 모였어요 → 단계를 ‘서류완비’로</span>':""}`}
 async function saveCase(){const up=formCase();$("#c_save").disabled=true;
   try{const nc=await B.save(curCase.id,up);Object.assign(curCase,nc||up);$("#c_msg").textContent="저장했어요";H.saved(curCase)}
   catch(x){$("#c_msg").textContent=/session/.test(x.message)?"편집 시간이 끝났어요. 다시 편집 비밀번호를 넣어 주세요":"저장하지 못했어요: "+x.message}
