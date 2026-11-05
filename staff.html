@@ -4,7 +4,7 @@
 <title>온앤쿨케어 추천·선정 관리</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="common.css?v=9">
+<link rel="stylesheet" href="common.css?v=10">
 <style>
 .wrap{max-width:1180px}
 .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin:10px 0 14px}
@@ -88,8 +88,8 @@ body.embed #login .err{width:100%}
 </div>
 <p class="foot">편집 비밀번호로 들어오면 가정방문 기록과 증빙 서류를 고칠 수 있고, 고친 사람 이름이 남아요. 내용은 외부에 공유하지 말아 주세요.</p>
 </div>
-<script src="detail.js?v=9"></script>
-<script src="cases.js?v=9"></script>
+<script src="detail.js?v=10"></script>
+<script src="cases.js?v=10"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const $=s=>document.querySelector(s);
@@ -98,7 +98,7 @@ let PASS="",rows=[],selId=null;
 const who=r=>`${r.worker_org||"생활지원사"} · ${r.worker_name||""}`;
 const typeOf=r=>r.voucher==="안 받음"?"1":r.voucher==="받았는데 다 씀"?"2":r.voucher==="받는 중"?"3":"?";
 const is4=r=>["기름(등유) 보일러","LPG","연탄"].includes(r.heating);
-const tpill=r=>{const t=typeOf(r);return (t==="?"?'<span class="pill">미확인</span>':`<span class="pill t${t}">${t}유형</span>`)+(is4(r)?' <span class="pill t4">4유형 후보</span>':"")};
+const tpill=r=>{const t=typeOf(r);return t==="?"?'<span class="pill">미확인</span>':`<span class="pill t${t[0]}">${t.replace(" 확인","")}유형${t.includes("확인")?" 확인":""}</span>`};
 const d=s=>{const x=new Date(s);return `${x.getMonth()+1}/${x.getDate()} ${String(x.getHours()).padStart(2,"0")}:${String(x.getMinutes()).padStart(2,"0")}`};
 async function fetchList(p){const r=await fetch(SB+"/rest/v1/rpc/oncool_staff_list",{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify({p_pass:p})});if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}
 async function load(p){const res=await fetchList(p);

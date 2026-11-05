@@ -4,14 +4,15 @@ window.DV=(function(){
   const arr=v=>Array.isArray(v)?v.join(", "):v;
   const has=v=>Array.isArray(v)?v.length>0:(v!==null&&v!==undefined&&String(v).trim()!=="");
   const phone=p=>{const d=String(p||"").replace(/[^0-9]/g,"");return d.length===11?d.replace(/(\d{3})(\d{4})(\d{4})/,"$1-$2-$3"):d.length===10?d.replace(/(\d{3})(\d{3})(\d{4})/,"$1-$2-$3"):p};
-  const typeOf=r=>r.voucher==="안 받음"?(r.income==="기초생활수급자"?"1·3":"1"):r.voucher==="받았는데 다 씀"?"2":r.voucher==="받는 중"?"3":"?";
+  /* 추천 단계 예상: 공고문 2쪽 · 3유형은 가정방문에서 바우처 쓰기 어려운 환경을 확인해야 정해짐 */
+  const typeOf=r=>["기름(등유) 보일러","LPG","연탄"].includes(r.heating)?"4":r.voucher==="받았는데 다 씀"?"2":r.voucher==="받는 중"?"3 확인":r.voucher==="안 받음"?(r.income==="기초생활수급자"?"1·3":"1"):"?";
   const is4=r=>["기름(등유) 보일러","LPG","연탄"].includes(r.heating);
   function age(b){if(!/^\d{6}$/.test(b||""))return"";const n=new Date();let y=+b.slice(0,2);y+=y>n.getFullYear()%100?1900:2000;const m=+b.slice(2,4),d=+b.slice(4,6);let a=n.getFullYear()-y;if(n.getMonth()+1<m||(n.getMonth()+1===m&&n.getDate()<d))a--;return a>0&&a<120?` (만 ${a}세)`:""}
   function row(l,v){return has(v)?`<div class="dv-row"><span>${l}</span><span>${esc(arr(v))}</span></div>`:""}
   function card(t,rows){const b=rows.join("");return b?`<div class="dv-card"><h3>${t}</h3>${b}</div>`:""}
   function chips(r){const c=[];const t=typeOf(r);
     c.push(t==="?"?'<span class="chip2">유형 미확인</span>':`<span class="chip2 info">${t}유형 예상</span>`);
-    if(is4(r))c.push('<span class="chip2 warn">4유형 후보</span>');
+    
     if(r.urgency)c.push(`<span class="chip2 ${r.urgency==="상"?"warn":r.urgency==="중"?"amber":""}">긴급 ${esc(r.urgency)}</span>`);
     if(["없음","압류 우려"].includes(r.account))c.push(`<span class="chip2 warn">통장 ${esc(r.account)}</span>`);
     if(r.heater_broken==="예")c.push('<span class="chip2 amber">난방기구 고장</span>');
