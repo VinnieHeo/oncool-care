@@ -4,7 +4,7 @@ window.DV=(function(){
   const arr=v=>Array.isArray(v)?v.join(", "):v;
   const has=v=>Array.isArray(v)?v.length>0:(v!==null&&v!==undefined&&String(v).trim()!=="");
   const phone=p=>{const d=String(p||"").replace(/[^0-9]/g,"");return d.length===11?d.replace(/(\d{3})(\d{4})(\d{4})/,"$1-$2-$3"):d.length===10?d.replace(/(\d{3})(\d{3})(\d{4})/,"$1-$2-$3"):p};
-  const typeOf=r=>r.voucher==="안 받음"?"1":r.voucher==="받았는데 다 씀"?"2":r.voucher==="받는 중"?"3":"?";
+  const typeOf=r=>r.voucher==="안 받음"?(r.income==="기초생활수급자"?"1·3":"1"):r.voucher==="받았는데 다 씀"?"2":r.voucher==="받는 중"?"3":"?";
   const is4=r=>["기름(등유) 보일러","LPG","연탄"].includes(r.heating);
   function age(b){if(!/^\d{6}$/.test(b||""))return"";const n=new Date();let y=+b.slice(0,2);y+=y>n.getFullYear()%100?1900:2000;const m=+b.slice(2,4),d=+b.slice(4,6);let a=n.getFullYear()-y;if(n.getMonth()+1<m||(n.getMonth()+1===m&&n.getDate()<d))a--;return a>0&&a<120?` (만 ${a}세)`:""}
   function row(l,v){return has(v)?`<div class="dv-row"><span>${l}</span><span>${esc(arr(v))}</span></div>`:""}

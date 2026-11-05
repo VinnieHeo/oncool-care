@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#f4f5f6">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="common.css?v=7">
+<link rel="stylesheet" href="common.css?v=8">
 </head><body><div class="wrap">
 <div class="eyebrow">안양시만안종합사회복지관 · 지역사회 맞춤형 에너지 돌봄 사업</div>
 <h1 style="display:flex;align-items:center;gap:10px"><img src="logo-96.png" alt="" width="44" height="44" style="border-radius:11px"><span><span class="w">온(溫)</span> 앤 <span class="c">쿨(cool)</span> 케어</span></h1>
@@ -106,7 +106,7 @@
   <h2>3. 소득과 에너지바우처</h2>
   <div class="q"><div class="lb">소득 구분</div><small>기초연금만 받으시면 ‘해당 없음’이에요</small><div class="opts" data-name="income" data-opts="기초생활수급자,차상위,해당 없음,모름"></div></div>
   <div class="q" id="rkbox" hidden><div class="lb">수급 종류 (모두 선택)</div><div class="opts" data-name="recipient_kinds" data-multi="1" data-opts="생계,의료,주거,교육"></div></div>
-  <div class="q"><div class="lb">에너지바우처</div><small>유형을 나누는 가장 중요한 질문이에요</small><div class="opts" data-name="voucher" data-opts="안 받음,받았는데 다 씀,받는 중,모름"></div></div>
+  <div class="q"><div class="lb">에너지바우처</div><small>유형을 나누는 중요한 질문이에요 · ‘다 씀’은 2025년 잔액 1만원 이하</small><div class="opts" data-name="voucher" data-opts="안 받음,받았는데 다 씀,받는 중,모름"></div></div>
 </section>
 
 <section class="card">
@@ -167,13 +167,15 @@
   · <b>지역가입자</b> → 보험료에 집·차 같은 재산도 반영돼요. 소득이 적어도 보험료가 기준을 넘으면 어려워요<br>
   · <b>자녀의 피부양자로 올라가 본인 보험료가 0원</b> → 주민등록상 세대주 기준으로 봐요. 우선 추천해 주시면 복지관이 확인해요<br>
   · <b>의료급여 수급자</b> → 건강보험료가 없어요. 수급자·의료급여 증명서로 확인해요<br>
+  · <b>가족이 건강보험료를 내는 경우</b> → 납부자의 자격확인서에 올라 있는 인원으로 가구원 수를 봐요<br>
+  · <b>외국인 등록자</b> → 소득금액증명원이나 근로소득 원천징수 영수증으로 확인해요<br>
   · 잘 모르겠으면 <b>‘모름’으로 두고 추천</b>해 주세요. 가정방문 때 확인해요</div>
-  <h3>② 유형 기준 · 에너지바우처로 나눠요</h3>
+  <h3>② 유형 기준 · 넷 중 하나</h3>
   <div class="types">
-    <div class="ty"><b><i>1</i>바우처 미수급</b>바우처를 받지 않는 저소득 가구</div>
-    <div class="ty"><b><i>2</i>바우처 소진</b>바우처를 받았지만 다 써서 부족한 가구</div>
-    <div class="ty"><b><i>3</i>바우처 수급</b>바우처를 받고 있지만 그래도 부족한 가구</div>
-    <div class="ty"><b><i>4</i>에너지 인프라 취약</b>도시가스가 안 들어와 기름·LPG·연탄을 쓰는 가구</div>
+    <div class="ty"><b><i>1</i>저소득 에너지 취약</b>바우처 대상이 아닌 저소득 가구 · 건강보험료 납부확인서로 확인</div>
+    <div class="ty"><b><i>2</i>바우처 한도 소진</b>2025년 에너지바우처를 거의 다 쓴 가구 (잔액 1만원 이하)</div>
+    <div class="ty"><b><i>3</i>바우처 사각지대</b>바우처를 받고 있거나, 받을 수 있는 수급 가구 (노인·영유아·장애인·임산부·중증·희귀질환자·한부모·소년소녀가정·다자녀가 함께 사는 수급자)</div>
+    <div class="ty"><b><i>4</i>에너지 인프라 취약</b>도시가스가 안 들어오는 등 사는 곳의 에너지 여건이 나쁜 가구 (기름·LPG·연탄 등)</div>
   </div>
   <p class="hint" style="margin-top:6px">어느 유형인지는 복지관 사례판정위원회가 최종으로 정해요.</p>
   <div class="must2"><b>이런 경우는 어려워요</b><br>· 본인(세대주) 명의 통장이 없으면 먼저 복지관과 상의가 필요해요<br>· 냉·난방비 없이 물품·수리만 원하는 경우는 선정할 수 없어요</div>
@@ -184,7 +186,7 @@
     <li><b>난방비</b>: 11–2월에 4번 나눠 본인 명의 통장으로 입금 (첫 입금 11월 16일, 이후 매월 10일)</li>
     <li><b>에너지 효율 진단과 개선</b>: 열화상 진단 후 방풍·단열·방한 물품, 난방기구 수리</li>
     <li><b>예방교육과 안부 확인</b>: 바우처 사용법, 한파 예방 수칙, 한파 특보 때 안부 전화</li>
-    <li>여름(6–8월)에는 냉방비와 냉방 물품을 지원해요</li>
+    <li>여름철에는 냉방비와 냉방 물품을 지원해요 (시기는 협회 안내에 따라 정해요)</li>
   </ul>
   <h3>동절기 난방비 (11–2월 합계)</h3>
   <table class="tbl"><thead><tr><th>가구원</th><th>1·3유형</th><th>2유형</th><th>4유형</th></tr></thead><tbody>
@@ -199,7 +201,7 @@
   <h3>추천한 뒤에는</h3>
   <ol class="steps">
     <li>복지관 담당자가 대상자께 연락하고 가정방문해요</li>
-    <li>서류를 받아요: 주민등록등본, 소득 증빙(3개월 이내), 바우처 확인, 통장 사본, 동의서</li>
+    <li>서류를 받아요: 주민등록등본, 소득 증빙(3개월 이내), 바우처 확인, 통장 사본, 개인정보 동의서(협회 양식)</li>
     <li>사례판정위원회에서 대상과 유형을 정해요</li>
     <li>협회 승인 뒤 11월 16일 첫 난방비를 보내요</li>
   </ol>
@@ -212,7 +214,7 @@
 <section class="card info">
   <h3>지역사회 맞춤형 에너지 돌봄 사업<br>‘온(溫) 앤 쿨(cool) 케어’</h3>
   <dl class="kv">
-    <dt>사업 기간</dt><dd>2026년 11월 4일 – 2027년 8월 27일</dd>
+    <dt>사업 기간</dt><dd>2026년 10월 28일 – 2027년 8월 27일 (1차년도)</dd>
     <dt>지원</dt><dd>사회복지공동모금회(사랑의열매) 지원사업</dd>
     <dt>주관</dt><dd>한국사회복지관협회</dd>
     <dt>수행</dt><dd>안양시만안종합사회복지관</dd>
@@ -232,7 +234,7 @@
     <dt>11월</dt><dd>대상가구 추천·선정, 첫 난방비(11/16), 효율 진단</dd>
     <dt>12–2월</dt><dd>매월 10일 난방비, 사용 확인, 물품·수리 지원</dd>
     <dt>5월</dt><dd>하절기 대상 추가 선정</dd>
-    <dt>6–8월</dt><dd>냉방비와 냉방 물품 지원</dd>
+    <dt>여름철</dt><dd>냉방비와 냉방 물품 지원</dd>
   </dl>
   <h3>문의</h3>
   <p>안양시만안종합사회복지관 온앤쿨케어 담당자<br>사무실 직통 <a href="tel:07089787710">070-8978-7710</a> · 휴대폰 <a href="tel:01083999293">010-8399-9293</a></p>

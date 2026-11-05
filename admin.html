@@ -4,7 +4,7 @@
 <title>온앤쿨케어 추천 관리</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="common.css?v=7">
+<link rel="stylesheet" href="common.css?v=8">
 <style>
 .wrap{max-width:1180px}
 .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin:10px 0 14px}
@@ -95,8 +95,8 @@ tbody tr{cursor:pointer} tbody tr:hover{background:var(--bg)} tbody tr.sel{backg
 </div>
 <p class="foot">이 페이지와 데이터는 담당자 계정으로 로그인해야만 볼 수 있어요. 로드맵에는 숫자만 보여요.</p>
 </div>
-<script src="detail.js?v=7"></script>
-<script src="cases.js?v=7"></script>
+<script src="detail.js?v=8"></script>
+<script src="cases.js?v=8"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
@@ -198,7 +198,7 @@ $("#clist").addEventListener("click",e=>{const tr=e.target.closest("tr[data-cid]
 $("#clist").addEventListener("keydown",e=>{if(e.key==="Enter"){const tr=e.target.closest("tr[data-cid]");if(tr)openCase(tr.dataset.cid)}});
 async function startCase(r){let c=CASES.find(x=>x.referral_id===r.id);
   if(!c){const ins={referral_id:r.id,v_is_head:r.is_head,v_head_name:r.head_name,v_head_birth:r.head_birth,v_household_size:r.household_size,v_income:r.income,v_recipient_kinds:r.recipient_kinds,v_voucher:r.voucher,v_heating:r.heating,v_account:r.account,visit_date:new Date().toISOString().slice(0,10),
-      type_proposed:CS.typeFrom(r.voucher,r.heating),eff_needs:[...(r.heater_broken==="예"?["난방기구 수리"]:[]),...((r.housing_risk||[]).length?["방풍·단열 물품"]:[])]};
+      type_proposed:CS.typeFrom(r.voucher,r.heating,r.income),eff_needs:[...(r.heater_broken==="예"?["난방기구 수리"]:[]),...((r.housing_risk||[]).length?["방풍·단열 물품"]:[])]};
     const {data,error}=await sb.from("oncool_cases").insert(ins).select().single();if(error){alertMsg("만들지 못했어요: "+error.message);return}
     CASES.push(data);c=data;await sb.from("oncool_referrals").update({status:"검토중"}).eq("id",r.id).eq("status","접수");r.status=r.status==="접수"?"검토중":r.status;render()}
   vtab("case");renderCases();openCase(c.id)}
