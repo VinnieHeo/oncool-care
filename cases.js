@@ -25,7 +25,7 @@ window.CS=(function(){
   /* 안내문 1쪽: 증빙은 "신청일 기준 3개월 이내 발급" → 기준일 = 가정방문일(신청서 받는 날), 없으면 심사 카드 만든 날 */
   function docState(c){const d=c.docs||{},t=typeOf(c),today=c.visit_date?new Date(c.visit_date):c.created_at?new Date(c.created_at):new Date();let need=0,ok=0,stale=[];
     DOCS.forEach(x=>{const req=x.req==="t23"?(t==="2"||t==="3"):!!x.req;if(!req)return;need++;const v=d[x.k]||{};
-      let good=!!v.got;if(good&&x.dated){if(!v.date){good=false}else{const dt=new Date(v.date);const lim=new Date(today);lim.setMonth(lim.getMonth()-3);if(dt<lim||dt>new Date()){good=false;stale.push(x.l)}}}
+      let good=!!v.got;if(good&&x.dated){if(!v.date){good=false}else{const dt=new Date(v.date);const lim=new Date(today);lim.setMonth(lim.getMonth()-3);if(dt<lim){good=false;stale.push(x.l)}}}
       if(good)ok++});
     return {need,ok,full:need>0&&ok===need,stale}}
   function goal(cases){const sel=cases.filter(c=>["선정","위원회상정","서류완비"].includes(c.stage));
