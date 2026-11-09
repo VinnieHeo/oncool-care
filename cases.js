@@ -3,10 +3,11 @@ window.CS=(function(){
   const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const DOCS=[
     {k:"resident",l:"주민등록등본",dated:1,req:1,h:"세대주·가구원 확인 · 발급 3개월 이내"},
-    {k:"income",l:"소득 증빙",dated:1,req:1,h:"1유형: 건강보험료 납부확인서(3개월 평균) · 3유형: 수급자 증명서 · 4유형: 건보료 납부확인서 또는 수급자 증명서 · 발급 3개월 이내 · 외국인은 소득금액증명원/근로소득 원천징수 영수증"},
+    {k:"income",l:"소득 증빙",dated:1,req:"t14",h:"1유형: 건강보험료 납부확인서(최근 3개월) · 4유형: 건보료 납부확인서 또는 수급자증명서 · 2·3유형은 결정통지서가 대신해요 · 발급 3개월 이내 · 외국인은 소득금액증명원/근로소득 원천징수 영수증 · 근거: 매뉴얼 1장"},
     {k:"hifam",l:"건보 자격확인서 + 가족관계증명서",dated:1,req:0,h:"가족이 건강보험료를 내는 경우만 · 납부자의 자격확인(통보)서 인원으로 가구원 수 산정"},
     {k:"voucher",l:"에너지바우처 확인",dated:0,req:"t23",h:"2유형: 결정통지서 또는 누리집 잔액 캡처 + 2025년 소진 확인(잔액 1만 원 이하, 1600-3190 공동청취) · 3유형: 결정통지서, 또는 수급자증명서 + 바우처 대상 증빙, 그리고 바우처를 쓰기 어려운 환경 확인(사진·상담 메모) · 근거: 공고문 2쪽, 안내문 1쪽"},
-    {k:"bank",l:"본인 명의 통장 사본",dated:0,req:1,h:"지원가구(세대주) 명의"},
+    {k:"confirm",l:"유형별 확인서 (협회 별첨 2·3·4)",dated:0,req:"t234",h:"복지관이 작성·직인 · 2유형 별첨 2(전년도 바우처 소진 조회) · 3유형 별첨 3(사각지대 거주) · 4유형 별첨 4(인프라 취약지역 거주) · 협회 시스템에 증빙으로 등록"},
+    {k:"bank",l:"대상자 본인 명의 통장 사본",dated:0,req:"t123",h:"세대주가 아니어도 대상자 본인 명의 · 4유형은 연료를 직접 구매·배송해서 필요 없어요 · 근거: 매뉴얼 3장"},
     {k:"consent_own",l:"개인정보 동의서 (복지관 자체 · 온앤쿨 시스템)",dated:1,req:1,h:"가정방문 때 서면으로 받기 · 이 시스템에 기록·증빙을 올리기 전에 필요 · 민감정보(건강·장애)는 별도 동의란 · 원본은 복지관 보관"},
     {k:"consent",l:"개인정보 수집·이용·제공 동의서 (협회 양식)",dated:0,req:1,h:"협회 시스템에 입력하기 전에 꼭 받아야 해요 · 원본은 복지관 보관"},
     {k:"pledge",l:"용도 약정서",dated:0,req:1,h:"냉·난방비를 용도대로 쓰겠다는 약정"},
@@ -40,7 +41,7 @@ window.CS=(function(){
   const fmt=n=>Number(n).toLocaleString("ko-KR");
   /* 안내문 1쪽: 증빙은 "신청일 기준 3개월 이내 발급" → 기준일 = 가정방문일(신청서 받는 날), 없으면 심사 카드 만든 날 */
   function docState(c){const d=c.docs||{},t=typeOf(c),today=c.visit_date?new Date(c.visit_date):c.created_at?new Date(c.created_at):new Date();let need=0,ok=0,stale=[];
-    DOCS.forEach(x=>{const req=x.req==="t23"?(t==="2"||t==="3"):!!x.req;if(!req)return;need++;const v=d[x.k]||{};
+    DOCS.forEach(x=>{const req=typeof x.req==="string"?(!t||x.req.includes(t)):!!x.req;if(!req)return;need++;const v=d[x.k]||{};
       let good=!!v.got;if(good&&x.dated){if(!v.date){good=false}else{const dt=new Date(v.date);const lim=new Date(today);lim.setMonth(lim.getMonth()-3);if(dt<lim){good=false;stale.push(x.l)}}}
       if(good)ok++});
     return {need,ok,full:need>0&&ok===need,stale}}
@@ -134,7 +135,7 @@ function openCase(c,r){curCase=c;r=r||{};const e=CS.esc,d=c.docs||{};
      <div class="cs-row2"><label>판정 유형 (위원회 상정용)<select id="c_type_final">${opt2([["","아직"],...["1","2","3","4"].map(t=>[t+"유형",t+"유형 "+CS.TYPES[t]])],c.type_final||"")}</select></label><label>지원 시작<select id="c_start_month">${[[11,"11월(4회)"],[12,"12월(3회)"],[1,"1월(2회)"],[2,"2월(1회)"]].map(([v,l])=>`<option value="${v}"${(c.start_month||11)==v?" selected":""}>${l}</option>`).join("")}</select></label></div>
      <div id="c_amt"></div></div>
    <div class="cs-card" style="grid-column:1/-1"><h3>증빙 서류 <small style="font-weight:400;color:var(--mute)">사진·스캔·PDF를 올리면 여기서 바로 열어볼 수 있어요 (담당자 계정만)</small></h3>
-     ${CS.DOCS.map(x=>{const v=d[x.k]||{};return `<div class="doc" data-doc="${x.k}"><div class="doc-top"><b>${x.l}${x.req===1?' <span style="color:var(--warm);font-size:12px">필수</span>':x.req==="t23"?' <span style="color:var(--amber);font-size:12px">2·3유형 필수</span>':""}</b>
+     ${CS.DOCS.map(x=>{const v=d[x.k]||{};return `<div class="doc" data-doc="${x.k}"><div class="doc-top"><b>${x.l}${x.req===1?' <span style="color:var(--warm);font-size:12px">필수</span>':typeof x.req==="string"?` <span style="color:var(--amber);font-size:12px">${x.req.slice(1).split("").join("·")}유형 필수</span>`:""}</b>
        <label><input type="checkbox" data-got="${x.k}"${v.got?" checked":""}> 받음</label>${x.dated?`<label>발급일 <input type="date" data-date="${x.k}" value="${e(v.date||"")}"></label>`:""}</div>${x.h?`<small>${x.h}</small>`:""}
        <div class="files" id="files-${x.k}"><span class="dv-empty">불러오는 중…</span></div></div>`}).join("")}</div>
    <div class="cs-card"><h3>에너지 효율 개선</h3><div class="cs-checks">${["열화상 진단","방풍·단열 물품","방한 물품","난방기구 수리","외부 집수리 연계"].map(x=>`<label><input type="checkbox" data-eff="${x}"${(c.eff_needs||[]).includes(x)?" checked":""}> ${x}</label>`).join("")}</div>
