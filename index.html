@@ -35,12 +35,13 @@
 <!-- 로그인 -->
 <section class="card" id="login" hidden>
   <h2>추천하는 분 확인</h2>
-  <p class="hint">이름과 휴대폰 번호로 들어와요. 처음이면 비밀번호 4자리를 직접 정해요. 명단에 없는 기관 담당자는 기관 가입 코드로 가입해요.</p>
+  <p class="hint">이름과 휴대폰 번호로 들어와요. 처음이면 비밀번호 4자리를 직접 정해요. 명단에 없으면 소속을 고르고 바로 가입해요.</p>
   <div class="q"><label for="wn">이름</label><input type="text" id="wn" maxlength="30" autocomplete="name"></div>
   <div class="q"><label for="wp">휴대폰 번호</label><input type="tel" id="wp" maxlength="13" placeholder="010-0000-0000" autocomplete="tel"></div>
   <div id="codeq" hidden>
-    <div class="must2" style="margin-top:12px">등록된 명단에 없어요. <b>기관에서 받은 가입 코드</b>가 있으면 넣어 주세요. 이름과 번호가 맞는데도 이 화면이 나오면 복지관 담당자에게 문의해 주세요.</div>
-    <div class="q"><label for="jcode">가입 코드</label><input type="password" id="jcode" autocomplete="off" maxlength="20"></div>
+    <div class="must2" style="margin-top:12px">등록된 명단에 없어요. <b>소속</b>을 고르고 비밀번호를 정하면 바로 가입돼요. 명단에 있는데 이 화면이 나오면 복지관 담당자에게 문의해 주세요.</div>
+    <div class="q"><label for="jorg">소속 (필수)</label><select id="jorg" required><option value="">선택해 주세요</option><option>만안복지관</option><option>만안장주</option><option>만안노주</option><option>생활지원사</option><option>사례관리</option><option value="외부기관">외부기관 (기관명 직접 입력)</option></select></div>
+    <div class="q" id="jetcq" hidden><label for="jetc">기관명 (필수)</label><input type="text" id="jetc" maxlength="40" placeholder="예: ○○동 행정복지센터"></div>
   </div>
   <div class="q" id="pinq" hidden><label for="pin" id="pinl">비밀번호 4자리</label><small id="pinh"></small>
     <input type="password" id="pin" inputmode="numeric" maxlength="4" autocomplete="current-password">
@@ -312,7 +313,7 @@ async function rpc(fn,args){
 const DM={rows:[{id:"d1",receipt_no:3,elder_name:"김○○",dong:"안양5동",status:"접수",created_at:new Date().toISOString(),voucher:"안 받음"},{id:"d2",receipt_no:7,elder_name:"이○○",dong:"박달1동",status:"검토중",created_at:new Date().toISOString(),voucher:"받는 중"}]};
 function demo(fn,a){return new Promise(r=>setTimeout(()=>{
   if(fn==="oncool_w_check")r({state:a.p_name==="새선생"?"new":a.p_name==="외부"?"not_found":"pin"});
-  else if(fn==="oncool_w_join")r({ok:true,token:"demo",name:a.p_name});
+  else if(fn==="oncool_w_join"||fn==="oncool_w_join_org")r({ok:true,token:"demo",name:a.p_name});
   else if(fn==="oncool_w_login"||fn==="oncool_w_setpin")r({ok:true,token:"demo",name:a.p_name});
   else if(fn==="oncool_w_list")r(DM.rows);
   else if(fn==="oncool_w_submit")r(12);
@@ -355,7 +356,7 @@ $("#lreset").onclick=()=>{STEP="id";resetLogin()};
 
 /* 로그인 */
 const phoneNorm=s=>s.replace(/[^0-9]/g,"");
-function resetLogin(){$("#codeq").hidden=true;$("#jcode").value="";$("#pinq").hidden=true;$("#pin2q").hidden=true;$("#pin").value="";$("#pin2").value="";$("#lbtn").textContent="다음";$("#wn").disabled=false;$("#wp").disabled=false;showErr($("#lerr"),"")}
+function resetLogin(){$("#codeq").hidden=true;$("#jorg").value="";$("#jetc").value="";$("#jetcq").hidden=true;$("#pinq").hidden=true;$("#pin2q").hidden=true;$("#pin").value="";$("#pin2").value="";$("#lbtn").textContent="다음";$("#wn").disabled=false;$("#wp").disabled=false;showErr($("#lerr"),"")}
 $("#wp").addEventListener("input",e=>{const d=phoneNorm(e.target.value).slice(0,11);e.target.value=d.length>7?d.replace(/(\d{3})(\d{4})(\d+)/,"$1-$2-$3"):d.length>3?d.replace(/(\d{3})(\d+)/,"$1-$2"):d});
 $("#lbtn").onclick=async()=>{
   if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
@@ -365,7 +366,7 @@ $("#lbtn").onclick=async()=>{
   try{
     if(STEP==="id"){const r=await rpc("oncool_w_check",{p_name:name,p_phone:phone});
       if(r.state==="busy"){showErr(err,"잠시 뒤에 다시 시도해 주세요.");return}
-      if(r.state==="not_found"){STEP="join";$("#wn").disabled=true;$("#wp").disabled=true;$("#codeq").hidden=false;$("#pinq").hidden=false;$("#pin2q").hidden=false;$("#pinl").textContent="사용할 비밀번호 4자리 정하기";$("#pinh").textContent="다음부터 이름·번호와 함께 이 비밀번호로 들어와요.";$("#lbtn").textContent="가입하고 시작하기";$("#jcode").focus();return}
+      if(r.state==="not_found"){STEP="join";$("#wn").disabled=true;$("#wp").disabled=true;$("#codeq").hidden=false;$("#pinq").hidden=false;$("#pin2q").hidden=false;$("#pinl").textContent="사용할 비밀번호 4자리 정하기";$("#pinh").textContent="다음부터 이름·번호와 함께 이 비밀번호로 들어와요.";$("#lbtn").textContent="가입하고 시작하기";$("#jorg").focus();return}
       if(r.state==="locked"){showErr(err,"비밀번호를 여러 번 틀려서 잠시 잠겼어요. 15분 뒤에 다시 해 주세요.");return}
       $("#wn").disabled=true;$("#wp").disabled=true;$("#pinq").hidden=false;
       if(r.state==="new"){STEP="new";$("#pinl").textContent="사용할 비밀번호 4자리 정하기";$("#pinh").textContent="다음부터 이름·번호와 함께 이 비밀번호로 들어와요.";$("#pin2q").hidden=false;$("#lbtn").textContent="비밀번호 정하고 시작하기"}
@@ -373,14 +374,16 @@ $("#lbtn").onclick=async()=>{
       $("#pin").focus();return}
     const pin=$("#pin").value;if(!/^[0-9]{4}$/.test(pin)){showErr(err,"비밀번호는 숫자 4자리예요.");return}
     if(STEP!=="pin"&&pin!==$("#pin2").value){showErr(err,"두 번 입력한 비밀번호가 달라요.");return}
-    if(STEP==="join"&&!$("#jcode").value.trim()){showErr(err,"가입 코드를 넣어 주세요.");$("#jcode").focus();return}
-    const r=STEP==="join"?await rpc("oncool_w_join",{p_name:name,p_phone:phone,p_code:$("#jcode").value.trim(),p_pin:pin}):await rpc(STEP==="new"?"oncool_w_setpin":"oncool_w_login",{p_name:name,p_phone:phone,p_pin:pin});
-    if(!r.ok){showErr(err,{locked:"비밀번호를 여러 번 틀려서 잠시 잠겼어요. 15분 뒤에 다시 해 주세요.",bad_code:"가입 코드가 맞지 않아요. 기관 담당자에게 다시 확인해 주세요.",exists:"이미 가입된 이름과 번호예요. 처음 화면에서 다시 들어와 주세요.",busy:"잠시 뒤에 다시 시도해 주세요."}[r.reason]||"비밀번호가 맞지 않아요.");return}
+    if(STEP==="join"&&!$("#jorg").value){showErr(err,"소속을 골라 주세요.");$("#jorg").focus();return}
+    if(STEP==="join"&&$("#jorg").value==="외부기관"&&!$("#jetc").value.trim()){showErr(err,"기관명을 적어 주세요.");$("#jetc").focus();return}
+    const r=STEP==="join"?await rpc("oncool_w_join_org",{p_name:name,p_phone:phone,p_org:$("#jorg").value,p_org_etc:$("#jetc").value.trim(),p_pin:pin}):await rpc(STEP==="new"?"oncool_w_setpin":"oncool_w_login",{p_name:name,p_phone:phone,p_pin:pin});
+    if(!r.ok){showErr(err,{locked:"비밀번호를 여러 번 틀려서 잠시 잠겼어요. 15분 뒤에 다시 해 주세요.",bad_org:"소속을 확인해 주세요. 외부기관은 기관명도 적어 주세요.",exists:"이미 가입된 이름과 번호예요. 처음 화면에서 다시 들어와 주세요.",busy:"잠시 뒤에 다시 시도해 주세요."}[r.reason]||"비밀번호가 맞지 않아요.");return}
     TOKEN=r.token;ME=r.name||name;ls("oc_tok",TOKEN);ls("oc_me",ME);resetLogin();STEP="id";goHome();
   }catch(e){showErr(err,"연결이 안 돼요. 인터넷 연결을 확인하고 다시 눌러 주세요.")}
   finally{$("#lbtn").disabled=false}
 };
-["wn","wp","pin","pin2","jcode"].forEach(i=>$("#"+i).addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing&&e.keyCode!==229){e.preventDefault();$("#lbtn").click()}}));
+$("#jorg").addEventListener("change",e=>{$("#jetcq").hidden=e.target.value!=="외부기관";if(!$("#jetcq").hidden)$("#jetc").focus()});
+["wn","wp","pin","pin2","jetc"].forEach(i=>$("#"+i).addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing&&e.keyCode!==229){e.preventDefault();$("#lbtn").click()}}));
 
 /* 내 목록 */
 $("#golist").onclick=async()=>{view("list");$("#mine").innerHTML='<p class="hint">불러오는 중…</p>';
