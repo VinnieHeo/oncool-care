@@ -34,10 +34,10 @@
 
 <!-- 로그인 -->
 <section class="card" id="login" hidden>
-  <h2>추천하는 분 확인</h2>
-  <p class="hint">이름과 휴대폰 번호로 들어와요. 처음이면 비밀번호 4자리를 직접 정해요. 명단에 없으면 소속을 고르고 바로 가입해요.</p>
-  <div class="q"><label for="wn">이름</label><input type="text" id="wn" maxlength="30" autocomplete="name"></div>
-  <div class="q"><label for="wp">휴대폰 번호</label><input type="tel" id="wp" maxlength="13" placeholder="010-0000-0000" autocomplete="tel"></div>
+  <h2>계정 만들기(담당자)</h2>
+  <p class="hint"><b>대상자 정보가 아니라</b> 추천하는 선생님(담당자) 본인의 이름과 휴대폰 번호를 넣어 주세요. 처음이면 비밀번호 4자리를 정하고, 다음부터는 같은 이름·번호·비밀번호로 들어와요. 명단에 없으면 소속을 고르고 바로 가입해요.</p>
+  <div class="q"><label for="wn">담당자 이름 (본인)</label><input type="text" id="wn" maxlength="30" autocomplete="name"></div>
+  <div class="q"><label for="wp">담당자 휴대폰 번호 (본인)</label><input type="tel" id="wp" maxlength="13" placeholder="010-0000-0000" autocomplete="tel"></div>
   <div id="codeq" hidden>
     <div class="must2" style="margin-top:12px">등록된 명단에 없어요. <b>소속</b>을 고르고 비밀번호를 정하면 바로 가입돼요. 명단에 있는데 이 화면이 나오면 복지관 담당자에게 문의해 주세요.</div>
     <div class="q"><label for="jorg">소속 (필수)</label><select id="jorg" required><option value="">선택해 주세요</option><option>만안복지관</option><option>만안장주</option><option>만안노주</option><option>생활지원사</option><option>사례관리</option><option value="외부기관">외부기관 (기관명 직접 입력)</option></select></div>
