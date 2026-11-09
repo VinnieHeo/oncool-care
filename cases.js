@@ -63,13 +63,36 @@ window.CS=(function(){
       <div class="dv-card"><h3>지원 금액 (동절기)</h3>${a?`<div class="amt-box">${a.list.map(([m,v])=>`<div>${m}<b>${fmt(v)}</b></div>`).join("")}<div class="tot">합계<b>${fmt(a.tot)}</b></div></div>`:'<p class="dv-empty">유형과 가구원 수를 확인하면 계산돼요</p>'}</div>
       <div class="dv-card"><h3>증빙 서류</h3>${DOCS.map(x=>{const v=d[x.k]||{};return `<div class="dv-row"><span>${x.l}</span><span>${v.got?"받음"+(v.date?" · "+esc(v.date):""):'<span style="color:var(--mute);font-weight:400">아직</span>'}</span></div>`}).join("")}</div>
       <div class="dv-card"><h3>효율 개선 · 판정</h3>${row("필요 지원",c.eff_needs)}${row("효율 메모",c.eff_note)}${row("위원회 결과",c.committee_result)}${row("판정일",c.committee_date)}${row("판정 메모",c.committee_note)}${row("협회 승인",c.kaswc_approved)}</div>
+      <div class="dv-card"><h3>에너지 상담</h3>${row("가구원",c.members)}${row("건강보험료 월액",c.hi_premium)}${row("냉방 설비",c.cool_equip)}${row("월평균 냉·난방비",[c.bill_avg,c.bill_checked?"고지서 "+c.bill_checked:""].filter(Boolean).join(" · "))}${row("체납 기간",c.arrears_months)}${row("설비 소유",c.equip_owner)}${row("단전·단가스",c.cutoff)}${row("온열·한랭 취약성",c.heat_risk)}${row("안부 확인 보호자",c.guardian)}</div>
       ${c.visit_note?`<div class="dv-card" style="grid-column:1/-1"><h3>방문 현황 메모</h3><div class="dv-quote">${esc(c.visit_note)}</div></div>`:""}
     </div>`}
+
+  /* 초기상담지 출력 (A4 한 장) */
+  function printSheet(c,r){r=r||{};const v=x=>esc(Array.isArray(x)?x.join(", "):(x??""));const t=typeOf(c),a=amounts(c),ds=docState(c),d=c.docs||{};
+    const R=(l,x,l2,x2)=>l2===undefined?`<tr><th>${l}</th><td colspan="3">${x}</td></tr>`:`<tr><th>${l}</th><td>${x}</td><th>${l2}</th><td>${x2}</td></tr>`;
+    const sec=(h,rows)=>`<h3>■ ${h}</h3><table>${rows}</table>`;
+    const html=`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>초기상담지_${v(r.elder_name)}</title><style>
+      @page{size:A4;margin:12mm}*{box-sizing:border-box}body{font-family:"맑은 고딕","Malgun Gothic",sans-serif;font-size:10pt;color:#000;margin:0}
+      h1{font-size:16pt;text-align:center;margin:0 0 2px}.sub{text-align:center;font-size:9pt;margin:0 0 8px}h3{font-size:10.5pt;margin:8px 0 3px}
+      table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border:1px solid #444;padding:3px 6px;vertical-align:middle;word-break:keep-all;overflow-wrap:anywhere}
+      th{background:#e7ecf2;width:17%;font-weight:700;text-align:center}td{width:33%}.sign{margin-top:10px;text-align:right}.note{font-size:8.5pt;margin-top:6px}
+      .bar{display:flex;gap:8px;justify-content:center;margin:10px}@media print{.bar{display:none}}</style></head><body>
+      <div class="bar"><button onclick="print()">인쇄 · PDF 저장</button></div>
+      <h1>온앤쿨케어 초기상담지 (에너지 돌봄)</h1><p class="sub">안양시만안종합사회복지관 · 접수 ${v(r.receipt_no)}번${c.household_code?" · 가구코드 "+v(c.household_code):""}</p>
+      ${sec("상담 정보",R("상담일",v(c.visit_date),"상담자",v(c.visitor))+R("추천자",v((r.worker_org||"")+" "+(r.worker_name||"")),"긴급도",v(r.urgency)))}
+      ${sec("대상자",R("성명",v(r.elder_name),"생년월일·성별",v([c.v_birth||r.birth,c.v_gender||r.gender].filter(Boolean).join(" · ")))+R("연락처",v(r.phone),"거주동",v(r.dong))+R("실거주 주소",v((r.address||"").replace(" | ",", "))))}
+      ${sec("세대·소득·바우처",R("세대주",v(c.v_is_head==="예"?"본인":[c.v_head_name,c.v_head_birth].filter(Boolean).join(" · ")),"가구원 수",v(c.v_household_size?c.v_household_size+"명":""))+R("가구원(등본)",v(c.members)||v(r.live_with))+R("소득 구분",v([c.v_income,(c.v_recipient_kinds||[]).join("·")].filter(Boolean).join(" ")),"건강보험료 월액",v(c.hi_premium))+R("에너지바우처",v(c.v_voucher),"바우처 대상 세대원",v(c.v_voucher_target))+R("바우처 쓰기 어려운 환경",v(c.v_env)))}
+      ${sec("주거 에너지 환경",R("난방 방식",v(c.v_heating),"냉방 설비",v(c.cool_equip))+R("주거 형태",v(r.housing_tenure),"주거 위험",v(r.housing_risk))+R("설비 고장",v(r.heater_broken),"설비 소유",v(c.equip_owner))+R("월평균 냉·난방비",v([c.bill_avg,c.bill_checked?"고지서 "+c.bill_checked:""].filter(Boolean).join(" · ")),"체납",v([(r.arrears||[]).join("·"),c.arrears_months].filter(Boolean).join(" · ")))+R("단전·단가스 경험",v(c.cutoff),"타 에너지 지원",v(r.other_support))+R("본인 명의 통장",v(c.v_account)))}
+      ${sec("건강·안전",R("건강·생활 위험",v(r.risk_note))+R("온열·한랭 취약성",v(c.heat_risk),"안부 확인 보호자",v(c.guardian)))}
+      ${sec("판단",R("유형 판단",v(t?t+"유형 "+TYPES[t]:"")+(c.type_final?"":" (제안)"),"동절기 지원액",a?fmt(a.tot)+"원":"")+R("효율 개선 필요",v(c.eff_needs),"증빙 서류",`${ds.ok}/${ds.need}`+(ds.stale.length?" (3개월 넘음: "+v(ds.stale.join(", "))+")":""))+R("추천 사유",v(r.reason))+R("방문 현황·상담자 의견",v(c.visit_note).replace(/\n/g,"<br>"))+R("위원회 결과",v(c.committee_result),"판정일",v(c.committee_date)))}
+      <p class="sign">상담자 ${v(c.visitor)}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(서명)</p>
+      <p class="note">※ 추천 페이지 입력 내용과 가정방문 기록으로 자동 작성된 상담지입니다. 출력 ${new Date().toLocaleDateString("ko-KR")}</p></body></html>`;
+    const w=window.open("","_blank");if(!w){alert("팝업이 막혀 있어요. 팝업을 허용해 주세요.");return}w.document.open();w.document.write(html);w.document.close()}
   function csv(cases,refs){const R=Object.fromEntries(refs.map(r=>[r.id,r]));const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
     const head=["가구코드","대상자","생년월일","성별","지원 기간","사업 참여 이력","돌봄단 발굴","연락처","거주동","주소","세대주 본인","세대주","가구원 수","소득 구분","수급 종류","바우처","바우처 대상 세대원","바우처 쓰기 어려운 환경","난방","유형","동절기 지원액","월별 지급","서류","3개월 지난 서류","방문일","방문자","방문 메모","효율 개선","단계","위원회 결과","판정일","협회 승인","추천자"];
     const lines=[head.map(q).join(",")].concat(cases.map(c=>{const r=R[c.referral_id]||{},a=amounts(c),ds=docState(c);return [c.household_code,r.elder_name,c.v_birth||r.birth,c.v_gender||r.gender,c.period,c.participation,c.care_found,r.phone,r.dong,(r.address||"").replace(" | ",", "),c.v_is_head,[c.v_head_name,c.v_head_birth].filter(Boolean).join(" "),c.v_household_size,c.v_income,(c.v_recipient_kinds||[]).join("·"),c.v_voucher,c.v_voucher_target,c.v_env,c.v_heating,typeOf(c)?typeOf(c)+"유형 "+TYPES[typeOf(c)]:"",a?a.tot:"",a?a.list.map(([m,v])=>m+" "+v).join(" / "):"",`${ds.ok}/${ds.need}`,ds.stale.join("·"),c.visit_date,c.visitor,c.visit_note,(c.eff_needs||[]).join("·"),c.stage,c.committee_result,c.committee_date,c.kaswc_approved,`${r.worker_org||"생활지원사"} ${r.worker_name||""}`].map(q).join(",")}));
     const b=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});const el=document.createElement("a");el.href=URL.createObjectURL(b);el.download=`온앤쿨_선정심사_${new Date().toISOString().slice(0,10)}.csv`;el.click();URL.revokeObjectURL(el.href)}
-  return {TYPES,ENV,DOCS,STAGES,typeFrom,proposed,typeOf,amounts,docState,goal,listHTML,viewHTML,csv,fmt,esc};
+  return {TYPES,ENV,DOCS,STAGES,typeFrom,proposed,typeOf,amounts,docState,goal,listHTML,viewHTML,csv,fmt,esc,printSheet};
 })();
 
 /* 심사 카드 편집기 (백엔드 B, 훅 H 주입) */
@@ -84,22 +107,29 @@ function openCase(c,r){curCase=c;r=r||{};const e=CS.esc,d=c.docs||{};
   $("#cedit").hidden=false;
   $("#cedit").innerHTML=`<div class="dv-head"><h2>${e(r.elder_name)}</h2><div class="chips" id="c_chips"></div></div>
   <p class="dv-sub">접수 ${e(r.receipt_no)}번 · 추천 ${e(r.worker_org||"생활지원사")} · ${e(r.worker_name)} · ${e(r.dong)} · ${e((r.address||"").replace(" | ",", "))}</p>
-  <div class="cs-form">
+  ${B.worker?'<p class="hint" style="margin:6px 0 0">가정방문 내용과 서류를 여기에 남겨 주세요. 복지관 담당자와 같은 카드를 함께 써요. 저장을 눌러야 반영돼요.</p>':""}<div class="cs-form">
    <div class="cs-card"><h3>가정방문</h3>
      <div class="cs-row2"><label>방문일<input type="date" id="c_visit_date" value="${e(c.visit_date||"")}"></label><label>방문자<input type="text" id="c_visitor" maxlength="30" value="${e(c.visitor||"")}"></label></div>
      <label>현황 메모 (주거·난방·건강·생활)<textarea id="c_visit_note" maxlength="2000">${e(c.visit_note||"")}</textarea></label></div>
-   <div class="cs-card"><h3>협회 시스템 입력 항목 <small style="font-weight:400;color:var(--mute)">(성과관리시스템 필수 항목)</small></h3>
+   <div class="cs-card"><h3>에너지 상담 <small style="font-weight:400;color:var(--mute)">(초기상담지 항목)</small></h3>
+     <label>가구원 (등본 기준 · 이름·생년월일·관계)<textarea id="c_members" maxlength="600" placeholder="예) 홍길동 1950.01.01 본인 / 김영희 1952.03.03 배우자">${e(c.members||"")}</textarea></label>
+     <div class="cs-row2"><label>건강보험료 월액<input type="text" id="c_hi_premium" maxlength="30" placeholder="예) 18,500원" value="${e(c.hi_premium||"")}"></label><label>냉방 설비<select id="c_cool_equip">${opt(["","에어컨","선풍기만","없음"],c.cool_equip||"")}</select></label></div>
+     <div class="cs-row2"><label>월평균 냉·난방비<input type="text" id="c_bill_avg" maxlength="30" placeholder="예) 12만 원" value="${e(c.bill_avg||"")}"></label><label>고지서<select id="c_bill_checked">${opt(["","확인","미확인"],c.bill_checked||"")}</select></label></div>
+     <div class="cs-row2"><label>체납 기간<input type="text" id="c_arrears_months" maxlength="20" placeholder="예) 가스 2개월" value="${e(c.arrears_months||"")}"></label><label>냉·난방 설비 소유<select id="c_equip_owner">${opt(["","본인","임대인","기타"],c.equip_owner||"")}</select></label></div>
+     <label>단전·단가스 경험<input type="text" id="c_cutoff" maxlength="100" placeholder="없음 / 있음(언제·무엇)" value="${e(c.cutoff||"")}"></label>
+     <div class="cs-row2"><label>온열·한랭질환 취약성<select id="c_heat_risk">${opt(["","낮음","보통","높음"],c.heat_risk||"")}</select></label><label>안부 확인 보호자<input type="text" id="c_guardian" maxlength="100" placeholder="성명·관계·연락처" value="${e(c.guardian||"")}"></label></div></div>
+   <div class="cs-card"${B.worker?" hidden":""}><h3>협회 시스템 입력 항목 <small style="font-weight:400;color:var(--mute)">(성과관리시스템 필수 항목)</small></h3>
      <div class="cs-row2"><label>성별<select id="c_v_gender">${opt(["","남","여"],c.v_gender||r.gender||"")}</select></label><label>생년월일<input type="date" id="c_v_birth" value="${e(c.v_birth||b8(r.birth))}"></label></div>
      <div class="cs-row2"><label>지원 기간 구분<select id="c_period">${opt(["동절기","하절기","동·하절기 전체"],c.period||"동절기")}</select></label><label>사업 참여 이력<select id="c_participation">${opt2([["신규 대상자","신규 (복지관 사례관리 대상 아님)"],["기존 대상자","기존 대상자 (연계)"]],c.participation||"신규 대상자")}</select></label></div>
      <div class="cs-row2"><label>에너지 돌봄단 발굴<select id="c_care_found">${opt2([["","선택"],["예","예 (돌봄단 발굴)"],["아니오","아니오 (기관 자체 발굴)"]],c.care_found||"")}</select></label><span></span></div></div>
-   <div class="cs-card"><h3>확인한 세대·소득 <small style="font-weight:400;color:var(--mute)">(추천 내용에서 가져옴, 확인 후 고치기)</small></h3>
+   <div class="cs-card"${B.worker?" hidden":""}><h3>확인한 세대·소득 <small style="font-weight:400;color:var(--mute)">(추천 내용에서 가져옴, 확인 후 고치기)</small></h3>
      <div class="cs-row2"><label>세대주 본인<select id="c_v_is_head">${opt(["","예","아니오"],c.v_is_head)}</select></label><label>가구원 수 (등본)<input type="number" min="1" max="20" id="c_v_household_size" value="${e(c.v_household_size||"")}"></label></div>
      <div class="cs-row2"><label>세대주 성함<input type="text" id="c_v_head_name" maxlength="30" value="${e(c.v_head_name||"")}"></label><label>세대주 생년월일<input type="text" id="c_v_head_birth" maxlength="6" value="${e(c.v_head_birth||"")}"></label></div>
      <div class="cs-row2"><label>소득 구분<select id="c_v_income">${opt(["","기초생활수급자","차상위","저소득(건보료 기준)","기준 초과"],c.v_income)}</select></label><label>에너지바우처<select id="c_v_voucher">${opt2([["",""],["안 받음","안 받음"],["받았는데 다 씀","받았는데 다 씀 (2025 잔액 1만원 이하)"],["받는 중","받는 중"]],c.v_voucher||"")}</select></label></div>
      <label>바우처 대상 세대원 <small style="font-weight:400;color:var(--mute)">노인·영유아·장애인·임산부·중증/희귀/중증난치질환자·한부모·소년소녀가정·다자녀 (수급자면 바우처 대상)</small><select id="c_v_voucher_target">${opt(["","있음","없음"],c.v_voucher_target)}</select></label>
      <label>바우처 쓰기 어려운 환경 <small style="font-weight:400;color:var(--mute)">3유형 판단 근거 (공고문 2쪽) · 근거 사진·메모를 남겨 두세요</small><select id="c_v_env">${opt(["",...CS.ENV],c.v_env)}</select></label>
      <div class="cs-row2"><label>난방 방식<select id="c_v_heating">${opt(["","도시가스","기름(등유) 보일러","LPG","연탄","전기","기타"],c.v_heating)}</select></label><label>본인 명의 통장<select id="c_v_account">${opt(["","있음","없음","압류 우려"],c.v_account)}</select></label></div></div>
-   <div class="cs-card"><h3>유형과 지원 금액</h3>
+   <div class="cs-card"${B.worker?" hidden":""}><h3>유형과 지원 금액</h3>
      <p class="dv-sub" style="margin:0 0 6px">확인한 정보로 본 제안: <b id="c_prop">${prop?e(prop):"정보 부족"}</b></p>
      <div class="cs-row2"><label>판정 유형 (위원회 상정용)<select id="c_type_final">${opt2([["","아직"],...["1","2","3","4"].map(t=>[t+"유형",t+"유형 "+CS.TYPES[t]])],c.type_final||"")}</select></label><label>지원 시작<select id="c_start_month">${[[11,"11월(4회)"],[12,"12월(3회)"],[1,"1월(2회)"],[2,"2월(1회)"]].map(([v,l])=>`<option value="${v}"${(c.start_month||11)==v?" selected":""}>${l}</option>`).join("")}</select></label></div>
      <div id="c_amt"></div></div>
@@ -109,16 +139,16 @@ function openCase(c,r){curCase=c;r=r||{};const e=CS.esc,d=c.docs||{};
        <div class="files" id="files-${x.k}"><span class="dv-empty">불러오는 중…</span></div></div>`}).join("")}</div>
    <div class="cs-card"><h3>에너지 효율 개선</h3><div class="cs-checks">${["열화상 진단","방풍·단열 물품","방한 물품","난방기구 수리","외부 집수리 연계"].map(x=>`<label><input type="checkbox" data-eff="${x}"${(c.eff_needs||[]).includes(x)?" checked":""}> ${x}</label>`).join("")}</div>
      <label style="margin-top:8px">메모<textarea id="c_eff_note" maxlength="1000">${e(c.eff_note||"")}</textarea></label></div>
-   <div class="cs-card"><h3>단계 · 판정</h3>
+   <div class="cs-card"${B.worker?" hidden":""}><h3>단계 · 판정</h3>
      <div class="cs-row2"><label>단계<select id="c_stage">${opt(CS.STAGES,c.stage)}</select></label><label>가구코드<input type="text" id="c_household_code" maxlength="10" placeholder="A-01" value="${e(c.household_code||"")}"></label></div>
      <div class="cs-row2"><label>위원회 결과<select id="c_committee_result">${opt(["","선정","보류","탈락"],c.committee_result)}</select></label><label>판정일<input type="date" id="c_committee_date" value="${e(c.committee_date||"")}"></label></div>
      <label>판정 메모<input type="text" id="c_committee_note" maxlength="300" value="${e(c.committee_note||"")}"></label>
      <label>협회 승인일<input type="date" id="c_kaswc_approved" value="${e(c.kaswc_approved||"")}"></label></div>
   </div>
-  <div class="acts"><button class="sbtn pri" id="c_save" type="button">저장</button><button class="sbtn" id="c_close" type="button">닫기</button>${B.revert?'<button class="sbtn dan" id="c_rev" type="button">추천 접수로 되돌리기</button>':""}<span class="msg" id="c_msg"></span></div>`;
+  <div class="acts"><button class="sbtn pri" id="c_save" type="button">저장</button><button class="sbtn" id="c_close" type="button">닫기</button>${B.worker?"":'<button class="sbtn" id="c_print" type="button">상담지 출력</button>'}${B.revert?'<button class="sbtn dan" id="c_rev" type="button">추천 접수로 되돌리기</button>':""}<span class="msg" id="c_msg"></span></div>`;
   refreshCalc();CS.DOCS.forEach(x=>listFiles(x.k));
   $("#cedit").oninput=$("#cedit").onchange=()=>{refreshCalc();$("#c_msg").textContent="저장 안 됨"};
-  $("#c_save").onclick=saveCase;$("#c_close").onclick=()=>{$("#cedit").hidden=true;curCase=null};
+  $("#c_save").onclick=saveCase;if($("#c_print"))$("#c_print").onclick=()=>CS.printSheet(Object.assign({},curCase,formCase()),r);$("#c_close").onclick=()=>{$("#cedit").hidden=true;curCase=null};
   let arm2=false;if($("#c_rev"))$("#c_rev").onclick=async()=>{if(!arm2){arm2=true;$("#c_rev").textContent="정말 되돌리기 (방문 기록·올린 서류가 지워져요)";return}
     $("#c_rev").disabled=true;try{await B.revert(c.id);$("#cedit").hidden=true;H.reverted(c)}catch(x){$("#c_msg").textContent="되돌리지 못했어요: "+x.message;$("#c_rev").disabled=false}};
   let arm=false;if($("#c_del"))$("#c_del").onclick=async()=>{if(!arm){arm=true;$("#c_del").textContent="정말 삭제 (올린 파일은 남아요)";return}try{await B.del(c.id);$("#cedit").hidden=true;H.deleted(c.id)}catch(x){$("#c_msg").textContent="삭제하지 못했어요"}};
@@ -131,6 +161,7 @@ function formCase(){const c=curCase,g=id=>$("#c_"+id),docs={};
     v_income:g("v_income").value||null,v_voucher_target:g("v_voucher_target").value||null,v_env:g("v_env").value||null,v_gender:g("v_gender").value||null,v_birth:g("v_birth").value||null,period:g("period").value,participation:g("participation").value,care_found:g("care_found").value||null,v_voucher:g("v_voucher").value||null,v_heating:g("v_heating").value||null,v_account:g("v_account").value||null,
     type_final:g("type_final").value||null,start_month:+g("start_month").value,docs,
     eff_needs:[...document.querySelectorAll("[data-eff]:checked")].map(x=>x.dataset.eff),eff_note:g("eff_note").value.trim()||null,
+    members:g("members").value.trim()||null,hi_premium:g("hi_premium").value.trim()||null,cool_equip:g("cool_equip").value||null,bill_avg:g("bill_avg").value.trim()||null,bill_checked:g("bill_checked").value||null,arrears_months:g("arrears_months").value.trim()||null,cutoff:g("cutoff").value.trim()||null,equip_owner:g("equip_owner").value||null,heat_risk:g("heat_risk").value||null,guardian:g("guardian").value.trim()||null,
     stage:g("stage").value,household_code:g("household_code").value.trim()||null,committee_result:g("committee_result").value||null,committee_date:g("committee_date").value||null,committee_note:g("committee_note").value.trim()||null,kaswc_approved:g("kaswc_approved").value||null}}
 function refreshCalc(){if(!curCase)return;const t=Object.assign({},curCase,formCase());const a=CS.amounts(t),ds=CS.docState(t);
   $("#c_prop").textContent=CS.proposed(t)||"정보 부족";
