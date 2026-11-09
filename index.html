@@ -91,7 +91,7 @@
   <div class="q"><label for="phone">연락처</label><input type="tel" id="phone" maxlength="20" placeholder="010-0000-0000"></div>
   <div class="q"><label for="addr1">주소</label><div class="pinrow"><input type="text" id="addr1" maxlength="100" placeholder="주소 검색을 눌러 주세요" readonly><button class="btn sec" id="addrbtn" type="button" style="width:auto;white-space:nowrap;padding:10px 14px">주소 검색</button></div>
     <input type="text" id="addr2" maxlength="40" placeholder="상세주소 (동·호수)" style="margin-top:8px" aria-label="상세주소"></div>
-  <div class="q"><label for="dong">거주동</label><small>주소를 검색하면 자동으로 골라질 수 있어요. 자동으로 안 골라지면 직접 선택해 주세요.</small><select id="dong"><option value="">선택</option><optgroup label="만안구"><option>안양1동</option><option>안양2동</option><option>안양3동</option><option>안양4동</option><option>안양5동</option><option>안양6동</option><option>안양7동</option><option>명학동</option><option>병목안동</option><option>석수1동</option><option>석수2동</option><option>석수3동</option><option>박달1동</option><option>박달2동</option></optgroup><optgroup label="동안구"><option>비산1동</option><option>비산2동</option><option>비산3동</option><option>부흥동</option><option>달안동</option><option>관양1동</option><option>관양2동</option><option>부림동</option><option>평촌동</option><option>평안동</option><option>귀인동</option><option>호계1동</option><option>호계2동</option><option>호계3동</option><option>범계동</option><option>신촌동</option><option>갈산동</option></optgroup><option>안양시 외</option></select></div>
+  <div class="q"><label for="dong">거주동</label><small>주소를 검색하면 자동으로 골라질 수 있어요. 자동으로 안 골라지면 직접 선택해 주세요.</small><select id="dong"><option value="">선택</option><optgroup label="만안구"><option>안양1동</option><option>안양2동</option><option>안양3동</option><option>안양4동</option><option>안양5동</option><option>안양6동</option><option>안양7동</option><option>명학동</option><option>병목안동</option><option>석수1동</option><option>석수2동</option><option>충훈동</option><option>박달동</option><option>호현동</option></optgroup><optgroup label="동안구"><option>비산1동</option><option>비산2동</option><option>비산3동</option><option>부흥동</option><option>달안동</option><option>관양동</option><option>인덕원동</option><option>부림동</option><option>평촌동</option><option>평안동</option><option>귀인동</option><option>호계1동</option><option>호계2동</option><option>호계3동</option><option>범계동</option><option>신촌동</option><option>갈산동</option></optgroup><option>안양시 외</option></select></div>
 </section>
 
 <section class="card">
@@ -402,7 +402,7 @@ $("#addrbtn").onclick=()=>{
   new daum.Postcode({width:"100%",height:"100%",oncomplete:d=>{
     let a=d.roadAddress||d.jibunAddress||d.address;if(d.buildingName)a+=` (${d.buildingName})`;
     $("#addr1").value=a;
-    const hn=({"안양8동":"명학동","안양9동":"병목안동"})[(d.hname||"").trim()]||(d.hname||"").trim(),bn=(d.bname||"").trim(),opts=[...$("#dong").options].map(o=>o.value);
+    const hn=({"안양8동":"명학동","안양9동":"병목안동","석수3동":"충훈동","박달1동":"박달동","박달2동":"호현동","관양1동":"관양동","관양2동":"인덕원동"})[(d.hname||"").trim()]||(d.hname||"").trim(),bn=(d.bname||"").trim(),opts=[...$("#dong").options].map(o=>o.value);
     if(d.sigungu&&!/^안양/.test(d.sigungu))$("#dong").value="안양시 외";
     else if(opts.includes(hn))$("#dong").value=hn;else if(opts.includes(bn))$("#dong").value=bn;
     closeAddr();$("#addr2").focus()}}).embed($("#addrwrap"));
