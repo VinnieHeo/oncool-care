@@ -65,7 +65,7 @@
 <section id="list" hidden>
   <button class="linkbtn back" data-go="home" type="button">← 처음으로</button>
   <h2 style="font-size:17px;margin:0 0 8px">내가 추천한 가구</h2>
-  <p class="hint">‘접수’ 상태일 때만 고칠 수 있어요. 복지관이 검토를 시작하면 담당자에게 연락해 주세요.</p>
+  <p class="hint">사례판정 전(‘접수’·‘검토중’)까지는 언제든 고칠 수 있어요. 복지관은 가장 최근 내용으로 심사해요. 판정이 나면 담당자에게 연락해 주세요.</p>
   <div class="mine" id="mine"></div>
 </section>
 
@@ -234,7 +234,7 @@
   </ol>
   <div class="dark"><b>선정 심사 때 함께해 주세요</b><br>추가 조사(가정방문)나 증빙 서류가 필요하면 담당자가 따로 부탁드려요.<br><em>그때 관리 페이지 계정을 열어 드릴게요.</em></div>
   <details class="more"><summary>필요한 서류 (참고)</summary><ul><li>주민등록등본</li><li>소득 증빙 (발급 3개월 이내)</li><li>본인 명의 통장 사본</li><li>개인정보 동의서 (복지관·협회 양식 각 1부)</li><li>용도 약정서</li><li>2·3유형: 에너지바우처 결정통지서 등 (유형 확인서는 복지관이 작성)</li></ul></details>
-  <p class="hint" style="margin:0">‘내가 추천한 가구’에서 진행 상태를 볼 수 있고, ‘접수’ 상태일 때는 내용을 고칠 수 있어요.</p>
+  <p class="hint" style="margin:0">‘내가 추천한 가구’에서 진행 상태를 볼 수 있고, 사례판정 전까지(‘접수’·‘검토중’)는 언제든 내용을 고칠 수 있어요.</p>
 </section>
 <div class="nav2"><button class="btn sec pv" type="button">← 이전</button><button class="btn nx" type="button">다음 →</button></div>
 </div>
@@ -388,7 +388,7 @@ $("#jorg").addEventListener("change",e=>{$("#jetcq").hidden=e.target.value!=="�
 /* 내 목록 */
 $("#golist").onclick=async()=>{view("list");$("#mine").innerHTML='<p class="hint">불러오는 중…</p>';
   try{MINE=await rpc("oncool_w_list",{p_token:TOKEN});
-    $("#mine").innerHTML=MINE.length?MINE.map(r=>`<div class="mi"><div><b>${esc(r.elder_name)}</b> <small>· ${esc(r.dong||"")} · 접수 ${r.receipt_no}번</small></div><span class="st s-${esc(r.status)}">${esc(r.status)}</span>${r.status==="접수"?`<button class="btn sec edit" type="button" data-edit="${esc(r.id)}">내용 고치기</button>`:""}</div>`).join(""):'<p class="hint">아직 추천한 가구가 없어요.</p>'}
+    $("#mine").innerHTML=MINE.length?MINE.map(r=>`<div class="mi"><div><b>${esc(r.elder_name)}</b> <small>· ${esc(r.dong||"")} · 접수 ${r.receipt_no}번</small></div><span class="st s-${esc(r.status)}">${esc(r.status)}</span>${["접수","검토중"].includes(r.status)?`<button class="btn sec edit" type="button" data-edit="${esc(r.id)}">내용 고치기</button>`:""}</div>`).join(""):'<p class="hint">아직 추천한 가구가 없어요.</p>'}
   catch(e){$("#mine").innerHTML='<p class="err">불러오지 못했어요.</p>'}};
 $("#mine").addEventListener("click",async e=>{const b=e.target.closest("[data-edit]");if(!b)return;
   const r=MINE.find(x=>x.id===b.dataset.edit);if(!r)return;openForm(r)});
@@ -427,7 +427,7 @@ $("#f").addEventListener("submit",async e=>{
   if(p.is_head!=="아니오"){p.head_name="";p.head_birth=""}if(p.income!=="기초생활수급자")p.recipient_kinds=[];
   $("#sbtn").disabled=true;const lbl=$("#sbtn").textContent;$("#sbtn").textContent="보내는 중…";
   try{const r=EDIT?await rpc("oncool_w_update",{p_token:TOKEN,p_id:EDIT,p}):await rpc("oncool_w_submit",{p_token:TOKEN,p});
-    if(EDIT){if(r===true){$("#rno").textContent="";$("#dmsg").textContent="고친 내용을 저장했어요.";view("done")}else showErr(err,"이미 복지관이 검토를 시작해서 고칠 수 없어요. 담당자에게 연락해 주세요.")}
+    if(EDIT){if(r===true){$("#rno").textContent="";$("#dmsg").textContent="고친 내용을 저장했어요.";view("done")}else showErr(err,"이미 사례판정이 끝나서 고칠 수 없어요. 담당자에게 연락해 주세요.")}
     else if(r>0){$("#rno").textContent=r;$("#dmsg").textContent="추천이 접수됐어요. 고맙습니다.";view("done")}
     else showErr(err,"지금은 접수가 많아요. 잠시 뒤에 다시 보내 주세요.");
   }catch(x){if(/session/.test(x.message)){showErr(err,"다시 로그인이 필요해요. 입력한 내용은 그대로 있으니, 새 창에서 로그인한 뒤 다시 보내 주세요.")}else showErr(err,"보내지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요. 입력한 내용은 그대로 있어요.")}
