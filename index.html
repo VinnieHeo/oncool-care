@@ -65,8 +65,9 @@
 <section id="list" hidden>
   <button class="linkbtn back" data-go="home" type="button">← 처음으로</button>
   <h2 style="font-size:17px;margin:0 0 8px">내가 추천한 가구</h2>
-  <p class="hint">사례판정 전(‘접수’·‘검토중’)까지는 언제든 고칠 수 있어요. 복지관은 가장 최근 내용으로 심사해요. 판정이 나면 담당자에게 연락해 주세요.</p>
+  <p class="hint">사례판정 전(‘접수’·‘검토중’)까지는 언제든 고칠 수 있어요. 복지관이 가정방문을 시작한 가구는 <b>‘가정방문 기록’</b>에서 방문 내용과 서류 사진을 함께 남길 수 있어요.</p>
   <div class="mine" id="mine"></div>
+  <section class="card panel" id="cedit" hidden style="margin-top:12px"></section>
 </section>
 
 <!-- 추천서 -->
@@ -297,6 +298,7 @@
 <p class="foot">입력한 내용은 복지관 담당자와 추천한 본인만 볼 수 있어요.</p>
 </div>
 <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<script src="cases.js?v=13"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const DEMO=new URLSearchParams(location.search).has("demo");
@@ -389,10 +391,29 @@ $("#jorg").addEventListener("change",e=>{$("#jetcq").hidden=e.target.value!=="�
 /* 내 목록 */
 $("#golist").onclick=async()=>{view("list");$("#mine").innerHTML='<p class="hint">불러오는 중…</p>';
   try{MINE=await rpc("oncool_w_list",{p_token:TOKEN});
-    $("#mine").innerHTML=MINE.length?MINE.map(r=>`<div class="mi"><div><b>${esc(r.elder_name)}</b> <small>· ${esc(r.dong||"")} · 접수 ${r.receipt_no}번</small></div><span class="st s-${esc(r.status)}">${esc(r.status)}</span>${["접수","검토중"].includes(r.status)?`<button class="btn sec edit" type="button" data-edit="${esc(r.id)}">내용 고치기</button>`:""}</div>`).join(""):'<p class="hint">아직 추천한 가구가 없어요.</p>'}
+    $("#mine").innerHTML=MINE.length?MINE.map(r=>`<div class="mi"><div><b>${esc(r.elder_name)}</b> <small>· ${esc(r.dong||"")} · 접수 ${r.receipt_no}번</small></div><span class="st s-${esc(r.status)}">${esc(r.status)}</span>${["접수","검토중"].includes(r.status)?`<button class="btn sec edit" type="button" data-edit="${esc(r.id)}">내용 고치기</button>`:""}${r.status!=="접수"?`<button class="btn edit" type="button" data-visit="${esc(r.id)}">가정방문 기록</button>`:""}</div>`).join(""):'<p class="hint">아직 추천한 가구가 없어요.</p>'}
   catch(e){$("#mine").innerHTML='<p class="err">불러오지 못했어요.</p>'}};
-$("#mine").addEventListener("click",async e=>{const b=e.target.closest("[data-edit]");if(!b)return;
+$("#mine").addEventListener("click",async e=>{const vb=e.target.closest("[data-visit]");if(vb){openVisit(vb.dataset.visit,vb);return}
+  const b=e.target.closest("[data-edit]");if(!b)return;
   const r=MINE.find(x=>x.id===b.dataset.edit);if(!r)return;openForm(r)});
+
+/* 가정방문 기록: 복지관이 ‘가정방문 기록 시작’을 누른 가구만 열림 (판정 칸은 복지관만) */
+const EFN=SB+"/functions/v1/oncool-evidence";
+async function wefn(b){const r=await fetch(EFN,{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify(Object.assign({wtoken:TOKEN},b))});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error==="locked"?"사례판정 단계라 서류를 바꿀 수 없어요":j.error==="session_invalid"?"session":(j.error||("HTTP "+r.status)));return j}
+if(window.CSE)CSE.init({worker:true,
+  async save(id,up){try{return await rpc("oncool_w_case_save",{p_token:TOKEN,p_case:id,p:up})}catch(x){throw new Error(/locked/.test(x.message)?"사례판정 단계라 고칠 수 없어요":x.message)}},
+  async list(cid,k){return (await wefn({action:"list",case_id:cid,doc:k})).files||[]},
+  async upload(cid,k,b,type){const u=await wefn({action:"upload_url",case_id:cid,doc:k,content_type:type});const r=await fetch(u.signedUrl,{method:"PUT",headers:{"Content-Type":type},body:b});if(!r.ok)throw new Error("업로드 실패 "+r.status)},
+  async open(cid,path){return (await wefn({action:"sign",case_id:cid,path})).url},
+  async remove(cid,path){await wefn({action:"remove",case_id:cid,path})}
+},{saved(){}});
+async function openVisit(id,btn){const r=MINE.find(x=>x.id===id);if(!r||!window.CSE)return;btn.disabled=true;
+  try{const cs=await rpc("oncool_w_cases",{p_token:TOKEN});const c=(cs||[]).find(x=>x.referral_id===id);
+    if(!c){alert("아직 복지관에서 가정방문 기록을 시작하지 않았어요.");return}
+    CSE.open(c,Object.assign({worker_name:ME},r))}
+  catch(x){alert(/session/.test(x.message)?"다시 들어와 주세요.":"불러오지 못했어요: "+x.message)}
+  finally{btn.disabled=false}}
 
 /* 주소 검색 (카카오 우편번호 서비스) */
 function closeAddr(){$("#addrlayer").hidden=true;$("#addrwrap").innerHTML=""}
