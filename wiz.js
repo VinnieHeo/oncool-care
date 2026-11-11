@@ -1,16 +1,17 @@
 /* 가정방문 카드 단계별 화면 · 서류 접기 · 전자서명 연결 (2026-11-12 시안) */
 (function(){
 const $=s=>document.querySelector(s);
-const QUAL=["resident","income","hifam","voucher","bank","etc"],SUBM=["consent_own","consent","pledge","lease"],SIGNABLE=["consent_own","consent","pledge"];
+const QUAL=["resident","income","bank","voucher","hifam","etc"],SUBM=["consent_own","consent","pledge","lease"],SIGNABLE=["consent_own","consent","pledge"];
 const STEPS=[["가정방문","방문 날짜와 본 모습"],["에너지 상담","가구·요금·설비·건강"],["자격 확인 서류","등본·소득·바우처·통장"],["제출 서류 · 서명","동의서·약정서 전자서명"],["에너지 효율 개선","필요한 물품·수리"],["확인하고 알리기","빠진 것 확인"]];
 let cur=0,P={},SIGS={},CID=null;
+const WREQ=["resident","income","bank"];/* 추천자 화면은 유형과 상관없이 필수 */
 /* 서류 설명: 한 줄에 한 가지 */
 const HELP={
  resident:[["세대주와 함께 사는 가족을 확인하는 서류예요"],["발급한 지 3개월 이내","w"]],
- income:[["아래 중 하나를 올려 주세요","h"],["건강보험료 납부확인서 (최근 3개월)","d"],["기초생활 수급자증명서","d"],["에너지바우처 결정통지서가 있으면 이 칸은 비워 두고 ‘에너지바우처 확인’에 올려 주세요"],["외국인은 소득금액증명원 또는 근로소득 원천징수 영수증"],["발급한 지 3개월 이내","w"]],
+ income:[["위에서부터 해당하는 것 하나를 올려 주세요","h"],["① 기초생활 수급자증명서 · 수급자라면","d"],["② 에너지바우처 결정통지서 · 바우처를 받는 집이라면","d"],["③ 건강보험료 납부확인서 (최근 3개월) · 수급자가 아니라면","d"],["수급자인데 바우처가 없는 집은 ①과 ③을 같이 올려 주세요","w"],["외국인은 소득금액증명원 또는 근로소득 원천징수 영수증"],["발급한 지 3개월 이내","w"]],
  hifam:[["가족이 건강보험료를 대신 내는 경우에만 필요해요","h"],["건강보험 자격확인서","d"],["가족관계증명서","d"]],
- voucher:[["에너지바우처를 받는 가구만 올려 주세요","h"],["바우처 결정통지서 또는 누리집 잔액 화면 캡처","d"],["작년(2025년) 바우처를 다 쓴 경우: 잔액 1만 원 이하 확인 (☎ 1600-3190)"],["바우처를 쓰기 어려운 집이면 그 모습 사진이나 메모도 함께"]],
- bank:[["대상자 본인 이름으로 된 통장","h"],["계좌번호가 보이는 첫 장을 찍어 주세요"],["세대주가 아니어도 대상자 본인 명의여야 해요"],["기름·연탄을 복지관이 직접 배달해 드리는 가구는 필요 없어요"]],
+ voucher:[["바우처를 받는 가구만 올려 주세요","h"],["소득 증빙 칸에 결정통지서를 올렸으면 비워 둬도 돼요"],["바우처 결정통지서 또는 누리집 잔액 화면 캡처","d"],["작년(2025년) 바우처를 다 쓴 경우: 잔액 1만 원 이하 확인 (☎ 1600-3190)"],["바우처를 쓰기 어려운 집이면 그 모습 사진이나 메모도 함께"]],
+ bank:[["대상자 본인 이름으로 된 통장","h"],["계좌번호가 보이는 첫 장을 찍어 주세요"],["세대주가 아니어도 대상자 본인 명의여야 해요"],["냉·난방비가 이 통장으로 들어가요","w"]],
  etc:[["집 안 사진, 난방기구 사진"],["도시가스가 안 들어오는 집이면 그 근거 사진"],["개인 카톡·문자로 보내지 말고 여기에 바로 올려 주세요","w"]],
  consent_own:[["이 시스템에 상담 기록과 서류를 남기기 위한 동의예요"],["복지관 양식"]],
  consent:[["협회 시스템에 등록하기 전에 꼭 받아야 해요"],["협회 양식 그대로 (별첨 5)"]],
@@ -32,7 +33,7 @@ function cnt(ks){const ds=[...document.querySelectorAll(".wz-pane .doc")].filter
 /* 서류 한 줄로 접기 */
 function fold(d){if(d.querySelector(".dhd"))return;const k=d.dataset.doc,b=d.querySelector(".doc-top b");
   const nm=b?b.childNodes[0].textContent.trim():k,tag=b&&b.querySelector("span");const tg=tag?tag.textContent.trim():"";
-  const req=tg==="필수";
+  const req=tg==="필수"||WREQ.includes(k);
   const hd=document.createElement("button");hd.type="button";hd.className="dhd";
   hd.innerHTML=`<span class="dic"></span><span class="dnm">${CS.esc(nm.replace(/\s*\(.*\)\s*$/,""))}<small>${CS.esc((nm.match(/\((.*)\)/)||[,""])[1])}</small></span>${req?'<span class="dtg req">필수</span>':'<span class="dtg">해당하면</span>'}<span class="dst"></span><span class="dch" aria-hidden="true"></span>`;
   const bd=document.createElement("div");bd.className="dbd";bd.hidden=true;while(d.firstChild)bd.appendChild(d.firstChild);
