@@ -184,19 +184,16 @@ function open(opt){ensureCss();close();st={opt,src:null,q:null,mode:"bw",warped:
   const root=el(`<div class="scn" role="dialog" aria-modal="true" aria-label="서류 스캔"><div class="scn-p">
    <div class="scn-h"><b>${esc(opt.title||"서류")} 스캔</b><button type="button" data-a="close">닫기</button></div>
    <div class="scn-b">
-    <div data-v="pick"><p class="scn-tip">카메라나 사진첩이 열려요. 열리지 않았다면 아래 ‘카메라로 한 장 더’나 ‘사진첩에서 더’를 눌러 주세요.</p></div>
+    <div data-v="pick"><p class="scn-tip">카메라나 사진첩이 열려요. 열리지 않았다면 아래 버튼을 눌러 주세요.</p><div class="scn-row" style="margin-top:12px"><button type="button" class="sb grow" data-a="morecam">카메라로 찍기</button><button type="button" class="sb grow" data-a="morelib">사진첩에서 고르기</button></div></div>
     <div data-v="edit" hidden><p class="scn-tip">파란 점 네 개를 종이 모서리에 맞춰 주세요. 끄는 동안 손가락 밑이 확대돼요.</p>
       <div class="scn-st"><canvas></canvas></div>
       <div class="scn-row" style="margin-top:10px"><button type="button" class="sb" data-a="auto">자동으로 다시 찾기</button><button type="button" class="sb" data-a="full">사진 전체</button><button type="button" class="sb" data-a="rot">90° 돌리기</button></div>
-      <div class="scn-row" style="margin-top:10px"><button type="button" class="sb pri grow" data-a="warp">펴고 보정하기</button></div></div>
+      <div class="scn-row" style="margin-top:10px"><button type="button" class="sb pri grow" data-a="warp">다음</button></div></div>
     <div data-v="result" hidden>
       <div class="scn-ch" role="group" aria-label="보정 방식"><button type="button" data-m="bw" aria-pressed="true">흑백 문서</button><button type="button" data-m="color" aria-pressed="false">컬러 문서</button><button type="button" data-m="raw" aria-pressed="false">보정 없이</button></div>
       <div class="scn-pp" style="margin-top:10px"><img alt="보정한 서류 미리보기"></div><p class="scn-m" data-meta></p>
-      <div class="scn-row"><button type="button" class="sb" data-a="back">모서리 다시</button><button type="button" class="sb pri grow" data-a="keep">이 장 담기</button></div></div>
+      <div class="scn-row"><button type="button" class="sb" data-a="back">모서리 다시</button><button type="button" class="sb pri grow" data-a="keep">서류 올리기</button></div></div>
    </div>
-   <div class="scn-f"><div class="scn-pg" data-pages hidden></div>
-    <div class="scn-row"><button type="button" class="sb grow" data-a="morecam">카메라로 한 장 더</button><button type="button" class="sb grow" data-a="morelib">사진첩에서 더</button></div>
-    <button type="button" class="sb pri" data-a="done" disabled>담은 장 올리기</button></div>
    <input type="file" accept="image/*" capture="environment" data-f="cam" hidden><input type="file" accept="image/*" multiple data-f="lib" hidden>
   </div></div>`);
   document.body.appendChild(root);st.root=root;document.documentElement.style.overflow="hidden";
@@ -240,7 +237,9 @@ async function onClick(e){const del=e.target.closest("[data-del]");if(del){const
   else if(k==="rot"){const S=st.src,c=document.createElement("canvas");c.width=S.height;c.height=S.width;const x=c.getContext("2d");x.translate(c.width,0);x.rotate(Math.PI/2);x.drawImage(S,0,0);const q=st.q.map(([qx,qy])=>[S.height-qy,qx]);st.q=[q[3],q[0],q[1],q[2]];st.src=c;draw()}
   else if(k==="warp"){busy(true);await new Promise(r=>setTimeout(r,30));st.size=outSize(st.q);st.warped=warp(st.src,st.q,st.size.W,st.size.H);busy(false);await render();view("result")}
   else if(k==="back")view("edit");
-  else if(k==="keep"){st.pages.push({b:st.blob,u:URL.createObjectURL(st.blob)});drawPages();st.src=null;if(st.queue.length)next();else{view("pick");st.root.querySelector('[data-v="pick"] p').textContent=`${st.pages.length}장 담았어요. 더 있으면 아래에서 한 장 더 찍거나 고르고, 다 됐으면 ‘올리기’를 눌러 주세요.`}}
+  else if(k==="keep"){/* 이 장 바로 올리기 → 남은 사진이 있으면 다음 장, 없으면 닫기 */a.disabled=true;a.textContent="올리는 중…";
+    try{await st.opt.onDone([st.blob]);st.up=(st.up||0)+1;st.src=null;a.disabled=false;a.textContent="서류 올리기";if(st.queue.length)next();else close()}
+    catch(x){a.disabled=false;a.textContent="다시 올리기";st.root.querySelector("[data-meta]").textContent="올리지 못했어요: "+(x.message||x)+" · 잠시 뒤에 다시 눌러 주세요."}}
   else if(k==="morecam")pick("cam");else if(k==="morelib")pick("lib");
   else if(k==="done"){a.disabled=true;a.textContent="올리는 중…";try{await st.opt.onDone(st.pages.map(p=>p.b));close()}catch(x){a.disabled=false;a.textContent="다시 올리기";st.root.querySelector('[data-v="pick"] p').textContent="올리지 못했어요: "+(x.message||x)+" · 잠시 뒤에 다시 눌러 주세요.";view("pick")}}}
 function close(){if(!st)return;st.pages.forEach(p=>URL.revokeObjectURL(p.u));st.root.remove();removeEventListener("resize",draw);document.documentElement.style.overflow="";st=null}
