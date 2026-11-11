@@ -145,7 +145,10 @@ function detect2(c){
   let ar2=0;for(let i=0;i<4;i++){const[x1,y1]=qd[i],[x2,y2]=qd[(i+1)%4];ar2+=x1*y2-x2*y1}if(Math.abs(ar2/2)<N*.12)return null;
   return qd.map(([x,y])=>[Math.max(0,Math.min(c.width,x/s)),Math.max(0,Math.min(c.height,y/s))])}
 
-function findPaper(c){let q=null;try{q=detect3(c)}catch(e){}if(!q){try{q=detect2(c)}catch(e){}}if(!q){try{q=detect(c)}catch(e){}}return q}
+function findPaper(c){let q=null;try{q=detect3(c)}catch(e){}if(!q){try{q=detect2(c)}catch(e){}}if(!q){try{q=detect(c)}catch(e){}}return q?inset(q,c):q}
+/* 찾은 모서리를 종이 안쪽으로 살짝 당김: 가장자리에 바닥이 묻지 않게 (긴 변의 0.6%) */
+function inset(q,c){const cx=q.reduce((s,p)=>s+p[0],0)/4,cy=q.reduce((s,p)=>s+p[1],0)/4,d=Math.max(c.width,c.height)*.006;
+  return q.map(([x,y])=>{const dx=cx-x,dy=cy-y,L=Math.hypot(dx,dy)||1;return[x+dx/L*d*1.41,y+dy/L*d*1.41]})}
 function full(c){const m=Math.round(Math.min(c.width,c.height)*.04);return[[m,m],[c.width-m,m],[c.width-m,c.height-m],[m,c.height-m]]}
 function homography(s,d){const A=[],B=[];for(let i=0;i<4;i++){const[x,y]=s[i],[u,v]=d[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);B.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);B.push(v)}
   for(let c=0;c<8;c++){let p=c;for(let r=c+1;r<8;r++)if(Math.abs(A[r][c])>Math.abs(A[p][c]))p=r;[A[c],A[p]]=[A[p],A[c]];[B[c],B[p]]=[B[p],B[c]];for(let r=0;r<8;r++){if(r===c)continue;const f=A[r][c]/A[c][c];for(let k=c;k<8;k++)A[r][k]-=f*A[c][k];B[r]-=f*B[c]}}
