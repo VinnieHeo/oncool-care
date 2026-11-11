@@ -1,0 +1,17 @@
+{
+ "name": "온앤쿨케어 관리",
+ "short_name": "온앤쿨 관리",
+ "start_url": "staff.html",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#f1f3fa",
+ "theme_color": "#4a63e7",
+ "lang": "ko",
+ "icons": [
+  {
+   "src": "logo-96.png",
+   "sizes": "96x96",
+   "type": "image/png"
+  }
+ ]
+}
