@@ -100,7 +100,7 @@ window.CS=(function(){
 window.CSE=(function(){
 const $=s=>document.querySelector(s);
 let B=null,H={saved(){},deleted(){},reverted(){}},curCase=null;
-const opt=(arr,v)=>arr.map(x=>x===""?`<option value=""${!v?" selected":""}>선택</option>`:`<option${x===v?" selected":""}>${x}</option>`).join("");
+const opt=(arr,v)=>(v&&!arr.includes(v)?[...arr,v]:arr).map(x=>x===""?`<option value=""${!v?" selected":""}>선택</option>`:`<option${x===v?" selected":""}>${x}</option>`).join("");/* 목록에 없는 저장값도 지우지 않게 */
 const opt2=(arr,v)=>arr.map(([x,l])=>`<option value="${x}"${x===v?" selected":""}>${l}</option>`).join("");
 const b8=b=>{if(!/^\d{6}$/.test(b||""))return"";let y=+b.slice(0,2);y+=y>new Date().getFullYear()%100?1900:2000;return `${y}-${b.slice(2,4)}-${b.slice(4,6)}`};
 function openCase(c,r){curCase=c;r=r||{};const e=CS.esc,d=c.docs||{};
