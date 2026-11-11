@@ -99,11 +99,11 @@ window.CS=(function(){
 /* 심사 카드 편집기 (백엔드 B, 훅 H 주입) */
 window.CSE=(function(){
 const $=s=>document.querySelector(s);
-let B=null,H={saved(){},deleted(){},reverted(){}},curCase=null;
+let B=null,H={saved(){},deleted(){},reverted(){}},curCase=null,curRef={};
 const opt=(arr,v)=>(v&&!arr.includes(v)?[...arr,v]:arr).map(x=>x===""?`<option value=""${!v?" selected":""}>선택</option>`:`<option${x===v?" selected":""}>${x}</option>`).join("");/* 목록에 없는 저장값도 지우지 않게 */
 const opt2=(arr,v)=>arr.map(([x,l])=>`<option value="${x}"${x===v?" selected":""}>${l}</option>`).join("");
 const b8=b=>{if(!/^\d{6}$/.test(b||""))return"";let y=+b.slice(0,2);y+=y>new Date().getFullYear()%100?1900:2000;return `${y}-${b.slice(2,4)}-${b.slice(4,6)}`};
-function openCase(c,r){curCase=c;r=r||{};const e=CS.esc,d=c.docs||{};
+function openCase(c,r){curCase=c;r=r||{};curRef=r;const e=CS.esc,d=c.docs||{};
   const prop=CS.proposed(c);
   $("#cedit").hidden=false;
   $("#cedit").innerHTML=`<div class="dv-head"><h2>${e(r.elder_name)}</h2><div class="chips" id="c_chips"></div></div>
@@ -138,6 +138,7 @@ function openCase(c,r){curCase=c;r=r||{};const e=CS.esc,d=c.docs||{};
      <p class="dv-sub" style="margin:0 0 6px">확인한 정보로 본 제안: <b id="c_prop">${prop?e(prop):"정보 부족"}</b></p>
      <div class="cs-row2"><label>판정 유형 (위원회 상정용)<select id="c_type_final">${opt2([["","아직"],...["1","2","3","4"].map(t=>[t+"유형",t+"유형 "+CS.TYPES[t]])],c.type_final||"")}</select></label><label>지원 시작<select id="c_start_month">${[[11,"11월(4회)"],[12,"12월(3회)"],[1,"1월(2회)"],[2,"2월(1회)"]].map(([v,l])=>`<option value="${v}"${(c.start_month||11)==v?" selected":""}>${l}</option>`).join("")}</select></label></div>
      <div id="c_amt"></div></div>
+   ${B.worker?"":'<div class="cs-card kw-card"><h3>협회 사이트 입력용 요약 <small style="font-weight:400;color:var(--mute)">(onandcool.or.kr 대상자 등록 순서)</small></h3><div id="c_kaswc"></div></div>'}
    <div class="cs-card" style="grid-column:1/-1"><h3>증빙 서류 <small style="font-weight:400;color:var(--mute)">‘찍어서 올리기’는 종이를 반듯하게 펴고 하얗게 보정해서 올립니다 (담당자 계정만)</small></h3>${B.worker?"":'<div class="pdfrow"><button type="button" class="upl" id="c_pdf">서류 전체 PDF로 받기</button><span id="c_pdfmsg" class="dv-empty"></span></div>'}
      ${CS.DOCS.filter(x=>!(B.worker&&x.k==="confirm")).map(x=>{const v=d[x.k]||{};return `<div class="doc" data-doc="${x.k}"><div class="doc-top"><b>${x.l}${x.req===1?' <span style="color:var(--warm);font-size:12px">필수</span>':typeof x.req==="string"?` <span style="color:var(--amber);font-size:12px">${x.req.slice(1).split("").join("·")}유형 필수</span>`:""}</b>
        <label><input type="checkbox" data-got="${x.k}"${v.got?" checked":""}> 받음</label>${x.dated?`<label>발급일 <input type="date" data-date="${x.k}" value="${e(v.date||"")}"></label>`:""}</div>${x.h?`<small>${x.h}</small>`:""}
@@ -169,13 +170,28 @@ function formCase(){const c=curCase,g=id=>$("#c_"+id),docs={};
     members:g("members").value.trim()||null,hi_premium:g("hi_premium").value.trim()||null,cool_equip:g("cool_equip").value||null,bill_avg:g("bill_avg").value.trim()||null,bill_checked:g("bill_checked").value||null,arrears_months:g("arrears_months").value.trim()||null,cutoff:g("cutoff").value.trim()||null,equip_owner:g("equip_owner").value||null,heat_risk:g("heat_risk").value||null,guardian:g("guardian").value.trim()||null,
     stage:g("stage").value,household_code:g("household_code").value.trim()||null,committee_result:g("committee_result").value||null,committee_date:g("committee_date").value||null,committee_note:g("committee_note").value.trim()||null,kaswc_approved:g("kaswc_approved").value||null}}
 function refreshCalc(){if(!curCase)return;const t=Object.assign({},curCase,formCase());const a=CS.amounts(t),ds=CS.docState(t);
-  $("#c_prop").textContent=CS.proposed(t)||"정보 부족";
+  $("#c_prop").textContent=CS.proposed(t)||"정보 부족";if(!B.worker)kaswc(t);
   $("#c_amt").innerHTML=a?`<div class="amt-box">${a.list.map(([m,v])=>`<div>${m}<b>${CS.fmt(v)}</b></div>`).join("")}<div class="tot">동절기 합계<b>${CS.fmt(a.tot)}</b></div></div>`:'<p class="dv-empty">유형과 가구원 수를 넣으면 계산됩니다</p>';
   $("#c_chips").innerHTML=`<span class="stg stg-${CS.esc(t.stage)}">${CS.esc(t.stage)}</span><span class="chip2 ${ds.full?"ok":"amber"}">서류 ${ds.ok}/${ds.need}</span>${ds.stale.length?`<span class="chip2 warn">신청일 기준 3개월 넘음: ${CS.esc(ds.stale.join(", "))}</span>`:""}${ds.full&&t.stage==="조사중"?'<span class="chip2 info">서류가 다 모였습니다 → 단계를 ‘서류완비’로</span>':""}`}
 async function saveCase(){const up=formCase();$("#c_save").disabled=true;
   try{const nc=await B.save(curCase.id,up);Object.assign(curCase,nc||up);$("#c_msg").textContent="저장되었습니다";H.saved(curCase)}
   catch(x){$("#c_msg").textContent=/session/.test(x.message)?"편집 시간이 끝났습니다. 다시 편집 비밀번호를 넣어 주세요":"저장하지 못했습니다: "+x.message}
   finally{$("#c_save").disabled=false}}
+/* 협회 사이트 입력용 요약: 협회 대상자 등록 화면과 같은 순서 · 항목마다 복사 */
+const KEV={"1유형":"건강보험료 납부확인서","2유형":"에너지이용권 결정통지서 + 확인서(별첨 2)","3유형":"결정통지서 또는 바우처 대상 증빙 + 확인서(별첨 3)","4유형":"건강보험료 납부확인서 또는 수급자증명서 + 확인서(별첨 4)"};
+function kaswc(t){const box=$("#c_kaswc");if(!box)return;const r=curRef||{},e=CS.esc,d8=v=>{v=String(v||"");if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;const n=v.replace(/\D/g,"");if(n.length===8)return n.slice(0,4)+"-"+n.slice(4,6)+"-"+n.slice(6);return b8(n)};
+  const n=+t.v_household_size||0,sg=(t.signs||{}).consent||(t.signs||{}).consent_own,hd=t.v_is_head;
+  const rows=[["대상자 성명",r.elder_name],["생년월일",d8(t.v_birth||r.birth)],["성별",t.v_gender||r.gender],["연락처",r.phone],["실거주 주소",(r.address||"").replace(" | "," ")],
+    ["가구주",hd==="예"?"대상자와 동일":hd==="아니오"?"다른 가구원":""],...(hd==="아니오"?[["가구주 성명",t.v_head_name],["가구주 생년월일",d8(t.v_head_birth)]]:[]),
+    ["가구원수",n>=4?"4인 이상":n?n+"인":""],["지원유형",t.type_final],["지원 기간",t.period],["사업 참여 이력",t.participation==="기존 대상자"?"기존 대상자 (연계)":t.participation?"신규 대상자":""],
+    ["돌봄단 발굴",t.care_found==="예"?"예 (돌봄단 발굴)":t.care_found==="아니오"?"아니오 (기관 자체발굴)":""],["증빙 첨부",KEV[t.type_final]||""],
+    ["개인정보 동의",sg?"동의 받음 · "+new Date(sg.signed_at).toLocaleDateString("ko-KR"):((t.docs||{}).consent||{}).got?"동의 받음 (종이)":""]];
+  const miss=rows.filter(x=>!x[1]).length;
+  box.innerHTML=(miss?`<p class="kw-miss">미확인 항목 ${miss}개 · 위 카드에서 먼저 확인해 주세요.</p>`:'<p class="kw-ok">모든 항목이 확인되었습니다.</p>')+'<div class="kw">'+rows.map(([k,v])=>`<div class="kw-r"><span>${e(k)}</span><b>${v?e(v):'<em>미확인</em>'}</b>${v&&k!=="증빙 첨부"&&k!=="개인정보 동의"?`<button type="button" class="kw-c" data-kw="${e(v)}">복사</button>`:"<i></i>"}</div>`).join("")+"</div>";
+  if(!document.getElementById("kw-css")){const st=document.createElement("style");st.id="kw-css";st.textContent=`.kw{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden}.kw-r{display:grid;grid-template-columns:110px 1fr 52px;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid var(--line);font-size:13.5px}.kw-r:first-child{border-top:0}.kw-r span{color:var(--mute)}.kw-r b{font-weight:600;min-width:0;overflow-wrap:anywhere}.kw-r em{color:var(--warm);font-style:normal}.kw-c{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:4px 0;cursor:pointer;color:var(--ink)}.kw-miss{margin:0 0 8px;color:var(--warm);font-size:13px;font-weight:700}.kw-ok{margin:0 0 8px;color:var(--green);font-size:13px;font-weight:700}`;document.head.appendChild(st)}}
+document.addEventListener("click",async e=>{const b=e.target.closest(".kw-c");if(!b)return;const v=b.dataset.kw;
+  try{await navigator.clipboard.writeText(v)}catch(_){const ta=document.createElement("textarea");ta.value=v;document.body.appendChild(ta);ta.select();try{document.execCommand("copy")}catch(__){}ta.remove()}
+  const o=b.textContent;b.textContent="복사됨";setTimeout(()=>b.textContent=o,1200)});
 /* 증빙 파일 */
 async function listFiles(k){const box=$("#files-"+k);if(!box||!curCase)return;let fs=[],error=null;try{fs=await B.list(curCase.id,k)}catch(x){error=x}
   box.innerHTML=fs.map(f=>`<span class="fpill">${CS.esc(f.mimetype==="application/pdf"?"PDF":"사진")} · ${CS.esc(new Date(f.created_at).toLocaleDateString("ko-KR"))}<button type="button" data-open="${CS.esc(k+"/"+f.name)}">보기</button><button type="button" class="x" data-rm="${CS.esc(k+"/"+f.name)}">삭제</button></span>`).join("")+
