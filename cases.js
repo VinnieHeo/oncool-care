@@ -103,7 +103,7 @@ let B=null,H={saved(){},deleted(){},reverted(){}},curCase=null,curRef={};
 const opt=(arr,v)=>(v&&!arr.includes(v)?[...arr,v]:arr).map(x=>x===""?`<option value=""${!v?" selected":""}>선택</option>`:`<option${x===v?" selected":""}>${x}</option>`).join("");/* 목록에 없는 저장값도 지우지 않게 */
 const opt2=(arr,v)=>arr.map(([x,l])=>`<option value="${x}"${x===v?" selected":""}>${l}</option>`).join("");
 const b8=b=>{if(!/^\d{6}$/.test(b||""))return"";let y=+b.slice(0,2);y+=y>new Date().getFullYear()%100?1900:2000;return `${y}-${b.slice(2,4)}-${b.slice(4,6)}`};
-/* 효율개선: 협회 실적 입력 지원 분야 + 복지관 추가 항목 · 기타는 내용 입력 */
+/* 효율개선: 협회 실적 입력 분야를 앞에, 이어서 복지관 항목 (한 묶음) · 기타는 내용 입력 */
 const EFF=["단열·창호 (뽁뽁이·문풍지)","고효율 LED 조명 교체","친환경 보일러 점검","서큘레이터·선풍기 보급"],EFF2=["열화상 진단","방한 물품","난방기구 수리","외부 집수리 연계","기타"];
 const effHas=(L,x)=>(L||[]).includes(x)||(x===EFF[0]&&(L||[]).includes("방풍·단열 물품"));
 document.addEventListener("change",e=>{const t=e.target;if(!t.matches||!t.matches('[data-eff="기타"]'))return;const l=document.querySelector(".eff-etc");if(l){l.hidden=!t.checked;if(t.checked){const i=l.querySelector("input");if(i)i.focus()}}});
@@ -147,8 +147,7 @@ function openCase(c,r){curCase=c;r=r||{};curRef=r;const e=CS.esc,d=c.docs||{};
      ${CS.DOCS.filter(x=>!(B.worker&&x.k==="confirm")).map(x=>{const v=d[x.k]||{};return `<div class="doc" data-doc="${x.k}"><div class="doc-top"><b>${x.l}${x.req===1?' <span style="color:var(--warm);font-size:12px">필수</span>':typeof x.req==="string"?` <span style="color:var(--amber);font-size:12px">${x.req.slice(1).split("").join("·")}유형 필수</span>`:""}</b>
        <label><input type="checkbox" data-got="${x.k}"${v.got?" checked":""}> 받음</label>${x.dated?`<label>발급일 <input type="date" data-date="${x.k}" value="${e(v.date||"")}"></label>`:""}</div>${x.h?`<small>${x.h}</small>`:""}
        <div class="files" id="files-${x.k}"><span class="dv-empty">불러오는 중…</span></div></div>`}).join("")}</div>
-   <div class="cs-card"><h3>에너지 효율 개선</h3><p class="eff-h">협회 지원 분야</p><div class="cs-checks">${EFF.map(x=>`<label><input type="checkbox" data-eff="${x}"${effHas(c.eff_needs,x)?" checked":""}> ${x}</label>`).join("")}</div>
-     <p class="eff-h">추가 필요사항</p><div class="cs-checks">${EFF2.map(x=>`<label><input type="checkbox" data-eff="${x}"${effHas(c.eff_needs,x)?" checked":""}> ${x}</label>`).join("")}</div>
+   <div class="cs-card"><h3>에너지 효율 개선</h3><div class="cs-checks">${EFF.concat(EFF2).map(x=>`<label><input type="checkbox" data-eff="${x}"${effHas(c.eff_needs,x)?" checked":""}> ${x}</label>`).join("")}</div>
      <label class="eff-etc"${effHas(c.eff_needs,"기타")?"":" hidden"}>기타 필요 내역<input type="text" id="c_eff_etc" maxlength="100" placeholder="필요한 물품이나 수리 내용을 입력해 주세요" value="${e(c.eff_etc||"")}"></label>
      <label style="margin-top:8px">메모<textarea id="c_eff_note" maxlength="1000">${e(c.eff_note||"")}</textarea></label></div>
    <div class="cs-card"${B.worker?" hidden":""}><h3>단계 · 판정</h3>
