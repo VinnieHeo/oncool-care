@@ -57,7 +57,7 @@ function open(k,p,onDone){const f=FORMS[k];if(!f)return;const ans={};let who="�
     <div class="sg-proxy" hidden><input type="text" id="sg_pn" placeholder="대리인 성함" maxlength="20"><input type="text" id="sg_pr" placeholder="대상자와의 관계 (예: 아들)" maxlength="20"></div></div>
    <div class="sg-padw"><div class="sg-padh"><b><span id="sg_nm">${esc(p.name||"")}</span> 님 서명</b><button type="button" class="sg-clr">지우기</button></div>
     <canvas class="sg-pad"></canvas><p class="sg-ph">이 칸에 손가락으로 서명해 주세요</p></div>
-   <p class="sg-meta">서명일 ${new Date().toLocaleDateString("ko-KR")} · 확인자 ${esc(p.visitor||"")} · 서명하면 위 내용에 동의한 것으로 저장돼요</p></div>
+   <p class="sg-meta">서명일 ${new Date().toLocaleDateString("ko-KR")} · 확인자 ${esc(p.visitor||"")} · 서명하면 위 내용에 동의한 것으로 저장됩니다</p></div>
   <div class="sg-foot"><span class="sg-left"></span><button type="button" class="btn sg-ok" disabled>서명 완료</button></div>`;
   document.body.appendChild(ov);document.documentElement.style.overflow="hidden";
   const cv=ov.querySelector(".sg-pad"),ctx=cv.getContext("2d"),ok=ov.querySelector(".sg-ok"),left=ov.querySelector(".sg-left");
@@ -73,7 +73,7 @@ function open(k,p,onDone){const f=FORMS[k];if(!f)return;const ans={};let who="�
   if(window.ResizeObserver){let lw=0;new ResizeObserver(()=>{const r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;if(!r.width||Math.round(r.width*d)===cv.width)return;
     if(!drawn){size();return}const tmp=document.createElement("canvas");tmp.width=cv.width;tmp.height=cv.height;tmp.getContext("2d").drawImage(cv,0,0);cv.width=r.width*d;cv.height=r.height*d;ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(tmp,0,0,cv.width,cv.height);ctx.setTransform(d,0,0,d,0,0);ctx.lineWidth=2.6;ctx.lineCap=ctx.lineJoin="round";ctx.strokeStyle="#111"}).observe(cv)}
   function need(){const qs=f.sec.filter(s=>s.q).map(s=>s.q.k);const miss=qs.filter(k=>!ans[k]).length;return {miss,proxy:who==="대리인"&&!(ov.querySelector("#sg_pn").value.trim()&&ov.querySelector("#sg_pr").value.trim())}}
-  function chk(){const n=need();ok.disabled=!!(n.miss||n.proxy||!drawn);left.textContent=n.miss?`체크할 곳 ${n.miss}개 남음`:n.proxy?"대리인 정보를 적어 주세요":!drawn?"서명을 해 주세요":Object.values(ans).includes("동의하지 않음")?"‘동의하지 않음’이 있어요":"준비됐어요"}
+  function chk(){const n=need();ok.disabled=!!(n.miss||n.proxy||!drawn);left.textContent=n.miss?`체크할 곳 ${n.miss}개 남음`:n.proxy?"대리인 정보를 적어 주세요":!drawn?"서명을 해 주세요":Object.values(ans).includes("동의하지 않음")?"‘동의하지 않음’이 있습니다":"준비되었습니다"}
   ov.addEventListener("input",chk);
   ov.addEventListener("click",e=>{const o=e.target.closest(".sg-o");if(o){const q=o.closest("[data-q]").dataset.q;ans[q]=o.dataset.o;o.parentNode.querySelectorAll(".sg-o").forEach(b=>{const on=b===o;b.classList.toggle("on",on);b.textContent=(on?"☑ ":"☐ ")+b.dataset.o});chk();return}
     const w=e.target.closest("[data-w]");if(w){who=w.dataset.w;ov.querySelectorAll("[data-w]").forEach(b=>b.classList.toggle("on",b===w));ov.querySelector(".sg-proxy").hidden=who!=="대리인";ov.querySelector("#sg_nm").textContent=who==="대리인"?"대리인":p.name||"";chk();return}
@@ -113,5 +113,5 @@ function staffHook(rpcS,tok){const b8=b=>{if(!/^\d{6}$/.test(b||""))return"";let
       box.innerHTML=`<span>✍ 전자서명 ${new Date(m.signed_at).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"numeric",minute:"2-digit"})} · ${m.who==="대리인"?esc(m.proxy_name)+"("+esc(m.proxy_rel)+")":"대상자 본인"} · 확인 ${esc(m.visitor||"")}</span><button type="button" class="upl pri sg-prbtn">서명본 출력</button>`;
       const top=d.querySelector(".doc-top");(top||d).after(box);
       box.querySelector("button").onclick=async()=>{const w=window.open("","_blank");if(w)w.document.write("<p style='font-family:sans-serif;padding:20px'>불러오는 중…</p>");
-        try{const rec=await rpcS("oncool_ed_sign",{p_token:tok(),p_case:c.id,p_form:k});print(k,rec,p,w)}catch(e){if(w)w.close();alert("서명본을 불러오지 못했어요: "+e.message)}}})}catch(e){console.error(e)}return x}}
+        try{const rec=await rpcS("oncool_ed_sign",{p_token:tok(),p_case:c.id,p_form:k});print(k,rec,p,w)}catch(e){if(w)w.close();alert("서명본을 불러오지 못했습니다: "+e.message)}}})}catch(e){console.error(e)}return x}}
 return {FORMS,open,print,printHTML,staffHook,PCSS}})();
