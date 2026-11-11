@@ -71,7 +71,8 @@ function go(i){cur=Math.max(0,Math.min(5,i));document.querySelectorAll(".wz-pane
   const dot=document.querySelectorAll(".wz-dot")[cur];if(dot)dot.scrollIntoView({inline:"center",block:"nearest"})}
 
 function build(c,r){const form=$("#cedit .cs-form");if(!form||document.getElementById("c_pdf"))return;/* 추천자 화면만 */
-  P={name:r&&r.elder_name,birth:c.v_birth||"",addr:(r&&r.address||"").replace(" | ",", "),phone:r&&r.phone||"",size:c.v_household_size||"",visitor:c.visitor||(r&&r.worker_name)||""};
+  const rb=/^\d{6}$/.test((r&&r.birth)||"")?r.birth:"",rb8=rb?((+rb.slice(0,2)>new Date().getFullYear()%100?"19":"20")+rb.slice(0,2)+"-"+rb.slice(2,4)+"-"+rb.slice(4)):"";
+  P={name:r&&r.elder_name,birth:c.v_birth||rb8,bb:rb||(c.v_birth||"").replace(/-/g,"").slice(2),addr:(r&&r.address||"").replace(" | ",", "),phone:r&&r.phone||"",size:c.v_household_size||"",visitor:c.visitor||(r&&r.worker_name)||""};
   SIGS=Object.assign({},c.signs||{});CID=c.id;CC=c;
   const cards=[...form.querySelectorAll(":scope>.cs-card")],byH=t=>cards.find(x=>(x.querySelector("h3")||{}).textContent?.startsWith(t));
   const visit=byH("가정방문"),energy=byH("에너지 상담"),docs=byH("증빙 서류"),eff=byH("에너지 효율");
@@ -93,6 +94,7 @@ function build(c,r){const form=$("#cedit .cs-form");if(!form||document.getElemen
   $("#wz_next").onclick=()=>{const from=cur;$("#c_save").click();if(cur<5)go(cur+1);
     if(from===2||from===3){const m=missing().filter(x=>x[2]===from);if(m.length)toast(`아직 없는 서류: ${m.map(x=>x[1]).join(", ")}\n나중에 받아서 올려도 돼요`)}};
   try{members(c)}catch(err){console.error(err)}
+  {const hp=$("#c_hi_premium");if(hp){const row=hp.closest(".cs-row2")||hp.closest("label");row.style.display="none"}}/* 건보료는 증빙으로 확인 · 관리 화면에서 입력 */
   cur=0;go(stepDone(0)&&stepDone(1)?2:0)}
 
 /* 추천서 내용: 가정방문 화면 맨 위에 접어서 (보기만) */
@@ -107,7 +109,8 @@ function refCard(r){const e=CS.esc,v=x=>Array.isArray(x)?x.join(", "):(x??""),d=
 const REL=["본인","배우자","아들","딸","며느리","사위","손자녀","아버지","어머니","형제자매","기타"];
 function members(c){const ta=$("#c_members");if(!ta||ta.dataset.mx)return;ta.dataset.mx=1;const lab=ta.closest("label");
   const parse=t=>(t||"").split(/\s*\/\s*|\n/).map(x=>x.trim()).filter(Boolean).map(x=>{const m=x.match(/^(\S+)\s+(\d{2,4}[.\-]?\d{1,2}[.\-]?\d{1,2})?\s*(\S+)?$/);return m?{n:m[1],b:(m[2]||"").replace(/[.\-]/g,""),r:m[3]||""}:{n:x,b:"",r:""}});
-  let L=parse(ta.value);if(!L.length)L=[{n:P.name||"",b:(c.v_birth||"").replace(/-/g,"").slice(2),r:"본인"}];
+  let L=parse(ta.value);if(!L.length)L=[{n:P.name||"",b:P.bb||"",r:"본인"}];
+  else L.forEach(x=>{if(x.r==="본인"&&!x.b)x.b=P.bb||""});/* 본인 생년월일은 추천서에서 */
   const box=document.createElement("div");box.className="mx";lab.after(box);lab.hidden=true;
   const fmtB=b=>{b=b.replace(/\D/g,"");if(b.length===8)return b.slice(0,4)+"."+b.slice(4,6)+"."+b.slice(6);if(b.length===6){let y=+b.slice(0,2);y+=y>new Date().getFullYear()%100?1900:2000;return y+"."+b.slice(2,4)+"."+b.slice(4)}return b};
   function sync(){ta.value=L.filter(x=>x.n.trim()).map(x=>[x.n.trim(),fmtB(x.b),x.r].filter(Boolean).join(" ")).join(" / ");ta.dispatchEvent(new Event("input",{bubbles:true}));box.querySelector(".mx-n").textContent=L.filter(x=>x.n.trim()).length+"명"}
