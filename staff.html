@@ -49,6 +49,48 @@ body.embed #login .err{width:100%}
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="theme.css?v=1">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="logo-96.png"><meta name="theme-color" content="#4a63e7"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="온앤쿨 관리">
+<style>
+.ntop{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;margin:4px 0 12px;position:relative}
+.push{display:flex;flex-direction:column;gap:2px;background:var(--surface);border-radius:14px;padding:9px 14px;box-shadow:var(--lift);position:relative;padding-left:30px}
+.push b{font-size:13.5px}.push small{font-size:12px;color:var(--mute)}
+.pdot{position:absolute;left:13px;top:14px;width:9px;height:9px;border-radius:50%;background:#16a06a;box-shadow:0 0 0 4px #16a06a22}
+.due{display:flex;flex-direction:column;gap:3px;background:var(--surface);border-radius:14px;padding:7px 12px;box-shadow:var(--lift)}
+.due label{font-size:11.5px;color:var(--mute);font-weight:700}.due input{padding:4px 8px;font-size:13px}
+.bell{position:relative;width:46px;height:46px;border-radius:14px;border:0;background:var(--grad);color:#fff;box-shadow:var(--glow);display:grid;place-items:center;cursor:pointer}
+.bell i{position:absolute;top:-5px;right:-5px;font-style:normal;font-size:11px;font-weight:800;background:#e0603a;color:#fff;border-radius:999px;min-width:19px;height:19px;display:grid;place-items:center;border:2px solid var(--bg)}
+.npanel{position:absolute;right:0;top:54px;width:min(380px,92vw);background:var(--surface);border-radius:18px;box-shadow:var(--lift2);padding:8px;z-index:20;display:flex;flex-direction:column;gap:4px;border:1px solid var(--line)}
+.nh{display:flex;justify-content:space-between;align-items:center;padding:6px 8px}
+.ni{all:unset;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"t m" "t a";gap:2px 10px;padding:9px 10px;border-radius:12px}
+.ni:hover,.ni:focus-visible{background:var(--soft)}.ni.new{background:color-mix(in srgb,var(--pri) 6%,var(--surface))}
+.ni .nt{grid-area:t;font-size:11px;font-weight:800;border-radius:8px;padding:3px 7px;background:var(--soft);color:var(--mute);align-self:start;white-space:nowrap}
+.nt.k-w{background:var(--warm-soft);color:var(--warm)}.nt.k-g{background:var(--green-soft);color:var(--green)}.nt.k-b{background:var(--cool-soft);color:var(--pri)}
+.ni .nm{grid-area:m;font-size:13px;font-weight:600}.ni small{grid-area:a;font-size:11.5px;color:var(--mute)}
+.ni.new .nm::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#e0603a;margin-left:6px;vertical-align:middle}
+.nnew{font-size:10.5px;font-weight:800;color:#fff;background:#e0603a;border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:middle}
+.vchips{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
+.vchips span{font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px}
+.vm{background:var(--soft);color:var(--mute)}.vm.m-동행{background:var(--violet-soft);color:var(--violet)}.vm.m-복지관{background:var(--cool-soft);color:var(--pri)}
+.vr{background:#e0603a;color:#fff}.vd{background:var(--green-soft);color:var(--green)}
+.vmode{margin:12px 0;display:flex;flex-direction:column;gap:10px}
+.vrow{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}.vrow>b{font-size:14px}.vrow small{color:var(--mute);font-size:12px}
+.seg{display:inline-flex;background:var(--soft);border-radius:12px;padding:3px;gap:2px;border:1px solid var(--line)}
+.seg button{border:0;background:none;font:inherit;font-size:13px;font-weight:700;color:var(--mute);padding:6px 12px;border-radius:9px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--pri);box-shadow:0 1px 3px rgba(23,33,79,.12)}
+.vreq{background:var(--warm-soft);border:1px solid color-mix(in srgb,var(--warm) 35%,transparent);border-radius:14px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.vreq span{font-size:11.5px;font-weight:800;color:var(--warm)}.vreq b{grid-column:1;font-size:14.5px}.vreq div{grid-column:2;grid-row:1/3;display:flex;gap:6px;flex-wrap:wrap}
+.vok{background:var(--green-soft);color:var(--green);border-radius:12px;padding:9px 12px;font-size:13.5px}
+.sms{background:var(--soft);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;border:1px solid var(--line)}
+.sms select{padding:5px 9px;font-size:13px;width:auto!important}.sms textarea{font-size:13px;line-height:1.5;width:100%;box-sizing:border-box}
+.srow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.srow small{color:var(--mute);font-size:12px}
+a.sbtn{text-decoration:none;display:inline-block}
+@media (max-width:640px){.ntop{grid-template-columns:minmax(0,1fr) auto}.due{grid-column:1/-1;grid-row:2;flex-direction:row;align-items:center;justify-content:space-between}.vreq{grid-template-columns:1fr}.vreq div{grid-column:1;grid-row:auto;margin-top:6px}}
+#smsLen{font-weight:800;color:var(--green)!important}#smsLen.long{color:var(--amber)!important}
+.pdot.off{background:#a3a9b8;box-shadow:0 0 0 4px #a3a9b822}
+.push{flex-direction:row;flex-wrap:wrap;align-items:center;gap:2px 10px}.push small{flex-basis:100%}.push .sbtn,.push .linkbtn{margin-left:auto}
+.push small{order:3}
+.nh small{font-weight:400;color:var(--mute);font-size:11.5px;margin-left:4px}
+</style>
 </head><body><div class="wrap">
 <div class="eyebrow">온앤쿨케어 · 복지관 내부 열람용</div>
 <h1>대상가구 추천 · 선정 관리</h1>
@@ -166,6 +208,77 @@ CSE.init({
   async remove(cid,path){await efn({action:"remove",case_id:cid,path})},
   async revert(cid){try{await efn({action:"purge",case_id:cid})}catch(e){}await rpcS("oncool_ed_case_revert",{p_token:ETOK,p_case:cid})}
 },{reverted(c){CASES=CASES.filter(x=>x.id!==c.id);const r=rows.find(x=>x.id===c.referral_id);if(r){r.status="접수";r.household_code=null}$("#ccnt").textContent=CASES.length?`(${CASES.length})`:"";renderCases();render();vtab("ref");if(r)openD(r.id)},saved(c){const r=rows.find(x=>x.id===c.referral_id);if(r){r.status={"선정":"선정","탈락":"제외","보류":"보류"}[c.stage]||"검토중";r.household_code=c.household_code}renderCases();render()}});
+/* 방문 방식 · 알림함 · 휴대폰 알림 · 추천자 문자 (2026-11-11) */
+const PFN=SB+"/functions/v1/oncool-push";
+let NOTIS=[],DUE="",PUSHN=0;
+{const _rs=rpcS;rpcS=async function(fn,b){const r=await _rs(fn,b);if(fn==="oncool_ed_data"&&r){NOTIS=r.notis||[];DUE=r.due||"";PUSHN=r.push_subs||0}return r}}
+try{const u=new URLSearchParams(location.search);if(u.get("case")||u.get("ref")){sessionStorage.setItem("oc_goto",JSON.stringify({c:u.get("case")||"",r:u.get("ref")||""}));history.replaceState(null,"",location.pathname)}}catch(e){}
+const NMODE=[["추천자","추천자 방문"],["동행","동행"],["복지관","복지관 방문"]];
+const nmask=n=>(n||"").slice(0,1)+"○○",nmd=d=>d?Number(d.slice(5,7))+"/"+Number(d.slice(8,10)):"",ntime=t=>{const d=new Date(t),n=new Date();const hm=d.toTimeString().slice(0,5);return d.toDateString()===n.toDateString()?"오늘 "+hm:(d.getMonth()+1)+"/"+d.getDate()+" "+hm};
+const pushOK=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
+async function pfn(b){const r=await fetch(PFN,{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify(Object.assign({token:ETOK},b))});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||("HTTP "+r.status));return j}
+const u8=s=>{const p="=".repeat((4-s.length%4)%4),b=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(b,c=>c.charCodeAt(0))};
+let SWREG=null;if(pushOK())navigator.serviceWorker.register("sw.js").then(r=>{SWREG=r;pushBox()}).catch(()=>{});
+async function mySub(){try{const r=SWREG||await navigator.serviceWorker.getRegistration();return r?await r.pushManager.getSubscription():null}catch(e){return null}}
+async function pushBox(){const el=$("#npush");if(!el)return;
+  if(!pushOK()){const ios=/iP(hone|ad|od)/.test(navigator.userAgent);el.innerHTML=`<span class="pdot off"></span><b>이 기기에서는 알림을 켤 수 없어요</b><small>${ios?"아이폰은 사파리에서 ‘홈 화면에 추가’한 아이콘으로 열면 켤 수 있어요":"크롬이나 사파리 최신 버전에서 열어 주세요"}</small>`;return}
+  const s=await mySub(),on=s&&Notification.permission==="granted";
+  el.innerHTML=on?`<span class="pdot"></span><b>이 기기 알림 켜짐</b><small>새 추천 · 방문 요청 · 다 했어요는 바로, 서류·방문일·수정은 저녁 6시에 묶어서</small><button type="button" class="linkbtn" id="poff">끄기</button>`
+    :Notification.permission==="denied"?`<span class="pdot off"></span><b>알림이 차단돼 있어요</b><small>휴대폰 설정 → 알림에서 이 앱(또는 브라우저) 알림을 허용해 주세요</small>`
+    :`<span class="pdot off"></span><b>이 기기 알림 꺼짐</b><small>새 추천이나 추천자 요청이 오면 휴대폰으로 알려 드려요</small><button type="button" class="sbtn pri" id="pon">이 기기에서 알림 켜기</button>`;
+  if($("#pon"))$("#pon").onclick=async()=>{const b=$("#pon");b.disabled=true;b.textContent="켜는 중…";
+    try{const p=await Notification.requestPermission();if(p!=="granted"){pushBox();return}
+      const reg=SWREG||await navigator.serviceWorker.register("sw.js");await navigator.serviceWorker.ready;const {key}=await pfn({action:"key"});
+      const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(key)});
+      await pfn({action:"subscribe",sub:sub.toJSON()});pushBox()}
+    catch(x){b.disabled=false;b.textContent="다시 시도";alert(/session/.test(x.message)?"편집 시간이 끝났어요. 다시 들어와 주세요.":"알림을 켜지 못했어요: "+x.message)}};
+  if($("#poff"))$("#poff").onclick=async()=>{const s=await mySub();if(s){try{await pfn({action:"unsubscribe",endpoint:s.endpoint})}catch(e){}await s.unsubscribe()}pushBox()}}
+function ntop(){let d=$("#ntop");if(!ETOK){if(d)d.remove();return}
+  if(!d){d=document.createElement("div");d.id="ntop";d.className="ntop";$("#app").prepend(d)}
+  const un=NOTIS.filter(x=>!x.read_at).length;
+  d.innerHTML=`<div class="push" id="npush"></div>
+  <div class="due"><label for="dueIn">이번 차수 서류 마감</label><input type="date" id="dueIn" value="${esc(DUE)}"></div>
+  <button type="button" class="bell" id="bell" aria-expanded="false" aria-label="알림 ${un}건"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${un?`<i>${un}</i>`:""}</button>
+  <div class="npanel" id="npanel" hidden><div class="nh"><b>알림 <small>최근 30일</small></b>${un?'<button type="button" class="linkbtn" id="nread">모두 읽음</button>':""}</div>${NOTIS.length?NOTIS.map(x=>`<button type="button" class="ni ${x.read_at?"":"new"}" data-nc="${esc(x.case_id||"")}" data-nr="${esc(x.referral_id||"")}"><span class="nt k-${x.kind==="방문 요청"?"w":x.kind==="다 했어요"?"g":x.kind==="새 추천"?"b":""}">${esc(x.kind)}</span><span class="nm">${esc(x.msg)}</span><small>${ntime(x.at)}</small></button>`).join(""):'<p class="hint" style="margin:8px">아직 알림이 없어요.</p>'}</div>`;
+  pushBox();
+  $("#bell").onclick=()=>{const p=$("#npanel");p.hidden=!p.hidden;$("#bell").setAttribute("aria-expanded",!p.hidden)};
+  if($("#nread"))$("#nread").onclick=async()=>{try{await rpcS("oncool_ed_notis_read",{p_token:ETOK});const t=new Date().toISOString();NOTIS.forEach(x=>x.read_at=x.read_at||t);ntop();ndecor()}catch(e){}};
+  $("#dueIn").onchange=async ev=>{const v=ev.target.value;try{await rpcS("oncool_ed_due",{p_token:ETOK,p_date:v||null});DUE=v;ev.target.style.borderColor="var(--green)"}catch(e){ev.target.style.borderColor="var(--warm)"}};
+  d.querySelector("#npanel").addEventListener("click",ev=>{const b=ev.target.closest(".ni");if(!b)return;$("#npanel").hidden=true;ngo(b.dataset.nc,b.dataset.nr)})}
+function ngo(cid,rid){if(cid&&CASES.find(x=>x.id===cid)){vtab("case");const tr=document.querySelector(`#clist tr[data-cid="${cid}"]`);if(tr){tr.click();setTimeout(()=>$("#cedit").scrollIntoView({block:"start"}),100)}return}
+  if(rid&&rows.find(x=>x.id===rid)){vtab("ref");openD(rid);setTimeout(()=>{const d=$("#detail");if(d&&!d.hidden)d.scrollIntoView({block:"start"})},100)}}
+function ndecor(){
+  document.querySelectorAll("#clist tr[data-cid]").forEach(tr=>{const c=CASES.find(x=>x.id===tr.dataset.cid);if(!c)return;const td=tr.children[1];const old=td.querySelector(".vchips");if(old)old.remove();const m=c.visit_mode||"추천자";
+    td.insertAdjacentHTML("beforeend",`<span class="vchips"><span class="vm m-${m}">${NMODE.find(x=>x[0]===m)[1]}</span>${c.visit_req?`<span class="vr">요청: ${esc(c.visit_req)}</span>`:""}${c.w_done_at?'<span class="vd">추천자 완료</span>':""}</span>`)});
+  const nw=new Set(NOTIS.filter(x=>!x.read_at&&x.kind==="새 추천").map(x=>x.referral_id));
+  document.querySelectorAll("#tb tr[data-id]").forEach(tr=>{if(nw.has(tr.dataset.id)&&!tr.querySelector(".nnew"))tr.children[2].insertAdjacentHTML("beforeend",' <span class="nnew">NEW</span>')})}
+{const _rc=renderCases;renderCases=function(){_rc();ndecor()};const _r=render;render=function(){_r();ndecor()}}
+const NTPL={"방문 요청":(r,c)=>`[온앤쿨케어] ${r.worker_name||""} 선생님, 추천하신 ${nmask(r.elder_name)} 님(접수 ${r.receipt_no}번) 가구가 선정 심사 대상이 됐어요. ${(c.visit_mode||"추천자")==="추천자"?"가정방문 후 서류를 ":(c.visit_mode==="동행"?"복지관 담당자와 함께 방문 부탁드려요. 서류는 ":"복지관이 방문해요. 서류는 ")}${DUE?nmd(DUE)+"까지 ":""}올려 주세요.\nhttps://vinnieheo.github.io/oncool-care/`,
+ "선정 안내":(r)=>`[온앤쿨케어] ${r.worker_name||""} 선생님, 추천하신 ${nmask(r.elder_name)} 님(접수 ${r.receipt_no}번) 가구가 지원 대상으로 선정됐어요. 고맙습니다. 첫 지원금은 11/23에 들어가요.`,
+ "보류 안내":(r)=>`[온앤쿨케어] ${r.worker_name||""} 선생님, 추천하신 ${nmask(r.elder_name)} 님(접수 ${r.receipt_no}번) 가구는 이번 심사에서 보류됐어요. 자세한 내용은 담당자에게 문의해 주세요.`};
+const nbytes=t=>[...t].reduce((n,ch)=>n+(ch.charCodeAt(0)<128?1:2),0);
+const smsHref=(ph,body)=>`sms:${(ph||"").replace(/[^0-9]/g,"")}?&body=${encodeURIComponent(body)}`;
+function nblock(c){const r=rows.find(x=>x.id===c.referral_id)||{};const el=document.createElement("div");el.className="vmode";
+  const draw=()=>{const m=c.visit_mode||"추천자",tk=el.dataset.tk||(c.stage==="선정"?"선정 안내":["보류","탈락"].includes(c.stage)?"보류 안내":"방문 요청"),body=NTPL[tk](r,c),n=nbytes(body);
+    el.innerHTML=`<div class="vrow"><b>방문 방식</b><div class="seg" role="group" aria-label="방문 방식">${NMODE.map(([k,l])=>`<button type="button" data-vm="${k}" aria-pressed="${m===k}">${l}</button>`).join("")}</div><small>기본은 추천자 방문이에요. 바꾸면 추천자 화면 안내가 바로 바뀌어요.</small></div>
+    ${c.visit_req?`<div class="vreq"><span>추천자 요청 · ${ntime(c.visit_req_at)}</span><b>‘${esc(c.visit_req)}’</b><div><button type="button" class="sbtn pri" data-acc="1">요청대로 바꾸기</button><button type="button" class="sbtn" data-rej="1">추천자 방문 유지</button></div></div>`:""}
+    ${c.w_done_at?`<div class="vok">추천자가 <b>방문·서류 다 했어요</b>를 눌렀어요 · ${ntime(c.w_done_at)}</div>`:""}
+    <div class="sms"><div class="vrow"><b>추천자에게 문자</b><select id="smsT" aria-label="문구 종류">${Object.keys(NTPL).map(k=>`<option${k===tk?" selected":""}>${k}</option>`).join("")}</select><small>${esc(r.worker_name||"")} · ${esc(r.worker_phone||"번호 없음")}</small></div>
+    <textarea id="smsB" rows="4" aria-label="문자 내용">${esc(body)}</textarea>
+    <div class="srow">${r.worker_phone?`<a class="sbtn pri" id="smsGo" href="${smsHref(r.worker_phone,body)}">문자 앱 열기</a>`:'<span class="hint" style="margin:0">추천자 번호가 없어요</span>'}<small id="smsLen" class="${n>90?"long":""}">${n<=90?"단문 · "+n+"/90바이트":"장문 문자로 나가요"}</small><small>휴대폰에서 누르면 문구가 채워진 문자 창이 열려요. 대상자 이름은 가려서 보내요.</small></div></div>`};
+  const setMode=async(mode)=>{try{const nc=await rpcS("oncool_ed_case_mode",{p_token:ETOK,p_case:c.id,p_mode:mode});Object.assign(c,{visit_mode:nc.visit_mode,visit_req:nc.visit_req,visit_req_at:nc.visit_req_at});draw();renderCases()}catch(x){alert2(x)}};
+  draw();
+  el.addEventListener("click",ev=>{const b=ev.target.closest("[data-vm]");if(b){setMode(b.dataset.vm);return}
+    if(ev.target.closest("[data-acc]")){setMode(c.visit_req==="같이 가 주세요"?"동행":"복지관");return}
+    if(ev.target.closest("[data-rej]"))setMode(c.visit_mode||"추천자")});
+  el.addEventListener("change",ev=>{if(ev.target.id==="smsT"){el.dataset.tk=ev.target.value;draw()}});
+  el.addEventListener("input",ev=>{if(ev.target.id!=="smsB")return;const v=ev.target.value,n=nbytes(v),L=el.querySelector("#smsLen");L.textContent=n<=90?"단문 · "+n+"/90바이트":"장문 문자로 나가요";L.classList.toggle("long",n>90);const g=el.querySelector("#smsGo");if(g)g.href=smsHref(r.worker_phone,v)});
+  return el}
+{const _o=CSE.open;CSE.open=function(c,r){_o.apply(this,arguments);if(!ETOK)return;const s=$("#cedit .dv-sub");if(s&&!$("#cedit .vmode"))s.after(nblock(CASES.find(x=>x.id===c.id)||c))}}
+{const _ld=loadEd;loadEd=async function(){await _ld();ntop();ndecor();try{const g=JSON.parse(sessionStorage.getItem("oc_goto")||"null");if(g){sessionStorage.removeItem("oc_goto");ngo(g.c,g.r)}}catch(e){}}}
+{const _out=$("#out").onclick;$("#out").onclick=function(){const d=$("#ntop");if(d)d.remove();return _out.apply(this,arguments)}}
+document.addEventListener("click",e=>{const p=$("#npanel");if(p&&!p.hidden&&!e.target.closest("#npanel,#bell"))p.hidden=true});
+
 if(ETOK)loadEd().catch(()=>{ETOK="";try{sessionStorage.removeItem("oc_etok")}catch(e){}});
 /* 공개 숫자 (이름 없음) */
 function pub(){fetch(SB+"/rest/v1/rpc/oncool_stats",{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:"{}"}).then(r=>r.json()).then(st=>{
