@@ -39,7 +39,7 @@ function bodyHTML(f,ans,interactive,p){let h="";
   if(f.info){const v=x=>esc(x||"");h+=`<h4>■ 대상자</h4><table class="sg-kv4"><tr><th>성명</th><td>${v(p.name)}</td><th>생년월일</th><td>${v(p.birth)}</td></tr><tr><th>주소</th><td colspan="3">${v(p.addr)}</td></tr><tr><th>연락처</th><td>${v(p.phone)}</td><th>가구원 수</th><td>${v(p.size)}${p.size?" 명":""}</td></tr><tr><th>지원 기간</th><td colspan="3">2026. 11. ~ 2027. 8.</td></tr></table>`}
   if(f.intro)h+=`<p>${esc(f.intro)}</p>`;
   f.sec.forEach(s=>{h+=`<h4>${esc(s.h)}</h4>`;if(s.p)h+=`<p class="ind">${esc(s.p)}</p>`;
-    if(s.tb)h+=`<div class="sg-tw"><table class="sg-tb"><tr>${s.tb[0].map(x=>`<th>${esc(x)}</th>`).join("")}</tr>${s.tb.slice(1).map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join("")}</tr>`).join("")}</table></div>`;
+    if(s.tb)h+=`<div class="sg-tw"><table class="sg-tb"><tr>${s.tb[0].map(x=>`<th>${esc(x)}</th>`).join("")}</tr>${s.tb.slice(1).map(r=>`<tr>${r.map((x,j)=>`<td data-l="${esc(s.tb[0][j])}">${esc(x)}</td>`).join("")}</tr>`).join("")}</table></div>`;
     if(s.kv)h+=`<table class="sg-kv">${s.kv.map(([a,b])=>`<tr><th>${esc(a)}</th><td>${esc(b).replace(/\n/g,"<br>")}</td></tr>`).join("")}</table>`;
     if(s.li)h+=`<ul>${s.li.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
     if(s.ol)h+=`<ol>${s.ol.map(x=>`<li>${x}</li>`).join("")}</ol>`;
@@ -63,10 +63,15 @@ function open(k,p,onDone){const f=FORMS[k];if(!f)return;const ans={};let who="�
   const cv=ov.querySelector(".sg-pad"),ctx=cv.getContext("2d"),ok=ov.querySelector(".sg-ok"),left=ov.querySelector(".sg-left");
   function size(){const r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);ctx.lineWidth=2.6;ctx.lineCap=ctx.lineJoin="round";ctx.strokeStyle="#111";drawn=false;ov.querySelector(".sg-ph").hidden=false;chk()}
   requestAnimationFrame(size);
-  let last=null;cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);const r=cv.getBoundingClientRect();last=[e.clientX-r.left,e.clientY-r.top];e.preventDefault()});
+  let last=null;cv.addEventListener("pointerdown",e=>{const r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;if(!drawn&&Math.round(r.width*d)!==cv.width)size();try{cv.setPointerCapture(e.pointerId)}catch(_){}last=[e.clientX-r.left,e.clientY-r.top];ctx.beginPath();ctx.arc(last[0],last[1],1.2,0,7);ctx.fillStyle="#111";ctx.fill();e.preventDefault()});
   cv.addEventListener("pointermove",e=>{if(!last)return;const r=cv.getBoundingClientRect(),pt=[e.clientX-r.left,e.clientY-r.top];ctx.beginPath();ctx.moveTo(...last);ctx.lineTo(...pt);ctx.stroke();last=pt;if(!drawn){drawn=true;ov.querySelector(".sg-ph").hidden=true;chk()}});
   ["pointerup","pointercancel"].forEach(t=>cv.addEventListener(t,()=>last=null));
   cv.style.touchAction="none";
+  /* 아이폰: 서명칸에서 손가락이 화면 스크롤·글자 선택으로 새지 않게 */
+  ["touchstart","touchmove"].forEach(t=>cv.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+  /* 칸 크기가 늦게 바뀌면 다시 맞추기 (그린 건 비율대로 옮김) */
+  if(window.ResizeObserver){let lw=0;new ResizeObserver(()=>{const r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;if(!r.width||Math.round(r.width*d)===cv.width)return;
+    if(!drawn){size();return}const tmp=document.createElement("canvas");tmp.width=cv.width;tmp.height=cv.height;tmp.getContext("2d").drawImage(cv,0,0);cv.width=r.width*d;cv.height=r.height*d;ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(tmp,0,0,cv.width,cv.height);ctx.setTransform(d,0,0,d,0,0);ctx.lineWidth=2.6;ctx.lineCap=ctx.lineJoin="round";ctx.strokeStyle="#111"}).observe(cv)}
   function need(){const qs=f.sec.filter(s=>s.q).map(s=>s.q.k);const miss=qs.filter(k=>!ans[k]).length;return {miss,proxy:who==="대리인"&&!(ov.querySelector("#sg_pn").value.trim()&&ov.querySelector("#sg_pr").value.trim())}}
   function chk(){const n=need();ok.disabled=!!(n.miss||n.proxy||!drawn);left.textContent=n.miss?`체크할 곳 ${n.miss}개 남음`:n.proxy?"대리인 정보를 적어 주세요":!drawn?"서명을 해 주세요":Object.values(ans).includes("동의하지 않음")?"‘동의하지 않음’이 있어요":"준비됐어요"}
   ov.addEventListener("input",chk);
