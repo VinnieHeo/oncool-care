@@ -191,3 +191,5 @@ label.upl{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
 .refb{padding:0 14px 14px;border-top:1px dashed var(--line)}.refb h4{font-size:12.5px;color:var(--pri);margin:12px 0 4px}.refb p{margin:0;font-size:14px;line-height:1.6;white-space:pre-wrap}
 .refb dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:12px 0 0;padding:10px 12px;background:var(--soft);border-radius:12px;font-size:13.5px}.refb dt{color:var(--mute)}.refb dd{margin:0;font-weight:600}
 .refb .refn{margin-top:10px;font-size:12.5px;color:var(--amber);font-weight:700}
+/* 입력칸 누를 때 화면 확대 막기 (iOS는 16px 미만이면 확대) */
+@media (max-width:820px){input,select,textarea{font-size:16px!important}}
