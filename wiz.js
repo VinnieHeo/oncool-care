@@ -61,7 +61,7 @@ function review(){const r=$("#wz_rev");if(!r)return;
   const m=missing(),bt=$(".wz-tell"),ms=$("#wz_miss"),af=$(".wz-after"),mode=(CC&&CC.visit_mode)||"추천자",done=CC&&CC.w_done_at;
   if(done){bt.disabled=true;bt.textContent="제출했어요 · 복지관 확인 중";ms.innerHTML="";af.hidden=false;af.textContent="고칠 게 있으면 복지관 담당자에게 말씀해 주세요."}
   else if(mode==="복지관"&&!window.__asVisitor){bt.hidden=true;ms.innerHTML='<p class="wz-ok">복지관이 방문하는 가구라 제출할 필요가 없어요. 아는 내용만 적어 주세요.</p>'}
-  else{bt.disabled=!!m.length;ms.innerHTML=m.length?`<div class="wz-miss"><b>아직 없는 필수 항목 ${m.length}개</b>${m.map(([k,l,st])=>`<button type="button" data-go="${st}">${l}<span>${st===2?"3단계":"4단계"} ›</span></button>`).join("")}</div>`:'<p class="wz-ok">✓ 필수 서류와 서명이 다 있어요. 제출할 수 있어요.</p>'}
+  else{bt.hidden=false;bt.disabled=!!m.length;bt.textContent="제출하기";af.hidden=true;ms.innerHTML=m.length?`<div class="wz-miss"><b>아직 없는 필수 항목 ${m.length}개</b>${m.map(([k,l,st])=>`<button type="button" data-go="${st}">${l}<span>${st===2?"3단계":"4단계"} ›</span></button>`).join("")}</div>`:'<p class="wz-ok">✓ 필수 서류와 서명이 다 있어요. 제출할 수 있어요.</p>'}
   {const nx=$("#wz_next");if(nx&&cur===5){nx.disabled=!!(bt.disabled||bt.hidden);nx.textContent=bt.hidden?"제출할 필요 없어요":bt.textContent}}
   r.innerHTML=STEPS.slice(0,5).map(([t],i)=>{const ok=stepDone(i),opt=i===4;return `<button type="button" class="wz-ri${ok?" ok":opt?" skip":""}" data-go="${i}"><i>${ok?"✓":i+1}</i><span><b>${t}</b><small>${ok?(i===2?"업로드 완료":i===3?"서명 완료":"입력 완료"):opt?"해당 없으면 넘어가도 돼요":i===2?`필수 서류 ${cnt(QUAL).join("/")}`:i===3?`서명 ${cnt(SIGNABLE).join("/")}`:"아직 비어 있어요"}</small></span><em>${ok?"":"채우기 ›"}</em></button>`}).join("")}
 
@@ -166,6 +166,7 @@ async function submit(bt){if(missing().length){review();return}bt.disabled=true;
   try{const r=await rpc("oncool_w_done",{p_token:TOKEN,p_case:CID});Object.assign(CC,r||{w_done_at:new Date().toISOString()});review();toast("제출했어요. 복지관이 확인하고 연락드려요.")}
   catch(err){bt.disabled=false;bt.textContent="제출하기";mir(bt);alert(/session/.test(err.message)?"다시 들어와 주세요.":/missing/.test(err.message)?"필수 서류나 서명이 빠져 있어요.":"제출하지 못했어요. 잠시 뒤에 다시 해 주세요.")}}
 document.addEventListener("change",e=>{if(e.target.closest(".wz-on"))refresh()});
+document.addEventListener("cs:saved",e=>{const c=e.detail;if(!CC||!c||c.id!==CC.id)return;if(c!==CC)Object.assign(CC,c);refresh();if(cur===5)review()});
 document.addEventListener("input",e=>{if(e.target.closest(".wz-on"))refresh()});
 setInterval(()=>{if($(".wz-on"))document.querySelectorAll(".wz-pane .doc").forEach(paint)},1200);
 const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,arguments);try{build(c,r||{})}catch(err){console.error(err)}return x};
