@@ -18,6 +18,41 @@
 <link rel="stylesheet" href="common.css?v=13">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="theme.css?v=1">
+<style>/* 추천자 할 일 표시 */
+
+#hlist{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.hsum{background:linear-gradient(135deg,#ff8a5b,#e0603a);color:#fff;border-radius:16px;padding:12px 16px;display:flex;flex-direction:column;gap:2px;box-shadow:0 12px 24px -14px rgba(224,96,58,.9)}
+.hsum b{font-size:16px}.hsum span{font-size:13px;opacity:.95}
+.hr{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--lift);overflow:hidden}
+.hrb{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto 14px;grid-template-areas:"n b g" "s s g";gap:4px 8px;padding:12px 14px 12px 16px;border-left:5px solid var(--line);align-items:center}
+.hrb:focus-visible{outline:3px solid var(--pri);outline-offset:-3px}
+.hn{grid-area:n;display:flex;gap:6px;align-items:baseline;min-width:0}.hn b{font-size:16px}.hn small{color:var(--mute);font-size:13px}
+.hbdg{grid-area:b;font-size:12.5px;font-weight:800;border-radius:999px;padding:3px 10px;background:var(--soft);color:var(--mute);white-space:nowrap}
+.hs{grid-area:s;font-size:12.5px;color:var(--mute)}
+.hgo{grid-area:g;font-size:22px;color:var(--mute);line-height:1}
+.k-todo{border-color:color-mix(in srgb,var(--warm) 45%,var(--line));background:linear-gradient(90deg,var(--warm-soft),var(--surface) 70%)}
+.k-todo .hrb{border-left-color:var(--warm)}.k-todo .hbdg{background:var(--warm);color:#fff}.k-todo .hs{color:var(--ink);font-weight:600}
+.k-info .hrb{border-left-color:var(--pri)}.k-info .hbdg{background:var(--cool-soft);color:var(--pri)}
+.k-rev .hrb{border-left-color:var(--violet)}.k-rev .hbdg{background:var(--violet-soft);color:var(--violet)}
+.k-ok .hrb{border-left-color:var(--green)}.k-ok .hbdg{background:var(--green-soft);color:var(--green)}
+.k-wait .hrb{border-left-color:#c4cad6}
+.hr .lk{all:unset;cursor:pointer;display:block;border-top:1px solid var(--line);padding:9px 16px;font-size:13.5px;font-weight:700;color:var(--pri)}
+#mine{display:flex;flex-direction:column;gap:8px}
+.wtodo{margin:12px 0 4px;border-radius:16px;padding:14px;background:var(--warm-soft);border:1px solid color-mix(in srgb,var(--warm) 35%,transparent)}
+.wtodo.m-복지관{background:var(--cool-soft);border-color:color-mix(in srgb,var(--pri) 30%,transparent)}
+.wt>b{display:block;font-size:17px;margin:6px 0 2px}.wt p{margin:0;font-size:13.5px;color:var(--ink)}
+.wtag{display:inline-block;font-size:11.5px;font-weight:800;color:#fff;background:var(--warm);border-radius:999px;padding:2px 9px}
+.m-복지관 .wtag{background:var(--pri)}.m-동행 .wtag{background:var(--violet)}
+.wsteps{list-style:none;margin:12px 0 10px;padding:0;display:flex;flex-direction:column;gap:6px}
+.wsteps li{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:12px;padding:8px 10px;font-size:14px;font-weight:600}
+.wsteps i{font-style:normal;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--soft);color:var(--mute);flex:none}
+.wsteps li.ok i{background:var(--green);color:#fff}.wsteps li.ok span{color:var(--mute);text-decoration:line-through}
+.wsteps small{margin-left:auto;color:var(--mute);font-weight:700}
+.wdone{width:100%}.wdone:disabled{background:var(--green);box-shadow:none;opacity:1}
+.wask{margin-top:10px;font-size:13.5px}.wask summary{cursor:pointer;color:var(--warm);font-weight:700}
+.wopts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.wreq{margin:10px 0 0;font-size:13px;background:var(--surface);border-radius:10px;padding:8px 10px}
+</style>
 </head><body><div class="wrap">
 <div class="eyebrow">안양시만안종합사회복지관 · 지역사회 맞춤형 에너지 돌봄 사업</div>
 <h1 style="display:flex;align-items:center;gap:10px"><img src="logo-96.png" alt="" width="44" height="44" style="border-radius:11px"><span><span class="w">온(溫)</span> 앤 <span class="c">쿨(cool)</span> 케어</span></h1>
@@ -458,5 +493,60 @@ $("#f").addEventListener("submit",async e=>{
   finally{$("#sbtn").disabled=false;$("#sbtn").textContent=lbl}
 });
 mview("menu");
+
+/* 추천자 할 일 표시 · 방문 요청 · 다 했어요 (2026-11-11) */
+(function(){
+let CASES=[];
+const md=d=>d?Number(d.slice(5,7))+"/"+Number(d.slice(8,10)):"";
+const dueOf=c=>md((c&&c.doc_due)||(CASES[0]&&CASES[0].doc_due)||"");
+const MODE={"추천자":["선생님이 방문해 주세요","방문해서 상담 내용을 적고 서류를 사진으로 올려 주세요."],"동행":["복지관 담당자와 함께 가요","방문 날짜를 담당자와 맞춰 주세요. 서류는 둘 중 누가 올려도 돼요."],"복지관":["복지관이 방문해요","선생님은 따로 하실 일이 없어요. 아는 내용이 있으면 메모만 남겨 주세요. 복지관이 서류를 챙겨요."]};
+function st(r){const c=CASES.find(x=>x.referral_id===r.id);
+  if(r.status==="선정")return{k:"ok",lb:"선정됐어요",c};
+  if(r.status==="보류"||r.status==="제외")return{k:"off",lb:r.status,c};
+  if(!c)return{k:"wait",lb:"복지관 확인 중",c};
+  const ds=CS.docState(c),mode=c.visit_mode||"추천자";
+  if(!["조사중","서류완비"].includes(c.stage))return{k:"rev",lb:"선정 심사 중",c,ds,mode};
+  if(c.w_done_at)return{k:"rev",lb:"제출 완료 · 복지관 확인 중",c,ds,mode};
+  if(mode==="복지관")return{k:"info",lb:"복지관 방문 예정",c,ds,mode};
+  return{k:"todo",lb:mode==="동행"?"동행 방문·서류 필요":"가정방문·서류 필요",c,ds,mode}}
+const ORD={todo:0,info:1,rev:2,wait:3,ok:4,off:5};
+function sub(s,r){const due=dueOf(s.c);
+  if(s.k==="todo"||s.k==="info")return `서류 ${s.ds.ok}/${s.ds.need}${due?" · 마감 "+due:""}${s.c.visit_date?" · 방문 "+md(s.c.visit_date):""}${s.c.visit_req?" · 방문 요청 보냄":""}`;
+  if(s.k==="wait")return `접수 ${r.receipt_no}번 · 복지관이 내용을 보고 있어요`;
+  if(s.k==="rev")return `서류 ${s.ds.ok}/${s.ds.need} · 사례판정위원회에서 정해요`;
+  if(s.k==="ok")return "지원이 시작돼요";return "담당자에게 문의해 주세요"}
+function rowHTML(r,full){const s=st(r),e=CS.esc;
+  return `<div class="hr k-${s.k}"><button type="button" class="hrb" data-hr="${e(r.id)}"><span class="hn"><b>${e(r.elder_name)}</b><small>${e(r.dong||"")}</small></span><span class="hbdg">${s.k==="todo"?"● ":""}${e(s.lb)}</span><span class="hs">${sub(s,r)}</span>${s.c?'<span class="hgo" aria-hidden="true">›</span>':""}</button>${full&&["접수","검토중"].includes(r.status)?`<button class="lk" type="button" data-edit="${e(r.id)}">내용 고치기</button>`:""}</div>`}
+function listHTML(full){const L=[...MINE].sort((a,b)=>ORD[st(a).k]-ORD[st(b).k]||b.receipt_no-a.receipt_no);const n=L.filter(r=>st(r).k==="todo").length,due=dueOf();
+  return (n?`<div class="hsum"><b>할 일이 있는 가구 ${n}곳</b><span>가정방문하고 서류를 ${due?due+"까지 ":""}올려 주세요</span></div>`:"")+(L.length?L.map(r=>rowHTML(r,full)).join(""):'<p class="hint">아직 추천한 가구가 없어요.</p>')}
+async function load(){try{CASES=await rpc("oncool_w_cases",{p_token:TOKEN})||[]}catch(e){CASES=[];if(/session/.test(e.message))throw e}}
+const _gh=goHome;goHome=async function(){await _gh();if(!TOKEN)return;try{await load()}catch(e){return}let box=$("#hlist");if(!box){box=document.createElement("div");box.id="hlist";$("#golist").after(box)}box.innerHTML=listHTML(false)};
+async function showList(){view("list");$("#cedit").hidden=true;$("#mine").innerHTML='<p class="hint">불러오는 중…</p>';
+  try{MINE=await rpc("oncool_w_list",{p_token:TOKEN});await load();$("#mine").innerHTML=listHTML(true)}catch(x){if(/session/.test(x.message)){logout();return}$("#mine").innerHTML='<p class="hint">불러오지 못했어요. 잠시 뒤에 다시 해 주세요.</p>'}}
+$("#golist").onclick=showList;
+{const h=document.querySelector("#list .hint");if(h)h.innerHTML='주황색은 <b>선생님 할 일이 있는 가구</b>예요. 누르면 가정방문 카드가 열려요. 사례판정 전까지는 추천 내용도 고칠 수 있어요.'}
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-hr]");if(!b)return;const id=b.dataset.hr;
+  if($("#list").hidden)await showList();const r=MINE.find(x=>x.id===id);if(!r)return;const s=st(r);if(!s.c)return;
+  CSE.open(s.c,Object.assign({worker_name:ME},r));todo(s.c);$("#cedit").scrollIntoView({block:"start"})});
+function todo(c){const old=$("#cedit .wtodo");if(old)old.remove();if(!["조사중","서류완비"].includes(c.stage))return;
+  const ds=CS.docState(c),mode=c.visit_mode||"추천자",[t,d]=MODE[mode],e=CS.esc,due=dueOf(c);
+  const steps=[["방문 날짜 정하기",!!c.visit_date,md(c.visit_date)],["방문해서 상담 내용 적기",!!(c.visit_note||"").trim(),""],["서류 사진 올리기",ds.full,`${ds.ok}/${ds.need}`],["다 했다고 알리기",!!c.w_done_at,""]];
+  const req=c.visit_req?`<p class="wreq">‘${e(c.visit_req)}’ 요청을 보냈어요. 복지관이 확인하면 위 안내가 바뀌어요.</p>`:mode==="추천자"?`<details class="wask"><summary>방문이 어려우신가요?</summary><div class="wopts"><button type="button" class="sbtn" data-req="같이 가 주세요">같이 가 주세요</button><button type="button" class="sbtn" data-req="복지관이 대신 가 주세요">복지관이 대신 가 주세요</button></div></details>`:"";
+  const el=document.createElement("div");el.className=`wtodo m-${mode}`;
+  el.innerHTML=`<div class="wt"><span class="wtag">${mode==="복지관"?"복지관 방문":mode==="동행"?"동행 방문":"추천자 방문"}</span><b>${t}</b><p>${d}${mode!=="복지관"&&due?` 서류 마감은 <b>${due}</b>이에요.`:""}</p></div>${mode==="복지관"?"":`<ol class="wsteps">${steps.map(([n,ok,x],i)=>`<li class="${ok?"ok":""}"><i>${ok?"✓":i+1}</i><span>${n}</span>${x?`<small>${x}</small>`:""}</li>`).join("")}</ol><button type="button" class="btn wdone" ${c.w_done_at?"disabled":""}>${c.w_done_at?"알렸어요 · 복지관 확인 중":"방문·서류 다 했어요"}</button><p class="wnote" hidden></p>`}${req}`;
+  const sub=$("#cedit .dv-sub");if(!sub)return;sub.after(el);const h=$("#cedit > .hint");if(h)h.remove();
+  el.addEventListener("click",async x=>{const q=x.target.closest("[data-req]");
+    if(q){q.disabled=true;try{const r=await rpc("oncool_w_visit_req",{p_token:TOKEN,p_case:c.id,p_req:q.dataset.req});Object.assign(c,r);todo(c)}catch(err){q.disabled=false;alert(/session/.test(err.message)?"다시 들어와 주세요.":"요청을 보내지 못했어요. 잠시 뒤에 다시 해 주세요.")}return}
+    const w=x.target.closest(".wdone");if(w&&!c.w_done_at){
+      if($("#c_msg")&&/저장 안 됨/.test($("#c_msg").textContent)){const n=el.querySelector(".wnote");n.hidden=false;n.textContent="아래 카드에 저장하지 않은 내용이 있어요. 먼저 ‘저장’을 눌러 주세요.";return}
+      if(!ds.full&&!confirm(`서류가 ${ds.ok}/${ds.need}예요. 그래도 다 했다고 알릴까요?`))return;
+      w.disabled=true;try{const r=await rpc("oncool_w_done",{p_token:TOKEN,p_case:c.id});Object.assign(c,r);todo(c)}catch(err){w.disabled=false;alert(/session/.test(err.message)?"다시 들어와 주세요.":"보내지 못했어요. 잠시 뒤에 다시 해 주세요.")}}})}
+/* 카드에서 저장하면 할 일 단계도 새로 */
+let lastMsg="";
+new MutationObserver(()=>{const m=$("#c_msg"),t=m?m.textContent:"";if(t===lastMsg)return;lastMsg=t;if(t!=="저장했어요")return;
+  load().then(()=>{const cur=CASES.find(c=>c.id===window.__wcur);if(cur&&$("#cedit .wtodo"))todo(cur)}).catch(()=>{})}).observe($("#cedit"),{subtree:true,childList:true,characterData:true});
+{const _open=CSE.open;CSE.open=function(c){window.__wcur=c.id;return _open.apply(this,arguments)}}
+})();
+
 </script>
 </body></html>
