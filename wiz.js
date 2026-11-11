@@ -52,6 +52,7 @@ function paint(d){const k=d.dataset.doc,ok=got(k),sg=SIGS[k];d.classList.toggle(
     s.innerHTML=sg?`<div class="dsg-ok">${sg.png?`<img src="${sg.png}" alt="서명">`:'<span class="dsg-ic">✍</span>'}<div><b>서명 완료</b><small>${new Date(sg.signed_at).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"numeric",minute:"2-digit"}).replace(". ","/").replace(".","")} · ${sg.who==="대리인"?CS.esc(sg.proxy_name)+"("+CS.esc(sg.proxy_rel)+")":"대상자 본인"}</small></div><button type="button" class="upl" data-resign="${k}">다시 받기</button></div>`
       :`<button type="button" class="btn dsg-go" data-sign="${k}">서명 받기</button><small class="dsg-h">${CS.esc(f.src)} · 화면에서 내용을 읽어 드리고 손가락으로 서명받아요. 종이 양식에 서명이 들어간 채로 복지관에서 출력해요.</small>`}}
 function refresh(){document.querySelectorAll(".wz-pane .doc").forEach(paint);
+  {const ch=$("#c_chips .chip2");if(ch){const n=missing().length;ch.textContent=`서류 ${NEED.length-n}/${NEED.length}`;ch.className="chip2 "+(n?"amber":"ok")}document.querySelectorAll("#c_chips .chip2.warn,#c_chips .chip2.info").forEach(x=>x.remove())}
   document.querySelectorAll(".wz-dot").forEach((x,i)=>{x.classList.toggle("ok",stepDone(i));x.classList.toggle("cur",i===cur)});
   const [a,b]=cnt(QUAL),[c,e]=cnt(SIGNABLE);const q=$("#wz_q"),s=$("#wz_s");if(q)q.innerHTML=bar(a,b);if(s)s.innerHTML=bar(c,e);
   if(cur===5)review()}
@@ -59,7 +60,7 @@ const bar=(a,b)=>`<div class="wz-cnt"><b>필수 ${a}/${b} 완료</b><i><u style=
 function review(){const r=$("#wz_rev");if(!r)return;
   const m=missing(),bt=$(".wz-tell"),ms=$("#wz_miss"),af=$(".wz-after"),mode=(CC&&CC.visit_mode)||"추천자",done=CC&&CC.w_done_at;
   if(done){bt.disabled=true;bt.textContent="제출했어요 · 복지관 확인 중";ms.innerHTML="";af.hidden=false;af.textContent="고칠 게 있으면 복지관 담당자에게 말씀해 주세요."}
-  else if(mode==="복지관"){bt.hidden=true;ms.innerHTML='<p class="wz-ok">복지관이 방문하는 가구라 제출할 필요가 없어요. 아는 내용만 적어 주세요.</p>'}
+  else if(mode==="복지관"&&!window.__asVisitor){bt.hidden=true;ms.innerHTML='<p class="wz-ok">복지관이 방문하는 가구라 제출할 필요가 없어요. 아는 내용만 적어 주세요.</p>'}
   else{bt.disabled=!!m.length;ms.innerHTML=m.length?`<div class="wz-miss"><b>아직 없는 필수 항목 ${m.length}개</b>${m.map(([k,l,st])=>`<button type="button" data-go="${st}">${l}<span>${st===2?"3단계":"4단계"} ›</span></button>`).join("")}</div>`:'<p class="wz-ok">✓ 필수 서류와 서명이 다 있어요. 제출할 수 있어요.</p>'}
   r.innerHTML=STEPS.slice(0,5).map(([t],i)=>{const ok=stepDone(i),opt=i===4;return `<button type="button" class="wz-ri${ok?" ok":opt?" skip":""}" data-go="${i}"><i>${ok?"✓":i+1}</i><span><b>${t}</b><small>${ok?(i===2?"업로드 완료":i===3?"서명 완료":"입력 완료"):opt?"해당 없으면 넘어가도 돼요":i===2?`필수 서류 ${cnt(QUAL).join("/")}`:i===3?`서명 ${cnt(SIGNABLE).join("/")}`:"아직 비어 있어요"}</small></span><em>${ok?"":"채우기 ›"}</em></button>`}).join("")}
 
@@ -83,7 +84,7 @@ function build(c,r){const form=$("#cedit .cs-form");if(!form||document.getElemen
   const rest=document.createElement("div");rest.hidden=true;cards.filter(x=>![visit,energy,docs,eff].includes(x)).forEach(x=>rest.appendChild(x));docs.hidden=true;rest.appendChild(docs);
   const nav=document.createElement("div");nav.className="wz";
   nav.innerHTML=`<div class="wz-dots">${STEPS.map(([t],i)=>`<button type="button" class="wz-dot" data-go="${i}"><i>${i+1}</i><span>${t}</span></button>`).join("")}</div><div class="wz-t" id="wz_t"></div>`;
-  form.innerHTML="";form.append(nav,...panes,rest);
+  form.innerHTML="";form.append(refCard(r),nav,...panes,rest);
   const acts=$("#cedit .acts");acts.classList.add("wz-acts");
   acts.insertAdjacentHTML("afterbegin",`<button type="button" class="sbtn wz-b" id="wz_prev">‹ 이전</button><button type="button" class="sbtn pri wz-n" id="wz_next">저장하고 다음</button>`);
   $("#c_save").classList.add("wz-hide");$("#c_close").textContent="닫기";
@@ -93,6 +94,14 @@ function build(c,r){const form=$("#cedit .cs-form");if(!form||document.getElemen
     if(from===2||from===3){const m=missing().filter(x=>x[2]===from);if(m.length)toast(`아직 없는 서류: ${m.map(x=>x[1]).join(", ")}\n나중에 받아서 올려도 돼요`)}};
   try{members(c)}catch(err){console.error(err)}
   cur=0;go(stepDone(0)&&stepDone(1)?2:0)}
+
+/* 추천서 내용: 가정방문 화면 맨 위에 접어서 (보기만) */
+function refCard(r){const e=CS.esc,v=x=>Array.isArray(x)?x.join(", "):(x??""),d=document.createElement("details");d.className="refc";
+  const kv=[["세대주",r.is_head==="예"?"대상자 본인":r.is_head==="아니오"?`아니오${r.head_name?" ("+r.head_name+")":""}`:r.is_head],["가구원 수",r.household_size?r.household_size+"명":""],["실제 함께 사는 분",r.live_with],["소득",r.income],["수급 종류",v(r.recipient_kinds)],["에너지바우처",r.voucher],["난방",r.heating],["본인 명의 통장",r.account],["집",[r.housing_tenure,v(r.housing_risk)].filter(Boolean).join(" · ")],["고장 난 난방기구",r.heater_broken],["요금 체납",v(r.arrears)],["다른 지원",r.other_support]].filter(([,x])=>x&&String(x).trim());
+  d.innerHTML=`<summary><b>추천서 내용 보기</b><span>${e(r.worker_org||"")} ${e(r.worker_name||"")} 선생님 추천${r.urgency?` · 긴급도 ${e(r.urgency)}`:""}</span></summary>
+  <div class="refb">${r.reason?`<h4>추천 사유</h4><p>${e(r.reason)}</p>`:""}${r.risk_note?`<h4>건강·생활 위험</h4><p>${e(r.risk_note)}</p>`:""}
+  ${kv.length?`<dl>${kv.map(([k,x])=>`<dt>${e(k)}</dt><dd>${e(x)}</dd>`).join("")}</dl>`:""}
+  <p class="refn">추천서와 실제가 다르면 1단계 현황 메모에 적어 주세요.</p></div>`;return d}
 
 /* 가구원: 줄글 대신 한 명씩 추가 (저장은 기존 칸에 "이름 생년월일 관계 / …"로) */
 const REL=["본인","배우자","아들","딸","며느리","사위","손자녀","아버지","어머니","형제자매","기타"];
