@@ -109,4 +109,4 @@ function staffHook(rpcS,tok){const b8=b=>{if(!/^\d{6}$/.test(b||""))return"";let
       const top=d.querySelector(".doc-top");(top||d).after(box);
       box.querySelector("button").onclick=async()=>{const w=window.open("","_blank");if(w)w.document.write("<p style='font-family:sans-serif;padding:20px'>불러오는 중…</p>");
         try{const rec=await rpcS("oncool_ed_sign",{p_token:tok(),p_case:c.id,p_form:k});print(k,rec,p,w)}catch(e){if(w)w.close();alert("서명본을 불러오지 못했어요: "+e.message)}}})}catch(e){console.error(e)}return x}}
-return {FORMS,open,print,printHTML,staffHook}})();
+return {FORMS,open,print,printHTML,staffHook,PCSS}})();
