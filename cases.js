@@ -134,7 +134,7 @@ function openCase(c,r){curCase=c;r=r||{};const e=CS.esc,d=c.docs||{};
      <p class="dv-sub" style="margin:0 0 6px">확인한 정보로 본 제안: <b id="c_prop">${prop?e(prop):"정보 부족"}</b></p>
      <div class="cs-row2"><label>판정 유형 (위원회 상정용)<select id="c_type_final">${opt2([["","아직"],...["1","2","3","4"].map(t=>[t+"유형",t+"유형 "+CS.TYPES[t]])],c.type_final||"")}</select></label><label>지원 시작<select id="c_start_month">${[[11,"11월(4회)"],[12,"12월(3회)"],[1,"1월(2회)"],[2,"2월(1회)"]].map(([v,l])=>`<option value="${v}"${(c.start_month||11)==v?" selected":""}>${l}</option>`).join("")}</select></label></div>
      <div id="c_amt"></div></div>
-   <div class="cs-card" style="grid-column:1/-1"><h3>증빙 서류 <small style="font-weight:400;color:var(--mute)">사진·스캔·PDF를 올리면 여기서 바로 열어볼 수 있어요 (담당자 계정만)</small></h3>
+   <div class="cs-card" style="grid-column:1/-1"><h3>증빙 서류 <small style="font-weight:400;color:var(--mute)">‘찍어서 올리기’는 종이를 반듯하게 펴고 하얗게 보정해서 올려요 (담당자 계정만)</small></h3><div class="pdfrow"><button type="button" class="upl" id="c_pdf">서류 전체 PDF로 받기</button><span id="c_pdfmsg" class="dv-empty"></span></div>
      ${CS.DOCS.map(x=>{const v=d[x.k]||{};return `<div class="doc" data-doc="${x.k}"><div class="doc-top"><b>${x.l}${x.req===1?' <span style="color:var(--warm);font-size:12px">필수</span>':typeof x.req==="string"?` <span style="color:var(--amber);font-size:12px">${x.req.slice(1).split("").join("·")}유형 필수</span>`:""}</b>
        <label><input type="checkbox" data-got="${x.k}"${v.got?" checked":""}> 받음</label>${x.dated?`<label>발급일 <input type="date" data-date="${x.k}" value="${e(v.date||"")}"></label>`:""}</div>${x.h?`<small>${x.h}</small>`:""}
        <div class="files" id="files-${x.k}"><span class="dv-empty">불러오는 중…</span></div></div>`}).join("")}</div>
@@ -175,7 +175,7 @@ async function saveCase(){const up=formCase();$("#c_save").disabled=true;
 /* 증빙 파일 */
 async function listFiles(k){const box=$("#files-"+k);if(!box||!curCase)return;let fs=[],error=null;try{fs=await B.list(curCase.id,k)}catch(x){error=x}
   box.innerHTML=fs.map(f=>`<span class="fpill">${CS.esc(f.mimetype==="application/pdf"?"PDF":"사진")} · ${CS.esc(new Date(f.created_at).toLocaleDateString("ko-KR"))}<button type="button" data-open="${CS.esc(k+"/"+f.name)}">보기</button><button type="button" class="x" data-rm="${CS.esc(k+"/"+f.name)}">삭제</button></span>`).join("")+
-    `<label class="upl">+ 사진·파일 올리기<input type="file" accept="image/*,application/pdf" multiple data-up="${k}"></label>`+(error?'<span class="err">목록을 못 불러왔어요</span>':"")}
+    `<span class="upls"><button type="button" class="upl pri" data-scan="${k}" data-from="cam">카메라로 찍어서 올리기</button><button type="button" class="upl" data-scan="${k}" data-from="lib">사진첩에서 골라 보정</button><label class="upl">파일 그대로 올리기<input type="file" accept="image/*,application/pdf" multiple data-up="${k}"></label></span>`+(error?'<span class="err">목록을 못 불러왔어요</span>':"")}
 async function shrink(file){if(!/^image\//.test(file.type)||file.type==="image/heic")return file;
   const img=await createImageBitmap(file).catch(()=>null);if(!img)return file;const m=2000,s=Math.min(1,m/Math.max(img.width,img.height));
   const cv=document.createElement("canvas");cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
@@ -188,6 +188,21 @@ document.addEventListener("change",async e=>{const inp=e.target.closest("[data-u
 document.addEventListener("click",async e=>{const o=e.target.closest("[data-open]"),x=e.target.closest("[data-rm]");if(!curCase||(!o&&!x))return;
   if(o){const w=window.open("","_blank");try{const u=await B.open(curCase.id,`${curCase.id}/${o.dataset.open}`);if(w)w.location=u;else location.href=u}catch(e2){if(w)w.close();$("#c_msg").textContent="열지 못했어요"}}
   if(x){if(x.dataset.arm!=="1"){x.dataset.arm="1";x.textContent="정말 삭제";return}try{await B.remove(curCase.id,`${curCase.id}/${x.dataset.rm}`)}catch(e2){$("#c_msg").textContent="삭제하지 못했어요";return}listFiles(x.dataset.rm.split("/")[0])}});
+
+
+/* 서류 스캔(찍어서 올리기) · 가구 서류 PDF */
+function markGot(k){const cb=document.querySelector(`[data-got="${k}"]`);if(cb&&!cb.checked){cb.checked=true;refreshCalc();$("#c_msg").textContent="파일을 올려 ‘받음’에 체크했어요. 저장을 눌러 주세요"}}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-scan]");if(!b||!curCase)return;const k=b.dataset.scan,doc=CS.DOCS.find(x=>x.k===k);
+  if(!window.SCAN){$("#c_msg").textContent="스캔 기능을 불러오지 못했어요. ‘파일 그대로 올리기’를 써 주세요";return}
+  const cid=curCase.id;SCAN.open({title:doc?doc.l:"서류",from:b.dataset.from,onDone:async blobs=>{for(const bl of blobs)await B.upload(cid,k,bl,"image/jpeg");if(curCase&&curCase.id===cid){markGot(k);listFiles(k)}}})});
+document.addEventListener("click",async e=>{const b=e.target.closest("#c_pdf");if(!b||!curCase||!window.SCAN)return;const msg=$("#c_pdfmsg"),cid=curCase.id,name=(document.querySelector("#cedit .dv-head h2")||{}).textContent||"가구";
+  b.disabled=true;msg.textContent="모으는 중…";const items=[],skipped=[];
+  try{for(const x of CS.DOCS){let fs=[];try{fs=await B.list(cid,x.k)}catch(_){}
+      for(const f of fs){if(f.mimetype==="application/pdf"){skipped.push(x.l);continue}const u=await B.open(cid,`${cid}/${x.k}/${f.name}`);const r=await fetch(u);if(r.ok)items.push(await r.blob())}}
+    if(!items.length){msg.textContent=skipped.length?"사진 서류가 없어요 (PDF로 올린 서류는 따로 열어 주세요)":"올린 서류가 없어요";return}
+    const pdf=await SCAN.pdf(items),a=document.createElement("a");a.href=URL.createObjectURL(pdf);a.download=`온앤쿨_${name.trim()}_서류.pdf`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
+    msg.textContent=`${items.length}장을 PDF 한 파일로 받았어요`+(skipped.length?` · PDF로 올린 ${skipped.length}건(${[...new Set(skipped)].join(", ")})은 따로 열어 주세요`:"")}
+  catch(x){msg.textContent="PDF를 만들지 못했어요: "+(x.message||x)}finally{b.disabled=false}});
 
 return {init(b,h){B=b;H=Object.assign(H,h||{})},open:openCase,current:()=>curCase};
 })();
