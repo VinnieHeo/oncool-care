@@ -17,7 +17,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="common.css?v=13">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="theme.css?v=1"><link rel="stylesheet" href="card.css?v=7"><meta name="color-scheme" content="light">
+<link rel="stylesheet" href="theme.css?v=1"><link rel="stylesheet" href="card.css?v=8"><meta name="color-scheme" content="light">
 <style>/* 추천자 할 일 표시 */
 
 #hlist{margin-top:14px;display:flex;flex-direction:column;gap:8px}
@@ -335,7 +335,7 @@
 <p class="foot">입력한 내용은 복지관 담당자와 추천한 본인만 볼 수 있습니다.</p>
 </div>
 <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-<script src="scan.js?v=5"></script><script src="cases.js?v=21"></script><script src="sign.js?v=5"></script><script src="wiz.js?v=11"></script>
+<script src="scan.js?v=6"></script><script src="cases.js?v=22"></script><script src="sign.js?v=5"></script><script src="wiz.js?v=11"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const DEMO=new URLSearchParams(location.search).has("demo");
@@ -535,7 +535,7 @@ function todo(c){const old=$("#cedit .wtodo");if(old)old.remove();if(!["조사�
   const steps=[["방문 날짜 정하기",!!c.visit_date,md(c.visit_date)],["방문해서 상담 내용 적기",!!(c.visit_note||"").trim(),""],["서류 사진 올리기",ds.full,`${ds.ok}/${ds.need}`],["다 했다고 알리기",!!c.w_done_at,""]];
   const req=c.visit_req?`<p class="wreq">‘${e(c.visit_req)}’ 요청을 보냈습니다.<br>복지관이 확인하면 위 안내가 바뀝니다.</p>`:mode==="추천자"?`<details class="wask"><summary>방문이 어려우십니까?</summary><div class="wopts"><button type="button" class="sbtn" data-req="같이 가 주세요">같이 가 주세요</button><button type="button" class="sbtn" data-req="복지관이 대신 가 주세요">복지관이 대신 가 주세요</button></div></details>`:"";
   const el=document.createElement("div");el.className=`wtodo m-${mode}`;
-  el.innerHTML=`<div class="wt"><span class="wtag">${mode==="복지관"?"복지관 방문":mode==="동행"?"동행 방문":"추천자 방문"}</span><b>${t}</b><p>${d}${mode!=="복지관"&&due?` 서류 마감은 <b>${due}</b>입니다.`:""}</p></div>${mode==="복지관"?"":`<ol class="wsteps">${steps.map(([n,ok,x],i)=>`<li class="${ok?"ok":""}"><i>${ok?"✓":i+1}</i><span>${n}</span>${x?`<small>${x}</small>`:""}</li>`).join("")}</ol><button type="button" class="btn wdone" ${c.w_done_at?"disabled":""}>${c.w_done_at?"제출 완료 · 복지관 확인 중":"방문·서류 완료"}</button><p class="wnote" hidden></p>`}${req}`;
+  el.innerHTML=`<div class="wt"><span class="wtag">${mode==="복지관"?"복지관 방문":mode==="동행"?"동행 방문":"추천자 방문"}</span><b>${t}</b><p>${d}${mode!=="복지관"&&due?`<br>서류 마감은 <b>${due}</b>입니다.`:""}</p></div>${mode==="복지관"?"":`<ol class="wsteps">${steps.map(([n,ok,x],i)=>`<li class="${ok?"ok":""}"><i>${ok?"✓":i+1}</i><span>${n}</span>${x?`<small>${x}</small>`:""}</li>`).join("")}</ol><button type="button" class="btn wdone" ${c.w_done_at?"disabled":""}>${c.w_done_at?"제출 완료 · 복지관 확인 중":"방문·서류 완료"}</button><p class="wnote" hidden></p>`}${req}`;
   const sub=$("#cedit .dv-sub");if(!sub)return;sub.after(el);const h=$("#cedit > .hint");if(h)h.remove();
   el.addEventListener("click",async x=>{const q=x.target.closest("[data-req]");
     if(q){q.disabled=true;try{const r=await rpc("oncool_w_visit_req",{p_token:TOKEN,p_case:c.id,p_req:q.dataset.req});Object.assign(c,r);todo(c)}catch(err){q.disabled=false;alert(/session/.test(err.message)?"다시 로그인해 주세요.":"요청을 보내지 못했습니다. 잠시 후 다시 시도해 주세요.")}return}
