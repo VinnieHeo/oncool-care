@@ -13,7 +13,7 @@ async function show(){const r=await load();let box=$("#vlist");
   if(!r){if(box)box.remove();return}
   V=r.rows||[];if(!box){box=document.createElement("div");box.id="vlist";($("#hlist")||$("#golist")).after(box)}
   const todo=V.filter(x=>!x.case.w_done_at).length;
-  box.innerHTML=`<div class="vhead"><b>복지관 방문 가구</b><span>${V.length}곳${todo?` · 할 일 ${todo}곳`:""}</span></div>`+(V.length?V.map(row).join(""):'<p class="hint" style="margin:0">복지관이 방문할 가구가 아직 없어요.</p>')}
+  box.innerHTML=`<div class="vhead"><b>복지관 방문 가구</b><span>${V.length}곳${todo?` · 할 일 ${todo}곳`:""}</span></div>`+(V.length?V.map(row).join(""):'<p class="hint" style="margin:0">복지관 방문 예정 가구가 없습니다.</p>')}
 const _gh=goHome;goHome=async function(){$("#list").classList.remove("vmode");tt("내가 추천한 가구");await _gh.apply(this,arguments);if(TOKEN)show()};
 document.addEventListener("click",ev=>{if(ev.target.closest("#golist")){$("#list").classList.remove("vmode");tt("내가 추천한 가구")}},true);
 function tt(t){const h=$("#list > h2");if(h)h.textContent=t}
