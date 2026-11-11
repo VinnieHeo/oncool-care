@@ -83,7 +83,24 @@ function build(c,r){const form=$("#cedit .cs-form");if(!form||document.getElemen
   $("#cedit").classList.add("wz-on");
   $("#wz_prev").onclick=()=>go(cur-1);
   $("#wz_next").onclick=()=>{$("#c_save").click();if(cur<5)go(cur+1)};
+  try{members(c)}catch(err){console.error(err)}
   cur=0;go(stepDone(0)&&stepDone(1)?2:0)}
+
+/* 가구원: 줄글 대신 한 명씩 추가 (저장은 기존 칸에 "이름 생년월일 관계 / …"로) */
+const REL=["본인","배우자","아들","딸","며느리","사위","손자녀","아버지","어머니","형제자매","기타"];
+function members(c){const ta=$("#c_members");if(!ta||ta.dataset.mx)return;ta.dataset.mx=1;const lab=ta.closest("label");
+  const parse=t=>(t||"").split(/\s*\/\s*|\n/).map(x=>x.trim()).filter(Boolean).map(x=>{const m=x.match(/^(\S+)\s+(\d{2,4}[.\-]?\d{1,2}[.\-]?\d{1,2})?\s*(\S+)?$/);return m?{n:m[1],b:(m[2]||"").replace(/[.\-]/g,""),r:m[3]||""}:{n:x,b:"",r:""}});
+  let L=parse(ta.value);if(!L.length)L=[{n:P.name||"",b:(c.v_birth||"").replace(/-/g,"").slice(2),r:"본인"}];
+  const box=document.createElement("div");box.className="mx";lab.after(box);lab.hidden=true;
+  const fmtB=b=>{b=b.replace(/\D/g,"");if(b.length===8)return b.slice(0,4)+"."+b.slice(4,6)+"."+b.slice(6);if(b.length===6){let y=+b.slice(0,2);y+=y>new Date().getFullYear()%100?1900:2000;return y+"."+b.slice(2,4)+"."+b.slice(4)}return b};
+  function sync(){ta.value=L.filter(x=>x.n.trim()).map(x=>[x.n.trim(),fmtB(x.b),x.r].filter(Boolean).join(" ")).join(" / ");ta.dispatchEvent(new Event("input",{bubbles:true}));box.querySelector(".mx-n").textContent=L.filter(x=>x.n.trim()).length+"명"}
+  function draw(){const e=CS.esc;
+    box.innerHTML=`<div class="mx-h"><b>가구원</b><span class="mx-n"></span><small>등본에 나온 사람을 한 명씩 넣어 주세요</small></div>`+L.map((x,i)=>`<div class="mx-r" data-i="${i}"><select data-f="r" aria-label="관계">${REL.map(r=>`<option${r===x.r?" selected":""}>${r}</option>`).join("")}${x.r&&!REL.includes(x.r)?`<option selected>${e(x.r)}</option>`:""}</select><input data-f="n" placeholder="이름" maxlength="20" value="${e(x.n)}"><input data-f="b" placeholder="생년월일 6자리" inputmode="numeric" maxlength="10" value="${e(x.b)}">${i?`<button type="button" class="mx-x" aria-label="빼기">✕</button>`:"<span></span>"}</div>`).join("")+`<button type="button" class="mx-add">+ 가구원 추가</button>`;sync()}
+  box.addEventListener("input",e=>{const r=e.target.closest(".mx-r");if(!r)return;e.stopPropagation();L[+r.dataset.i][e.target.dataset.f]=e.target.value;sync()});
+  box.addEventListener("change",e=>{const r=e.target.closest(".mx-r");if(!r)return;e.stopPropagation();L[+r.dataset.i][e.target.dataset.f]=e.target.value;sync()});
+  box.addEventListener("click",e=>{if(e.target.closest(".mx-add")){L.push({n:"",b:"",r:L.length===1?"배우자":"기타"});draw();const ins=box.querySelectorAll('.mx-r:last-of-type input[data-f=n]');if(ins[0])ins[0].focus();return}
+    const x=e.target.closest(".mx-x");if(x){L.splice(+x.closest(".mx-r").dataset.i,1);draw()}});
+  draw()}
 
 document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g&&g.closest(".wz-on")&&!g.closest(".back")){go(+g.dataset.go);return}
   const s=e.target.closest("[data-sign],[data-resign]");if(s){const k=s.dataset.sign||s.dataset.resign;
