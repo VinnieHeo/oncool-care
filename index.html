@@ -17,7 +17,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="common.css?v=13">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="theme.css?v=1"><link rel="stylesheet" href="card.css?v=2"><meta name="color-scheme" content="light">
+<link rel="stylesheet" href="theme.css?v=1"><link rel="stylesheet" href="card.css?v=3"><meta name="color-scheme" content="light">
 <style>/* 추천자 할 일 표시 */
 
 #hlist{margin-top:14px;display:flex;flex-direction:column;gap:8px}
@@ -72,11 +72,11 @@
 <!-- 로그인 -->
 <section class="card" id="login" hidden>
   <h2>계정 만들기(담당자)</h2>
-  <p class="hint"><b>대상자 정보가 아니라</b> 추천하는 선생님(담당자) 본인의 이름과 휴대폰 번호를 넣어 주세요. 처음이면 비밀번호 4자리를 정하고, 다음부터는 같은 이름·번호·비밀번호로 들어와요. 명단에 없으면 소속을 고르고 바로 가입해요.</p>
+  <ul class="tips"><li><b>선생님 본인</b>의 이름과 휴대폰 번호를 넣어 주세요 <small>(대상자 정보 아님)</small></li><li>처음이면 비밀번호 4자리를 정해요</li><li>다음부터는 같은 이름·번호·비밀번호로 들어와요</li></ul>
   <div class="q"><label for="wn">담당자 이름 (본인)</label><input type="text" id="wn" maxlength="30" autocomplete="name"></div>
   <div class="q"><label for="wp">담당자 휴대폰 번호 (본인)</label><input type="tel" id="wp" maxlength="13" placeholder="010-0000-0000" autocomplete="tel"></div>
   <div id="codeq" hidden>
-    <div class="must2" style="margin-top:12px">등록된 명단에 없어요. <b>소속</b>을 고르고 비밀번호를 정하면 바로 가입돼요. 명단에 있는데 이 화면이 나오면 복지관 담당자에게 문의해 주세요.</div>
+    <div class="must2" style="margin-top:12px"><b>등록된 명단에 없어요.</b><br>소속을 고르고 비밀번호를 정하면 바로 가입돼요.<br><small>명단에 있는데 이 화면이 나오면 복지관 담당자에게 문의해 주세요.</small></div>
     <div class="q"><label for="jorg">소속 (필수)</label><select id="jorg" required><option value="">선택해 주세요</option><option>만안복지관</option><option>만안장주</option><option>만안노주</option><option>생활지원사</option><option>사례관리</option><option value="외부기관">외부기관 (기관명 직접 입력)</option></select></div>
     <div class="q" id="jetcq" hidden><label for="jetc">기관명 (필수)</label><input type="text" id="jetc" maxlength="40" placeholder="예: ○○동 행정복지센터"></div>
   </div>
@@ -117,7 +117,7 @@
   <p class="hint" style="margin:6px 0 0">적어 주신 내용으로 선정 여부를 먼저 봐요. <b>최대한 자세히</b> 적어 주시고, 정말 모르는 칸만 ‘모름’을 눌러 주세요.</p>
 </section>
 <section class="card">
-  <div class="consent"><input type="checkbox" id="consent"><label for="consent"><b>대상자께 이 사업 추천을 위해 복지관에 정보를 전달하는 것에 동의를 받았어요.</b><br><span style="font-size:13px">구두 동의면 돼요. 서면 동의서는 선정 심사 때 받아요.</span></label></div>
+  <div class="consent"><input type="checkbox" id="consent"><label for="consent"><b>대상자께 이 사업 추천을 위해 복지관에 정보를 전달하는 것에 동의를 받았어요.</b><br><span style="font-size:13px">지금은 말로 받은 동의면 돼요.<br>동의서는 가정방문 때 폰으로 서명받아요.</span></label></div>
 </section>
 <section class="card">
   <h2>1. 대상자 기본 정보</h2>
@@ -272,7 +272,7 @@
   </ol>
   <p class="hint" style="margin:6px 0 10px">*일정은 상황에 따라 변동될 수 있습니다</p>
   <div class="dark"><b>1차 심사 대상이 되면 서류를 올려 주세요</b><br>담당자가 연락드리고, 서류 올리는 화면을 열어 드려요.<br><em>11/16(월)까지 휴대폰 사진이나 PDF로 올려 주세요.</em></div>
-  <details class="more" open><summary>올려 주실 서류</summary><ul><li>주민등록등본 (가구원 전원 나오게)</li><li>소득 증빙 (1·4유형): 건강보험료 납부확인서 또는 수급자 증명서 (발급 3개월 이내)</li><li>대상자 본인 명의 통장 사본 (1~3유형)</li><li>에너지바우처 결정통지서 (바우처 받는 집 · 신청 안 했으면 수급자 증명서)</li><li>개인정보 동의서·용도 약정서 서명본 (복지관·협회 양식, 담당자가 드려요)</li><li>유형 확인서는 복지관이 써요</li></ul></details>
+  <details class="more" open><summary>올려 주실 서류</summary><div class="dlist2"><p class="dl-h">사진으로 올리기 · 모두 필수</p><ol><li><b>주민등록등본</b><small>가구원 전원 나오게</small></li><li><b>소득 증빙</b> 아래에서 해당하는 것 하나<small>① 수급자증명서 · ② 바우처 결정통지서 · ③ 건강보험료 납부확인서</small></li><li><b>대상자 본인 명의 통장 사본</b></li></ol><p class="dl-h">폰으로 서명받기 · 모두 필수</p><ol><li><b>개인정보 동의서 2장</b><small>복지관 양식 · 협회 양식</small></li><li><b>냉·난방비 용도 약정서</b></li></ol><p class="dl-n">서류는 발급한 지 3개월 이내 · 가정방문 화면에서 단계별로 안내해 드려요</p></div></details>
   <p class="hint" style="margin:0">‘내가 추천한 가구’에서 진행 상태를 볼 수 있고, 사례판정 전까지(‘접수’·‘검토중’)는 언제든 내용을 고칠 수 있어요.</p>
 </section>
 <div class="nav2"><button class="btn sec pv" type="button">← 이전</button><button class="btn nx" type="button">다음 →</button></div>
@@ -497,6 +497,8 @@ mview("menu");
 /* 추천자 할 일 표시 · 방문 요청 · 다 했어요 (2026-11-11) */
 (function(){
 let CASES=[];
+const WK=["resident","income","bank","consent_own","consent","pledge"];/* 추천자 필수: 서류 3 + 서명 3 */
+const wds=c=>{const d=(c&&c.docs)||{},ok=WK.filter(k=>(d[k]||{}).got).length;return{ok,need:WK.length,full:ok===WK.length}};
 const md=d=>d?Number(d.slice(5,7))+"/"+Number(d.slice(8,10)):"";
 const dueOf=c=>md((c&&c.doc_due)||(CASES[0]&&CASES[0].doc_due)||"");
 const MODE={"추천자":["선생님이 방문해 주세요","방문해서 상담 내용을 적고 서류를 사진으로 올려 주세요."],"동행":["복지관 담당자와 함께 가요","방문 날짜를 담당자와 맞춰 주세요. 서류는 둘 중 누가 올려도 돼요."],"복지관":["복지관이 방문해요","선생님은 따로 하실 일이 없어요. 아는 내용이 있으면 메모만 남겨 주세요. 복지관이 서류를 챙겨요."]};
@@ -504,7 +506,7 @@ function st(r){const c=CASES.find(x=>x.referral_id===r.id);
   if(r.status==="선정")return{k:"ok",lb:"선정됐어요",c};
   if(r.status==="보류"||r.status==="제외")return{k:"off",lb:r.status,c};
   if(!c)return{k:"wait",lb:"복지관 확인 중",c};
-  const ds=CS.docState(c),mode=c.visit_mode||"추천자";
+  const ds=wds(c),mode=c.visit_mode||"추천자";
   if(!["조사중","서류완비"].includes(c.stage))return{k:"rev",lb:"선정 심사 중",c,ds,mode};
   if(c.w_done_at)return{k:"rev",lb:"제출 완료 · 복지관 확인 중",c,ds,mode};
   if(mode==="복지관")return{k:"info",lb:"복지관 방문 예정",c,ds,mode};
@@ -529,7 +531,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-hr]"
   if($("#list").hidden)await showList();const r=MINE.find(x=>x.id===id);if(!r)return;const s=st(r);if(!s.c)return;
   CSE.open(s.c,Object.assign({worker_name:ME},r));todo(s.c);$("#cedit").scrollIntoView({block:"start"})});
 function todo(c){const old=$("#cedit .wtodo");if(old)old.remove();if(!["조사중","서류완비"].includes(c.stage))return;
-  const ds=CS.docState(c),mode=c.visit_mode||"추천자",[t,d]=MODE[mode],e=CS.esc,due=dueOf(c);
+  const ds=wds(c),mode=c.visit_mode||"추천자",[t,d]=MODE[mode],e=CS.esc,due=dueOf(c);
   const steps=[["방문 날짜 정하기",!!c.visit_date,md(c.visit_date)],["방문해서 상담 내용 적기",!!(c.visit_note||"").trim(),""],["서류 사진 올리기",ds.full,`${ds.ok}/${ds.need}`],["다 했다고 알리기",!!c.w_done_at,""]];
   const req=c.visit_req?`<p class="wreq">‘${e(c.visit_req)}’ 요청을 보냈어요. 복지관이 확인하면 위 안내가 바뀌어요.</p>`:mode==="추천자"?`<details class="wask"><summary>방문이 어려우신가요?</summary><div class="wopts"><button type="button" class="sbtn" data-req="같이 가 주세요">같이 가 주세요</button><button type="button" class="sbtn" data-req="복지관이 대신 가 주세요">복지관이 대신 가 주세요</button></div></details>`:"";
   const el=document.createElement("div");el.className=`wtodo m-${mode}`;
