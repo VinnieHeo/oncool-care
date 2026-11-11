@@ -2,8 +2,10 @@
 (function(){
 const $=s=>document.querySelector(s);
 const QUAL=["resident","income","bank","voucher","hifam","etc"],SUBM=["consent_own","consent","pledge","lease"],SIGNABLE=["consent_own","consent","pledge"];
-const STEPS=[["가정방문","방문 날짜와 본 모습"],["에너지 상담","가구·요금·설비·건강"],["자격 확인 서류","등본·소득·바우처·통장"],["제출 서류 · 서명","동의서·약정서 전자서명"],["에너지 효율 개선","필요한 물품·수리"],["확인하고 알리기","빠진 것 확인"]];
-let cur=0,P={},SIGS={},CID=null;
+const STEPS=[["가정방문","방문 날짜와 본 모습"],["에너지 상담","가구·요금·설비·건강"],["자격 확인 서류","등본·소득·바우처·통장"],["제출 서류 · 서명","동의서·약정서 전자서명"],["에너지 효율 개선","필요한 물품·수리"],["확인하고 제출","빠진 것 확인 후 제출"]];
+let cur=0,P={},SIGS={},CID=null,CC=null;
+const NEED=[["resident","주민등록등본",2],["income","소득 증빙",2],["bank","통장 사본",2],["consent_own","복지관 동의서 서명",3],["consent","협회 동의서 서명",3],["pledge","용도 약정서 서명",3]];
+const missing=()=>NEED.filter(([k])=>!got(k));
 const WREQ=["resident","income","bank"];/* 추천자 화면은 유형과 상관없이 필수 */
 /* 서류 설명: 한 줄에 한 가지 */
 const HELP={
@@ -55,7 +57,11 @@ function refresh(){document.querySelectorAll(".wz-pane .doc").forEach(paint);
   if(cur===5)review()}
 const bar=(a,b)=>`<div class="wz-cnt"><b>필수 ${a}/${b} 완료</b><i><u style="width:${b?a/b*100:0}%"></u></i></div>`;
 function review(){const r=$("#wz_rev");if(!r)return;
-  r.innerHTML=STEPS.slice(0,5).map(([t],i)=>{const ok=stepDone(i),opt=i===4;return `<button type="button" class="wz-ri${ok?" ok":opt?" skip":""}" data-go="${i}"><i>${ok?"✓":i+1}</i><span><b>${t}</b><small>${ok?"됐어요":opt?"해당 없으면 넘어가도 돼요":i===2?`필수 서류 ${cnt(QUAL).join("/")}`:i===3?`서명 ${cnt(SIGNABLE).join("/")}`:"아직 비어 있어요"}</small></span><em>${ok?"":"채우기 ›"}</em></button>`}).join("")}
+  const m=missing(),bt=$(".wz-tell"),ms=$("#wz_miss"),af=$(".wz-after"),mode=(CC&&CC.visit_mode)||"추천자",done=CC&&CC.w_done_at;
+  if(done){bt.disabled=true;bt.textContent="제출했어요 · 복지관 확인 중";ms.innerHTML="";af.hidden=false;af.textContent="고칠 게 있으면 복지관 담당자에게 말씀해 주세요."}
+  else if(mode==="복지관"){bt.hidden=true;ms.innerHTML='<p class="wz-ok">복지관이 방문하는 가구라 제출할 필요가 없어요. 아는 내용만 적어 주세요.</p>'}
+  else{bt.disabled=!!m.length;ms.innerHTML=m.length?`<div class="wz-miss"><b>아직 없는 필수 항목 ${m.length}개</b>${m.map(([k,l,st])=>`<button type="button" data-go="${st}">${l}<span>${st===2?"3단계":"4단계"} ›</span></button>`).join("")}</div>`:'<p class="wz-ok">✓ 필수 서류와 서명이 다 있어요. 제출할 수 있어요.</p>'}
+  r.innerHTML=STEPS.slice(0,5).map(([t],i)=>{const ok=stepDone(i),opt=i===4;return `<button type="button" class="wz-ri${ok?" ok":opt?" skip":""}" data-go="${i}"><i>${ok?"✓":i+1}</i><span><b>${t}</b><small>${ok?(i===2?"업로드 완료":i===3?"서명 완료":"입력 완료"):opt?"해당 없으면 넘어가도 돼요":i===2?`필수 서류 ${cnt(QUAL).join("/")}`:i===3?`서명 ${cnt(SIGNABLE).join("/")}`:"아직 비어 있어요"}</small></span><em>${ok?"":"채우기 ›"}</em></button>`}).join("")}
 
 function go(i){cur=Math.max(0,Math.min(5,i));document.querySelectorAll(".wz-pane").forEach((p,j)=>p.hidden=j!==cur);
   $("#wz_t").innerHTML=`<small>${cur+1} / 6단계</small><b>${STEPS[cur][0]}</b>`;
@@ -65,14 +71,14 @@ function go(i){cur=Math.max(0,Math.min(5,i));document.querySelectorAll(".wz-pane
 
 function build(c,r){const form=$("#cedit .cs-form");if(!form||document.getElementById("c_pdf"))return;/* 추천자 화면만 */
   P={name:r&&r.elder_name,birth:c.v_birth||"",addr:(r&&r.address||"").replace(" | ",", "),phone:r&&r.phone||"",size:c.v_household_size||"",visitor:c.visitor||(r&&r.worker_name)||""};
-  SIGS=Object.assign({},c.signs||{});CID=c.id;
+  SIGS=Object.assign({},c.signs||{});CID=c.id;CC=c;
   const cards=[...form.querySelectorAll(":scope>.cs-card")],byH=t=>cards.find(x=>(x.querySelector("h3")||{}).textContent?.startsWith(t));
   const visit=byH("가정방문"),energy=byH("에너지 상담"),docs=byH("증빙 서류"),eff=byH("에너지 효율");
   const allDocs=[...docs.querySelectorAll(".doc")];allDocs.forEach(fold);
   const mk=(h,ks,id,sub)=>{const cd=document.createElement("div");cd.className="cs-card";cd.innerHTML=`<h3>${h}</h3><p class="wz-sub">${sub}</p><div id="${id}"></div><div class="dlist"></div>`;ks.forEach(k=>{const d=allDocs.find(x=>x.dataset.doc===k);if(d)cd.querySelector(".dlist").appendChild(d)});return cd};
   const q=mk("자격 확인 서류",QUAL,"wz_q","선정 기준에 맞는지 확인하는 서류예요. 누르면 펼쳐져요. 다 올린 서류는 초록색으로 바뀌어요."),
         s=mk("제출 서류 · 서명",SUBM,"wz_s","협회와 복지관에 내는 서류예요. 대상자에게 화면으로 읽어 드리고 폰에 서명받으면 돼요.");
-  const rv=document.createElement("div");rv.className="cs-card";rv.innerHTML=`<h3>확인하고 알리기</h3><p class="wz-sub">빠진 단계가 있으면 눌러서 채워 주세요. 다 됐으면 복지관에 알려 주세요.</p><div id="wz_rev" class="wz-rev"></div><button type="button" class="btn wz-tell">방문·서류 다 했어요 · 복지관에 알리기</button>`;
+  const rv=document.createElement("div");rv.className="cs-card";rv.innerHTML=`<h3>확인하고 제출</h3><p class="wz-sub">필수 서류와 서명이 모두 있어야 제출할 수 있어요. 서류를 나중에 받았으면 다 올린 뒤 제출해 주세요.</p><div id="wz_rev" class="wz-rev"></div><div id="wz_miss"></div><button type="button" class="btn wz-tell">제출하기</button><p class="wz-after" hidden></p>`;
   const panes=[visit,energy,q,s,eff,rv].map(x=>{const p=document.createElement("div");p.className="wz-pane";p.appendChild(x);return p});
   const rest=document.createElement("div");rest.hidden=true;cards.filter(x=>![visit,energy,docs,eff].includes(x)).forEach(x=>rest.appendChild(x));docs.hidden=true;rest.appendChild(docs);
   const nav=document.createElement("div");nav.className="wz";
@@ -83,7 +89,8 @@ function build(c,r){const form=$("#cedit .cs-form");if(!form||document.getElemen
   $("#c_save").classList.add("wz-hide");$("#c_close").textContent="닫기";
   $("#cedit").classList.add("wz-on");
   $("#wz_prev").onclick=()=>go(cur-1);
-  $("#wz_next").onclick=()=>{$("#c_save").click();if(cur<5)go(cur+1)};
+  $("#wz_next").onclick=()=>{const from=cur;$("#c_save").click();if(cur<5)go(cur+1);
+    if(from===2||from===3){const m=missing().filter(x=>x[2]===from);if(m.length)toast(`아직 없는 서류: ${m.map(x=>x[1]).join(", ")}\n나중에 받아서 올려도 돼요`)}};
   try{members(c)}catch(err){console.error(err)}
   cur=0;go(stepDone(0)&&stepDone(1)?2:0)}
 
@@ -112,7 +119,14 @@ document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g
         const cb=document.querySelector(`[data-got="${k}"]`);if(cb&&!cb.checked){cb.checked=true;cb.dispatchEvent(new Event("change",{bubbles:true}))}
         window.__signs=SIGS;refresh();if(m)m.textContent="서명을 저장했어요"}
       catch(err){if(m)m.textContent="";alert(/session/.test(err.message)?"다시 들어와 주세요.":/locked/.test(err.message)?"사례판정 단계라 서명을 바꿀 수 없어요.":"서명을 저장하지 못했어요. 잠시 뒤에 다시 해 주세요.")}});return}
-  const t=e.target.closest(".wz-tell");if(t){const w=document.querySelector(".wtodo .wdone");if(w)w.click()}});
+  const t=e.target.closest(".wz-tell");if(t&&!t.disabled)submit(t)});
+function toast(msg){let el=$(".wz-toast");if(!el){el=document.createElement("div");el.className="wz-toast";document.body.appendChild(el)}el.textContent=msg;el.classList.add("on");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("on"),3200)}
+async function submit(bt){if(missing().length){review();return}bt.disabled=true;bt.textContent="저장하는 중…";
+  const m=$("#c_msg");if(m)m.textContent="";$("#c_save").click();
+  for(let i=0;i<40;i++){await new Promise(r=>setTimeout(r,150));const t=m?m.textContent:"";if(t==="저장했어요")break;if(/못|끝났/.test(t)){bt.disabled=false;bt.textContent="제출하기";return}}
+  bt.textContent="제출하는 중…";
+  try{const r=await rpc("oncool_w_done",{p_token:TOKEN,p_case:CID});Object.assign(CC,r||{w_done_at:new Date().toISOString()});review();toast("제출했어요. 복지관이 확인하고 연락드려요.")}
+  catch(err){bt.disabled=false;bt.textContent="제출하기";alert(/session/.test(err.message)?"다시 들어와 주세요.":/missing/.test(err.message)?"필수 서류나 서명이 빠져 있어요.":"제출하지 못했어요. 잠시 뒤에 다시 해 주세요.")}}
 document.addEventListener("change",e=>{if(e.target.closest(".wz-on"))refresh()});
 document.addEventListener("input",e=>{if(e.target.closest(".wz-on"))refresh()});
 setInterval(()=>{if($(".wz-on"))document.querySelectorAll(".wz-pane .doc").forEach(paint)},1200);
