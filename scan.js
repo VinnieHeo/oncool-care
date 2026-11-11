@@ -157,15 +157,26 @@ function warp(src,q,W,H){const Hm=homography([[0,0],[W,0],[W,H],[0,H]],q),sd=src
     if(u<0||v<0||u>=sw-1||v>=sh-1){od[i]=od[i+1]=od[i+2]=od[i+3]=255;continue}const x0=u|0,y0=v|0,fx=u-x0,fy=v-y0,j=(y0*sw+x0)*4,j2=j+sw*4;
     for(let k=0;k<3;k++){const a=sd[j+k]+(sd[j+4+k]-sd[j+k])*fx,b=sd[j2+k]+(sd[j2+4+k]-sd[j2+k])*fx;od[i+k]=a+(b-a)*fy}od[i+3]=255}
   return o}
-function enhance(img,mode){if(mode==="raw")return img;const W=img.width,H=img.height,d=img.data,o=new ImageData(W,H),od=o.data,S=16,gw=Math.ceil(W/S),gh=Math.ceil(H/S),bg=new Float32Array(gw*gh*3);
+function enhance(img,mode){if(mode==="raw")return img;const W=img.width,H=img.height,d=img.data,o=new ImageData(W,H),od=o.data,S=24,gw=Math.ceil(W/S),gh=Math.ceil(H/S),G=gw*gh,bg=new Float32Array(G*3),ok=new Uint8Array(G),bl=new Float32Array(G);
+  /* 1) 칸마다 바탕색 추정(밝은 쪽 85%) */
   for(let gy=0;gy<gh;gy++)for(let gx=0;gx<gw;gx++){const v=[[],[],[]];for(let y=gy*S;y<Math.min(H,gy*S+S);y+=2)for(let x=gx*S;x<Math.min(W,gx*S+S);x+=2){const i=(y*W+x)*4;v[0].push(d[i]);v[1].push(d[i+1]);v[2].push(d[i+2])}
-    for(let k=0;k<3;k++){const a=v[k].sort((p,q)=>p-q);bg[(gy*gw+gx)*3+k]=a[Math.floor(a.length*.9)]||255}}
-  for(let pass=0;pass<2;pass++){const t=bg.slice();for(let gy=0;gy<gh;gy++)for(let gx=0;gx<gw;gx++)for(let k=0;k<3;k++){let m=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const yy=Math.min(gh-1,Math.max(0,gy+dy)),xx=Math.min(gw-1,Math.max(0,gx+dx));m=Math.max(m,t[(yy*gw+xx)*3+k])}bg[(gy*gw+gx)*3+k]=m}}
-  {const t=bg.slice();for(let gy=0;gy<gh;gy++)for(let gx=0;gx<gw;gx++)for(let k=0;k<3;k++){let s=0,c=0;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const yy=gy+dy,xx=gx+dx;if(yy<0||xx<0||yy>=gh||xx>=gw)continue;s+=t[(yy*gw+xx)*3+k];c++}bg[(gy*gw+gx)*3+k]=s/c}}
-  const cu=v=>{v=(v-.18)/(.86-.18);v=v<0?0:v>1?1:v;return Math.pow(v,1.35)};
+    const j=gy*gw+gx;for(let k=0;k<3;k++){const a=v[k].sort((p,q)=>p-q);bg[j*3+k]=a[Math.floor(a.length*.85)]||255}bl[j]=.299*bg[j*3]+.587*bg[j*3+1]+.114*bg[j*3+2]}
+  /* 2) 종이 밝기 기준 → 색칠된 칸·글자 덩어리 칸은 바탕으로 안 씀 */
+  const sl=Array.from(bl).sort((a,b)=>a-b),P=sl[Math.floor(G*.75)]||230;
+  for(let j=0;j<G;j++){const r=bg[j*3],g=bg[j*3+1],b=bg[j*3+2],ch=Math.max(r,g,b)-Math.min(r,g,b);ok[j]=(ch<38&&bl[j]>P*.45)?1:0}
+  /* 3) 빠진 칸은 둘레의 좋은 칸으로 채움 (그늘은 살리고 색 면은 지움) */
+  for(let it=0;it<60;it++){let left=0;const nk=ok.slice(),nb=bg.slice();for(let gy=0;gy<gh;gy++)for(let gx=0;gx<gw;gx++){const j=gy*gw+gx;if(ok[j])continue;let s=[0,0,0],c=0;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const yy=gy+dy,xx=gx+dx;if(yy<0||xx<0||yy>=gh||xx>=gw)continue;const q=yy*gw+xx;if(!ok[q])continue;for(let k=0;k<3;k++)s[k]+=bg[q*3+k];c++}
+      if(c){for(let k=0;k<3;k++)nb[j*3+k]=s[k]/c;nk[j]=1}else left++}ok.set(nk);bg.set(nb);if(!left)break}
+  for(let j=0;j<G;j++)if(!ok[j])for(let k=0;k<3;k++)bg[j*3+k]=P;
+  /* 4) 부드럽게 */
+  for(let pass=0;pass<2;pass++){const t=bg.slice();for(let gy=0;gy<gh;gy++)for(let gx=0;gx<gw;gx++)for(let k=0;k<3;k++){let s=0,c=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const yy=gy+dy,xx=gx+dx;if(yy<0||xx<0||yy>=gh||xx>=gw)continue;s+=t[(yy*gw+xx)*3+k];c++}bg[(gy*gw+gx)*3+k]=s/c}}
+  /* 5) 바탕은 하얗게, 글자는 진하게(중간톤 덜 날림) */
+  const cu=mode==="bw"?(v=>{v=(v-.12)/(.9-.12);v=v<0?0:v>1?1:v;return Math.pow(v,1.6)}):(v=>{v=(v-.06)/(.92-.06);v=v<0?0:v>1?1:v;return Math.pow(v,1.25)});
   for(let y=0;y<H;y++){const fy=Math.min(gh-1.001,Math.max(0,y/S-.5)),y0=fy|0,ty=fy-y0;for(let x=0;x<W;x++){const fx=Math.min(gw-1.001,Math.max(0,x/S-.5)),x0=fx|0,tx=fx-x0,i=(y*W+x)*4,n=[0,0,0];
     for(let k=0;k<3;k++){const a=bg[(y0*gw+x0)*3+k],b=bg[(y0*gw+x0+1)*3+k],c=bg[((y0+1)*gw+x0)*3+k],e=bg[((y0+1)*gw+x0+1)*3+k],t1=a+(b-a)*tx,B=t1+((c+(e-c)*tx)-t1)*ty;n[k]=Math.min(1,d[i+k]/Math.max(40,B))}
-    if(mode==="bw"){const l=cu(.299*n[0]+.587*n[1]+.114*n[2])*255;od[i]=od[i+1]=od[i+2]=l}else{const l=.299*n[0]+.587*n[1]+.114*n[2],f=l>0?cu(l)/l:0;for(let k=0;k<3;k++)od[i+k]=Math.min(255,n[k]*f*255)}od[i+3]=255}}
+    const l=.299*n[0]+.587*n[1]+.114*n[2];
+    if(mode==="bw"){od[i]=od[i+1]=od[i+2]=cu(l)*255}else{const f=l>0?cu(l)/l:0;for(let k=0;k<3;k++)od[i+k]=Math.min(255,n[k]*f*255)}od[i+3]=255}}
   return o}
 
 /* ---- 화면 ---- */
