@@ -59,15 +59,15 @@ function refresh(){document.querySelectorAll(".wz-pane .doc").forEach(paint);
 const bar=(a,b)=>`<div class="wz-cnt"><b>필수 ${a}/${b} 완료</b><i><u style="width:${b?a/b*100:0}%"></u></i></div>`;
 function review(){const r=$("#wz_rev");if(!r)return;
   const m=missing(),bt=$(".wz-tell"),ms=$("#wz_miss"),af=$(".wz-after"),mode=(CC&&CC.visit_mode)||"추천자",done=CC&&CC.w_done_at;
-  if(done){bt.disabled=true;bt.textContent="제출 완료 · 복지관 확인 중";ms.innerHTML="";af.hidden=false;af.innerHTML=origBox()+'<p class="wz-fix">수정이 필요한 경우 복지관 담당자에게 문의해 주십시오.</p>'}
+  if(done){{const pv=$("#wz_prev"),cm=$("#c_msg");if(pv)pv.hidden=true;if(cm)cm.style.display="none"}bt.disabled=true;bt.textContent="제출 완료 · 복지관 확인 중";ms.innerHTML="";af.hidden=false;af.innerHTML=origBox()+'<p class="wz-fix">수정이 필요한 경우 복지관 담당자에게 문의해 주십시오.</p>'}
   else if(mode==="복지관"&&!window.__asVisitor){bt.hidden=true;ms.innerHTML='<p class="wz-ok">복지관 방문 가구는 제출하지 않아도 됩니다.<br>확인된 내용만 입력해 주세요.</p>'}
-  else{bt.hidden=false;bt.disabled=!!m.length;bt.textContent="제출하기";af.hidden=true;ms.innerHTML=m.length?`<div class="wz-miss"><b>누락된 필수 항목 ${m.length}개</b>${m.map(([k,l,st])=>`<button type="button" data-go="${st}">${l}<span>${st===2?"3단계":"4단계"} ›</span></button>`).join("")}</div>`:'<p class="wz-ok">✓ 필수 서류와 서명이 모두 확인되었습니다.<br>제출할 수 있습니다.</p>'}
+  else{{const pv=$("#wz_prev");if(pv&&cur===5)pv.hidden=false}bt.hidden=false;bt.disabled=!!m.length;bt.textContent="제출하기";af.hidden=true;ms.innerHTML=m.length?`<div class="wz-miss"><b>누락된 필수 항목 ${m.length}개</b>${m.map(([k,l,st])=>`<button type="button" data-go="${st}">${l}<span>${st===2?"3단계":"4단계"} ›</span></button>`).join("")}</div>`:'<p class="wz-ok">✓ 필수 서류와 서명이 모두 확인되었습니다.<br>제출할 수 있습니다.</p>'}
   {const nx=$("#wz_next");if(nx&&cur===5){nx.disabled=!!(bt.disabled||bt.hidden);nx.textContent=bt.hidden?"제출 대상 아님":bt.textContent}}
   r.innerHTML=STEPS.slice(0,5).map(([t],i)=>{const ok=stepDone(i),opt=i===4;return `<button type="button" class="wz-ri${ok?" ok":opt?" skip":""}" data-go="${i}"><i>${ok?"✓":i+1}</i><span><b>${t}</b><small>${ok?(i===2?"업로드 완료":i===3?"서명 완료":"입력 완료"):opt?"해당 없으면 생략 가능":i===2?`필수 서류 ${cnt(QUAL).join("/")}`:i===3?`서명 ${cnt(SIGNABLE).join("/")}`:"미입력"}</small></span><em>${ok?"":"입력 ›"}</em></button>`}).join("")}
 
 function go(i){cur=Math.max(0,Math.min(5,i));document.querySelectorAll(".wz-pane").forEach((p,j)=>p.hidden=j!==cur);
   $("#wz_t").innerHTML=`<small>${cur+1} / 6단계</small><b>${STEPS[cur][0]}</b>`;
-  $("#wz_prev").hidden=cur===0;$("#wz_next").textContent=cur===5?"제출하기":"저장하고 다음";$("#wz_next").disabled=false;{const cl=$("#c_close");if(cl)cl.hidden=cur===5}
+  $("#wz_prev").hidden=cur===0;{const cm=$("#c_msg");if(cm)cm.style.display=""}$("#wz_next").textContent=cur===5?"제출하기":"저장하고 다음";$("#wz_next").disabled=false;{const cl=$("#c_close");if(cl)cl.hidden=cur===5}
   refresh();const top=$(".wz");if(top)top.scrollIntoView({block:"start"});
   const dot=document.querySelectorAll(".wz-dot")[cur];if(dot)dot.scrollIntoView({inline:"center",block:"nearest"})}
 
@@ -95,6 +95,7 @@ function build(c,r){const form=$("#cedit .cs-form");if(!form||document.getElemen
   $("#wz_next").onclick=()=>{if(cur===5){const t=$(".wz-tell");if(t&&!t.disabled&&!t.hidden)submit(t);return}const from=cur;$("#c_save").click();if(cur<5)go(cur+1);
     if(from===2||from===3){const m=missing().filter(x=>x[2]===from);if(m.length)toast(`누락된 서류: ${m.map(x=>x[1]).join(", ")}\n추후 업로드할 수 있습니다.`)}};
   try{members(c)}catch(err){console.error(err)}
+  try{head(c,r)}catch(err){console.error(err)}
   try{equip();guardian()}catch(err){console.error(err)}
   {const hp=$("#c_hi_premium");if(hp){const row=hp.closest(".cs-row2")||hp.closest("label");row.style.display="none"}}/* 건보료는 증빙으로 확인 · 관리 화면에서 입력 */
   cur=0;go(stepDone(0)&&stepDone(1)?2:0)}
@@ -132,6 +133,15 @@ function guardian(){const inp=$("#c_guardian");if(!inp||inp.dataset.gx)return;in
 
 /* 가구원: 줄글 대신 한 명씩 추가 (저장은 기존 칸에 "이름 생년월일 관계 / …"로) */
 const REL=["본인","배우자","아들","딸","며느리","사위","손자녀","아버지","어머니","형제자매","기타"];
+/* 세대주(가구주): 협회 시스템 등록 항목 · 추천서 답을 먼저 채움 */
+function head(c,r){const ih=$("#c_v_is_head"),hn=$("#c_v_head_name"),hb=$("#c_v_head_birth"),mx=$("#cedit .mx");if(!ih||!hn||!hb||!mx||mx.dataset.hd)return;mx.dataset.hd=1;
+  if(!ih.value&&r&&r.is_head)ih.value=r.is_head;if(!hn.value&&r&&r.head_name)hn.value=r.head_name;hb.removeAttribute("maxlength");
+  const box=document.createElement("div");box.className="eqx hdx";mx.after(box);
+  const fire=()=>ih.dispatchEvent(new Event("input",{bubbles:true}));
+  function draw(){const v=ih.value;box.innerHTML=`<b>세대주(가구주) <small>등본 기준 · 협회 시스템 등록 항목</small></b><div class="eqg"><button type="button" class="eqc${v==="예"?" on":""}" data-h="예">대상자 본인</button><button type="button" class="eqc${v==="아니오"?" on":""}" data-h="아니오">다른 가구원</button></div>`+(v==="아니오"?`<div class="gxr"><input data-hf="n" placeholder="세대주 성명" maxlength="20" value="${CS.esc(hn.value)}"><input data-hf="b" placeholder="생년월일 6자리" inputmode="numeric" maxlength="8" value="${CS.esc(hb.value)}"></div>`:"")}
+  draw();
+  box.addEventListener("click",e=>{const b=e.target.closest("[data-h]");if(!b)return;ih.value=b.dataset.h;if(ih.value==="예"){hn.value="";hb.value=""}draw();fire()});
+  box.addEventListener("input",e=>{const f=e.target.dataset.hf;if(!f)return;e.stopPropagation();if(f==="n")hn.value=e.target.value;else hb.value=e.target.value.replace(/\D/g,"");fire()})}
 function members(c){const ta=$("#c_members");if(!ta||ta.dataset.mx)return;ta.dataset.mx=1;const lab=ta.closest("label");
   const parse=t=>(t||"").split(/\s*\/\s*|\n/).map(x=>x.trim()).filter(Boolean).map(x=>{const m=x.match(/^(\S+)\s+(\d{2,4}[.\-]?\d{1,2}[.\-]?\d{1,2})?\s*(\S+)?$/);return m?{n:m[1],b:(m[2]||"").replace(/[.\-]/g,""),r:m[3]||""}:{n:x,b:"",r:""}});
   let L=parse(ta.value);if(!L.length)L=[{n:P.name||"",b:P.bb||"",r:"본인"}];
