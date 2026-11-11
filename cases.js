@@ -100,7 +100,7 @@ window.CS=(function(){
 window.CSE=(function(){
 const $=s=>document.querySelector(s);
 let B=null,H={saved(){},deleted(){},reverted(){}},curCase=null;
-const opt=(arr,v)=>arr.map(x=>`<option${x===v?" selected":""}>${x}</option>`).join("");
+const opt=(arr,v)=>arr.map(x=>x===""?`<option value=""${!v?" selected":""}>선택</option>`:`<option${x===v?" selected":""}>${x}</option>`).join("");
 const opt2=(arr,v)=>arr.map(([x,l])=>`<option value="${x}"${x===v?" selected":""}>${l}</option>`).join("");
 const b8=b=>{if(!/^\d{6}$/.test(b||""))return"";let y=+b.slice(0,2);y+=y>new Date().getFullYear()%100?1900:2000;return `${y}-${b.slice(2,4)}-${b.slice(4,6)}`};
 function openCase(c,r){curCase=c;r=r||{};const e=CS.esc,d=c.docs||{};
@@ -110,14 +110,18 @@ function openCase(c,r){curCase=c;r=r||{};const e=CS.esc,d=c.docs||{};
   <p class="dv-sub">접수 ${e(r.receipt_no)}번 · 추천 ${e(r.worker_org||"생활지원사")} · ${e(r.worker_name)} · ${e(r.dong)} · ${e((r.address||"").replace(" | ",", "))}</p>
   ${B.worker?'<p class="hint" style="margin:6px 0 0">가정방문 내용과 서류를 여기에 남겨 주세요. 복지관 담당자와 같은 카드를 함께 써요. 저장을 눌러야 반영돼요.</p>':""}<div class="cs-form">
    <div class="cs-card"><h3>가정방문</h3>
-     <div class="cs-row2"><label>방문일<input type="date" id="c_visit_date" value="${e(c.visit_date||"")}"></label><label>방문자<input type="text" id="c_visitor" maxlength="30" value="${e(c.visitor||"")}"></label></div>
-     <label>현황 메모 (주거·난방·건강·생활)<textarea id="c_visit_note" maxlength="2000">${e(c.visit_note||"")}</textarea></label></div>
-   <div class="cs-card"><h3>에너지 상담 <small style="font-weight:400;color:var(--mute)">(초기상담지 항목)</small></h3>
-     <label>가구원 (등본 기준 · 이름·생년월일·관계)<textarea id="c_members" maxlength="600" placeholder="예) 홍길동 1950.01.01 본인 / 김영희 1952.03.03 배우자">${e(c.members||"")}</textarea></label>
-     <div class="cs-row2"><label>건강보험료 월액<input type="text" id="c_hi_premium" maxlength="30" placeholder="예) 18,500원" value="${e(c.hi_premium||"")}"></label><label>냉방 설비<select id="c_cool_equip">${opt(["","에어컨","선풍기만","없음"],c.cool_equip||"")}</select></label></div>
-     <div class="cs-row2"><label>월평균 냉·난방비<input type="text" id="c_bill_avg" maxlength="30" placeholder="예) 12만 원" value="${e(c.bill_avg||"")}"></label><label>고지서<select id="c_bill_checked">${opt(["","확인","미확인"],c.bill_checked||"")}</select></label></div>
-     <div class="cs-row2"><label>체납 기간<input type="text" id="c_arrears_months" maxlength="20" placeholder="예) 가스 2개월" value="${e(c.arrears_months||"")}"></label><label>냉·난방 설비 소유<select id="c_equip_owner">${opt(["","본인","임대인","기타"],c.equip_owner||"")}</select></label></div>
-     <label>단전·단가스 경험<input type="text" id="c_cutoff" maxlength="100" placeholder="없음 / 있음(언제·무엇)" value="${e(c.cutoff||"")}"></label>
+     <div class="cs-row2"><label>방문일<input type="date" id="c_visit_date" value="${e(c.visit_date||"")}"></label><label>방문자<input type="text" id="c_visitor" maxlength="30" placeholder="이름" value="${e(c.visitor||"")}"></label></div>
+     <label>현황 메모<small class="fh">주거·난방·건강·생활 모습을 적어 주세요</small><textarea id="c_visit_note" maxlength="2000" placeholder="예) 보일러는 있지만 가스비 걱정에 전기장판만 사용. 외풍이 심함.">${e(c.visit_note||"")}</textarea></label></div>
+   <div class="cs-card"><h3>에너지 상담 <small class="fh2">초기상담지 항목</small></h3>
+     <div class="cs-sub">가구</div>
+     <label>가구원<small class="fh">등본 기준 · 이름·생년월일·관계</small><textarea id="c_members" maxlength="600" placeholder="예) 홍길동 1950.01.01 본인 / 김영희 1952.03.03 배우자">${e(c.members||"")}</textarea></label>
+     <div class="cs-row2"><label>건강보험료 월액<input type="text" id="c_hi_premium" maxlength="30" inputmode="numeric" placeholder="예) 18,500원" value="${e(c.hi_premium||"")}"></label><span></span></div>
+     <div class="cs-sub">요금</div>
+     <div class="cs-row2"><label>월평균 냉·난방비<input type="text" id="c_bill_avg" maxlength="30" placeholder="예) 12만 원" value="${e(c.bill_avg||"")}"></label><label>고지서 확인<select id="c_bill_checked">${opt(["","확인","미확인"],c.bill_checked||"")}</select></label></div>
+     <div class="cs-row2"><label>체납 기간<input type="text" id="c_arrears_months" maxlength="20" placeholder="없음 / 가스 2개월" value="${e(c.arrears_months||"")}"></label><label>단전·단가스 경험<input type="text" id="c_cutoff" maxlength="100" placeholder="없음 / 있음(언제·무엇)" value="${e(c.cutoff||"")}"></label></div>
+     <div class="cs-sub">설비</div>
+     <div class="cs-row2"><label>냉방 설비<select id="c_cool_equip">${opt(["","에어컨","선풍기만","없음"],c.cool_equip||"")}</select></label><label>냉·난방 설비 소유<select id="c_equip_owner">${opt(["","본인","임대인","기타"],c.equip_owner||"")}</select></label></div>
+     <div class="cs-sub">건강·안부</div>
      <div class="cs-row2"><label>온열·한랭질환 취약성<select id="c_heat_risk">${opt(["","낮음","보통","높음"],c.heat_risk||"")}</select></label><label>안부 확인 보호자<input type="text" id="c_guardian" maxlength="100" placeholder="성명·관계·연락처" value="${e(c.guardian||"")}"></label></div></div>
    <div class="cs-card"${B.worker?" hidden":""}><h3>협회 시스템 입력 항목 <small style="font-weight:400;color:var(--mute)">(성과관리시스템 필수 항목)</small></h3>
      <div class="cs-row2"><label>성별<select id="c_v_gender">${opt(["","남","여"],c.v_gender||r.gender||"")}</select></label><label>생년월일<input type="date" id="c_v_birth" value="${e(c.v_birth||b8(r.birth))}"></label></div>
@@ -134,8 +138,8 @@ function openCase(c,r){curCase=c;r=r||{};const e=CS.esc,d=c.docs||{};
      <p class="dv-sub" style="margin:0 0 6px">확인한 정보로 본 제안: <b id="c_prop">${prop?e(prop):"정보 부족"}</b></p>
      <div class="cs-row2"><label>판정 유형 (위원회 상정용)<select id="c_type_final">${opt2([["","아직"],...["1","2","3","4"].map(t=>[t+"유형",t+"유형 "+CS.TYPES[t]])],c.type_final||"")}</select></label><label>지원 시작<select id="c_start_month">${[[11,"11월(4회)"],[12,"12월(3회)"],[1,"1월(2회)"],[2,"2월(1회)"]].map(([v,l])=>`<option value="${v}"${(c.start_month||11)==v?" selected":""}>${l}</option>`).join("")}</select></label></div>
      <div id="c_amt"></div></div>
-   <div class="cs-card" style="grid-column:1/-1"><h3>증빙 서류 <small style="font-weight:400;color:var(--mute)">‘찍어서 올리기’는 종이를 반듯하게 펴고 하얗게 보정해서 올려요 (담당자 계정만)</small></h3><div class="pdfrow"><button type="button" class="upl" id="c_pdf">서류 전체 PDF로 받기</button><span id="c_pdfmsg" class="dv-empty"></span></div>
-     ${CS.DOCS.map(x=>{const v=d[x.k]||{};return `<div class="doc" data-doc="${x.k}"><div class="doc-top"><b>${x.l}${x.req===1?' <span style="color:var(--warm);font-size:12px">필수</span>':typeof x.req==="string"?` <span style="color:var(--amber);font-size:12px">${x.req.slice(1).split("").join("·")}유형 필수</span>`:""}</b>
+   <div class="cs-card" style="grid-column:1/-1"><h3>증빙 서류 <small style="font-weight:400;color:var(--mute)">‘찍어서 올리기’는 종이를 반듯하게 펴고 하얗게 보정해서 올려요 (담당자 계정만)</small></h3>${B.worker?"":'<div class="pdfrow"><button type="button" class="upl" id="c_pdf">서류 전체 PDF로 받기</button><span id="c_pdfmsg" class="dv-empty"></span></div>'}
+     ${CS.DOCS.filter(x=>!(B.worker&&x.k==="confirm")).map(x=>{const v=d[x.k]||{};return `<div class="doc" data-doc="${x.k}"><div class="doc-top"><b>${x.l}${x.req===1?' <span style="color:var(--warm);font-size:12px">필수</span>':typeof x.req==="string"?` <span style="color:var(--amber);font-size:12px">${x.req.slice(1).split("").join("·")}유형 필수</span>`:""}</b>
        <label><input type="checkbox" data-got="${x.k}"${v.got?" checked":""}> 받음</label>${x.dated?`<label>발급일 <input type="date" data-date="${x.k}" value="${e(v.date||"")}"></label>`:""}</div>${x.h?`<small>${x.h}</small>`:""}
        <div class="files" id="files-${x.k}"><span class="dv-empty">불러오는 중…</span></div></div>`}).join("")}</div>
    <div class="cs-card"><h3>에너지 효율 개선</h3><div class="cs-checks">${["열화상 진단","방풍·단열 물품","방한 물품","난방기구 수리","외부 집수리 연계"].map(x=>`<label><input type="checkbox" data-eff="${x}"${(c.eff_needs||[]).includes(x)?" checked":""}> ${x}</label>`).join("")}</div>
@@ -156,7 +160,7 @@ function openCase(c,r){curCase=c;r=r||{};const e=CS.esc,d=c.docs||{};
   $("#cedit").scrollIntoView({behavior:"smooth",block:"start"});
 }
 function formCase(){const c=curCase,g=id=>$("#c_"+id),docs={};
-  CS.DOCS.forEach(x=>{const got=document.querySelector(`[data-got="${x.k}"]`).checked,dt=document.querySelector(`[data-date="${x.k}"]`);docs[x.k]={got,date:dt&&dt.value||null}});
+  CS.DOCS.forEach(x=>{const gb=document.querySelector(`[data-got="${x.k}"]`);if(!gb){docs[x.k]=(c.docs||{})[x.k]||{got:false,date:null};return}const got=gb.checked,dt=document.querySelector(`[data-date="${x.k}"]`);docs[x.k]={got,date:dt&&dt.value||null}});
   return {visit_date:g("visit_date").value||null,visitor:g("visitor").value.trim()||null,visit_note:g("visit_note").value.trim()||null,
     v_is_head:g("v_is_head").value||null,v_head_name:g("v_head_name").value.trim()||null,v_head_birth:g("v_head_birth").value.trim()||null,v_household_size:+g("v_household_size").value||null,
     v_income:g("v_income").value||null,v_voucher_target:g("v_voucher_target").value||null,v_env:g("v_env").value||null,v_gender:g("v_gender").value||null,v_birth:g("v_birth").value||null,period:g("period").value,participation:g("participation").value,care_found:g("care_found").value||null,v_voucher:g("v_voucher").value||null,v_heating:g("v_heating").value||null,v_account:g("v_account").value||null,
@@ -175,7 +179,7 @@ async function saveCase(){const up=formCase();$("#c_save").disabled=true;
 /* 증빙 파일 */
 async function listFiles(k){const box=$("#files-"+k);if(!box||!curCase)return;let fs=[],error=null;try{fs=await B.list(curCase.id,k)}catch(x){error=x}
   box.innerHTML=fs.map(f=>`<span class="fpill">${CS.esc(f.mimetype==="application/pdf"?"PDF":"사진")} · ${CS.esc(new Date(f.created_at).toLocaleDateString("ko-KR"))}<button type="button" data-open="${CS.esc(k+"/"+f.name)}">보기</button><button type="button" class="x" data-rm="${CS.esc(k+"/"+f.name)}">삭제</button></span>`).join("")+
-    `<span class="upls"><button type="button" class="upl pri" data-scan="${k}" data-from="cam">카메라로 찍어서 올리기</button><button type="button" class="upl" data-scan="${k}" data-from="lib">사진첩에서 골라 보정</button><label class="upl">파일 그대로 올리기<input type="file" accept="image/*,application/pdf" multiple data-up="${k}"></label></span>`+(error?'<span class="err">목록을 못 불러왔어요</span>':"")}
+    `<span class="upls"><button type="button" class="upl pri" data-scan="${k}" data-from="cam">카메라로 찍기</button><button type="button" class="upl" data-scan="${k}" data-from="lib">사진첩에서 고르기</button><label class="upl">파일 그대로<input type="file" accept="image/*,application/pdf" multiple data-up="${k}"></label></span>`+(error?'<span class="err">목록을 못 불러왔어요</span>':"")}
 async function shrink(file){if(!/^image\//.test(file.type)||file.type==="image/heic")return file;
   const img=await createImageBitmap(file).catch(()=>null);if(!img)return file;const m=2000,s=Math.min(1,m/Math.max(img.width,img.height));
   const cv=document.createElement("canvas");cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
