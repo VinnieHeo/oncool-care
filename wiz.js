@@ -66,7 +66,7 @@ function review(){const r=$("#wz_rev");if(!r)return;
   r.innerHTML=STEPS.slice(0,5).map(([t],i)=>{const ok=stepDone(i),opt=i===4;return `<button type="button" class="wz-ri${ok?" ok":opt?" skip":""}" data-go="${i}"><i>${ok?"✓":i+1}</i><span><b>${t}</b><small>${ok?(i===2?"업로드 완료":i===3?"서명 완료":"입력 완료"):opt?"해당 없으면 생략 가능":i===2?`필수 서류 ${cnt(QUAL).join("/")}`:i===3?`서명 ${cnt(SIGNABLE).join("/")}`:"미입력"}</small></span><em>${ok?"":"입력 ›"}</em></button>`}).join("")}
 
 function go(i){cur=Math.max(0,Math.min(5,i));document.querySelectorAll(".wz-pane").forEach((p,j)=>p.hidden=j!==cur);
-  $("#wz_t").innerHTML=`<small>${cur+1} / 6단계</small><b>${STEPS[cur][0]}</b>`;
+  $("#wz_t").innerHTML=`<small>${cur+1} / 6단계</small><b>${STEPS[cur][0]}</b>`+(window.FAQ?'<button type="button" class="wz-ask" data-faq>💬 문의</button>':"");if(window.FAQ)FAQ.badge();
   $("#wz_prev").hidden=cur===0;{const cm=$("#c_msg");if(cm)cm.style.display=""}$("#wz_next").textContent=cur===5?"제출하기":"저장하고 다음";$("#wz_next").disabled=false;{const cl=$("#c_close");if(cl)cl.hidden=cur===5}
   refresh();const top=$(".wz");if(top)top.scrollIntoView({block:"start"});
   const dot=document.querySelectorAll(".wz-dot")[cur];if(dot)dot.scrollIntoView({inline:"center",block:"nearest"})}
