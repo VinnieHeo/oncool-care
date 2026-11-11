@@ -103,6 +103,10 @@ let B=null,H={saved(){},deleted(){},reverted(){}},curCase=null,curRef={};
 const opt=(arr,v)=>(v&&!arr.includes(v)?[...arr,v]:arr).map(x=>x===""?`<option value=""${!v?" selected":""}>선택</option>`:`<option${x===v?" selected":""}>${x}</option>`).join("");/* 목록에 없는 저장값도 지우지 않게 */
 const opt2=(arr,v)=>arr.map(([x,l])=>`<option value="${x}"${x===v?" selected":""}>${l}</option>`).join("");
 const b8=b=>{if(!/^\d{6}$/.test(b||""))return"";let y=+b.slice(0,2);y+=y>new Date().getFullYear()%100?1900:2000;return `${y}-${b.slice(2,4)}-${b.slice(4,6)}`};
+/* 효율개선: 협회 실적 입력 지원 분야 + 복지관 추가 항목 · 기타는 내용 입력 */
+const EFF=["단열·창호 (뽁뽁이·문풍지)","고효율 LED 조명 교체","친환경 보일러 점검","서큘레이터·선풍기 보급"],EFF2=["열화상 진단","방한 물품","난방기구 수리","외부 집수리 연계","기타"];
+const effHas=(L,x)=>(L||[]).includes(x)||(x===EFF[0]&&(L||[]).includes("방풍·단열 물품"));
+document.addEventListener("change",e=>{const t=e.target;if(!t.matches||!t.matches('[data-eff="기타"]'))return;const l=document.querySelector(".eff-etc");if(l){l.hidden=!t.checked;if(t.checked){const i=l.querySelector("input");if(i)i.focus()}}});
 function openCase(c,r){curCase=c;r=r||{};curRef=r;const e=CS.esc,d=c.docs||{};
   const prop=CS.proposed(c);
   $("#cedit").hidden=false;
@@ -143,7 +147,9 @@ function openCase(c,r){curCase=c;r=r||{};curRef=r;const e=CS.esc,d=c.docs||{};
      ${CS.DOCS.filter(x=>!(B.worker&&x.k==="confirm")).map(x=>{const v=d[x.k]||{};return `<div class="doc" data-doc="${x.k}"><div class="doc-top"><b>${x.l}${x.req===1?' <span style="color:var(--warm);font-size:12px">필수</span>':typeof x.req==="string"?` <span style="color:var(--amber);font-size:12px">${x.req.slice(1).split("").join("·")}유형 필수</span>`:""}</b>
        <label><input type="checkbox" data-got="${x.k}"${v.got?" checked":""}> 받음</label>${x.dated?`<label>발급일 <input type="date" data-date="${x.k}" value="${e(v.date||"")}"></label>`:""}</div>${x.h?`<small>${x.h}</small>`:""}
        <div class="files" id="files-${x.k}"><span class="dv-empty">불러오는 중…</span></div></div>`}).join("")}</div>
-   <div class="cs-card"><h3>에너지 효율 개선</h3><div class="cs-checks">${["열화상 진단","방풍·단열 물품","방한 물품","난방기구 수리","외부 집수리 연계"].map(x=>`<label><input type="checkbox" data-eff="${x}"${(c.eff_needs||[]).includes(x)?" checked":""}> ${x}</label>`).join("")}</div>
+   <div class="cs-card"><h3>에너지 효율 개선</h3><p class="eff-h">협회 지원 분야</p><div class="cs-checks">${EFF.map(x=>`<label><input type="checkbox" data-eff="${x}"${effHas(c.eff_needs,x)?" checked":""}> ${x}</label>`).join("")}</div>
+     <p class="eff-h">추가 필요사항</p><div class="cs-checks">${EFF2.map(x=>`<label><input type="checkbox" data-eff="${x}"${effHas(c.eff_needs,x)?" checked":""}> ${x}</label>`).join("")}</div>
+     <label class="eff-etc"${effHas(c.eff_needs,"기타")?"":" hidden"}>기타 필요 내역<input type="text" id="c_eff_etc" maxlength="100" placeholder="필요한 물품이나 수리 내용을 입력해 주세요" value="${e(c.eff_etc||"")}"></label>
      <label style="margin-top:8px">메모<textarea id="c_eff_note" maxlength="1000">${e(c.eff_note||"")}</textarea></label></div>
    <div class="cs-card"${B.worker?" hidden":""}><h3>단계 · 판정</h3>
      <div class="cs-row2"><label>단계<select id="c_stage">${opt(CS.STAGES,c.stage)}</select></label><label>가구코드<input type="text" id="c_household_code" maxlength="10" placeholder="A-01" value="${e(c.household_code||"")}"></label></div>
@@ -166,7 +172,7 @@ function formCase(){const c=curCase,g=id=>$("#c_"+id),docs={};
     v_is_head:g("v_is_head").value||null,v_head_name:g("v_head_name").value.trim()||null,v_head_birth:g("v_head_birth").value.trim()||null,v_household_size:+g("v_household_size").value||null,
     v_income:g("v_income").value||null,v_voucher_target:g("v_voucher_target").value||null,v_env:g("v_env").value||null,v_gender:g("v_gender").value||null,v_birth:g("v_birth").value||null,period:g("period").value,participation:g("participation").value,care_found:g("care_found").value||null,v_voucher:g("v_voucher").value||null,v_heating:g("v_heating").value||null,v_account:g("v_account").value||null,
     type_final:g("type_final").value||null,start_month:+g("start_month").value,docs,
-    eff_needs:[...document.querySelectorAll("[data-eff]:checked")].map(x=>x.dataset.eff),eff_note:g("eff_note").value.trim()||null,
+    eff_needs:[...document.querySelectorAll("[data-eff]:checked")].map(x=>x.dataset.eff),eff_note:g("eff_note").value.trim()||null,eff_etc:(g("eff_etc")&&document.querySelector('[data-eff="기타"]:checked')?g("eff_etc").value.trim():"")||null,
     members:g("members").value.trim()||null,hi_premium:g("hi_premium").value.trim()||null,cool_equip:g("cool_equip").value||null,bill_avg:g("bill_avg").value.trim()||null,bill_checked:g("bill_checked").value||null,arrears_months:g("arrears_months").value.trim()||null,cutoff:g("cutoff").value.trim()||null,equip_owner:g("equip_owner").value||null,heat_risk:g("heat_risk").value||null,guardian:g("guardian").value.trim()||null,
     stage:g("stage").value,household_code:g("household_code").value.trim()||null,committee_result:g("committee_result").value||null,committee_date:g("committee_date").value||null,committee_note:g("committee_note").value.trim()||null,kaswc_approved:g("kaswc_approved").value||null}}
 function refreshCalc(){if(!curCase)return;const t=Object.assign({},curCase,formCase());const a=CS.amounts(t),ds=CS.docState(t);
@@ -227,5 +233,5 @@ document.addEventListener("click",async e=>{const b=e.target.closest("#c_pdf");i
     msg.textContent=`${items.length}장을 PDF 한 파일로 받았습니다`+(skipped.length?` · PDF로 올린 ${skipped.length}건(${[...new Set(skipped)].join(", ")})은 따로 열어 주세요`:"")}
   catch(x){msg.textContent="PDF를 만들지 못했습니다: "+(x.message||x)}finally{b.disabled=false}});
 
-return {init(b,h){B=b;H=Object.assign(H,h||{})},open:openCase,current:()=>curCase};
+return {init(b,h){B=b;H=Object.assign(H,h||{});if(!b.worker)document.body.classList.add("staff-ui")},open:openCase,current:()=>curCase};
 })();
