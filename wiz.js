@@ -2,23 +2,23 @@
 (function(){
 const $=s=>document.querySelector(s);
 const QUAL=["resident","income","bank","voucher","hifam","etc"],SUBM=["consent_own","consent","pledge","lease"],SIGNABLE=["consent_own","consent","pledge"];
-const STEPS=[["가정방문","방문 날짜와 본 모습"],["에너지 상담","가구·요금·설비·건강"],["자격 확인 서류","등본·소득·바우처·통장"],["제출 서류 · 서명","동의서·약정서 전자서명"],["에너지 효율 개선","필요한 물품·수리"],["확인하고 제출","빠진 것 확인 후 제출"]];
+const STEPS=[["가정방문","방문 일자·현장 상황"],["에너지 상담","가구·요금·설비·건강"],["자격 확인 서류","등본·소득·바우처·통장"],["제출 서류 · 서명","동의서·약정서 전자서명"],["에너지 효율 개선","필요한 물품·수리"],["확인하고 제출","누락 확인 후 제출"]];
 let cur=0,P={},SIGS={},CID=null,CC=null;
 const NEED=[["resident","주민등록등본",2],["income","소득 증빙",2],["bank","통장 사본",2],["consent_own","복지관 동의서 서명",3],["consent","협회 동의서 서명",3],["pledge","용도 약정서 서명",3]];
 const missing=()=>NEED.filter(([k])=>!got(k));
 const WREQ=["resident","income","bank"];/* 추천자 화면은 유형과 상관없이 필수 */
 /* 서류 설명: 한 줄에 한 가지 */
 const HELP={
- resident:[["세대주와 함께 사는 가족을 확인하는 서류예요"],["발급한 지 3개월 이내","w"]],
- income:[["위에서부터 해당하는 것 하나를 올려 주세요","h"],["① 기초생활 수급자증명서 · 수급자라면","d"],["② 에너지바우처 결정통지서 · 바우처를 받는 집이라면","d"],["③ 건강보험료 납부확인서 (최근 3개월) · 수급자가 아니라면","d"],["수급자인데 바우처가 없는 집은 ①과 ③을 같이 올려 주세요","w"],["외국인은 소득금액증명원 또는 근로소득 원천징수 영수증"],["발급한 지 3개월 이내","w"]],
- hifam:[["가족이 건강보험료를 대신 내는 경우에만 필요해요","h"],["건강보험 자격확인서","d"],["가족관계증명서","d"]],
- voucher:[["바우처를 받는 가구만 올려 주세요","h"],["소득 증빙 칸에 결정통지서를 올렸으면 비워 둬도 돼요"],["바우처 결정통지서 또는 누리집 잔액 화면 캡처","d"],["작년(2025년) 바우처를 다 쓴 경우: 잔액 1만 원 이하 확인 (☎ 1600-3190)"],["바우처를 쓰기 어려운 집이면 그 모습 사진이나 메모도 함께"]],
- bank:[["대상자 본인 이름으로 된 통장","h"],["계좌번호가 보이는 첫 장을 찍어 주세요"],["세대주가 아니어도 대상자 본인 명의여야 해요"],["냉·난방비가 이 통장으로 들어가요","w"]],
- etc:[["집 안 사진, 난방기구 사진"],["도시가스가 안 들어오는 집이면 그 근거 사진"],["개인 카톡·문자로 보내지 말고 여기에 바로 올려 주세요","w"]],
- consent_own:[["이 시스템에 상담 기록과 서류를 남기기 위한 동의예요"],["복지관 양식"]],
- consent:[["협회 시스템에 등록하기 전에 꼭 받아야 해요"],["협회 양식 그대로 (별첨 5)"]],
- pledge:[["지원받은 돈을 냉·난방비로만 쓰겠다는 약정이에요"]],
- lease:[["보일러·난방기구가 집주인 것이고, 그걸 고칠 때만 필요해요","h"],["집주인 서명을 받아 사진으로 올려 주세요"]]};
+ resident:[["세대 구성원 확인용 서류"],["발급한 지 3개월 이내","w"]],
+ income:[["아래 순서대로 해당하는 서류 1종 제출","h"],["① 기초생활 수급자증명서 · 수급자","d"],["② 에너지바우처 결정통지서 · 바우처 수급 가구","d"],["③ 건강보험료 납부확인서 (최근 3개월) · 수급자가 아닌 경우","d"],["바우처가 없는 수급자는 ①과 ③ 함께 제출","w"],["외국인은 소득금액증명원 또는 근로소득 원천징수 영수증"],["발급한 지 3개월 이내","w"]],
+ hifam:[["가족이 건강보험료를 대신 납부하는 경우에만 제출","h"],["건강보험 자격확인서","d"],["가족관계증명서","d"]],
+ voucher:[["바우처 수급 가구만 제출","h"],["소득 증빙에 결정통지서를 제출한 경우 생략 가능"],["바우처 결정통지서 또는 누리집 잔액 화면 캡처","d"],["작년(2025년) 바우처를 다 쓴 경우: 잔액 1만 원 이하 확인 (☎ 1600-3190)"],["바우처 사용이 어려운 가구는 현장 사진 또는 메모 첨부"]],
+ bank:[["대상자 본인 명의 통장","h"],["계좌번호가 보이는 첫 장 촬영"],["세대주가 아니어도 대상자 본인 명의 필수"],["냉·난방비 지급 계좌","w"]],
+ etc:[["집 안 사진, 난방기구 사진"],["도시가스 미공급 가구는 근거 사진"],["개인 메신저로 보내지 말고 이 화면에서 업로드","w"]],
+ consent_own:[["상담 기록·서류 보관을 위한 동의"],["복지관 양식"]],
+ consent:[["협회 시스템 등록 전 필수"],["협회 양식 그대로 (별첨 5)"]],
+ pledge:[["지원금을 냉·난방비로만 사용한다는 약정"]],
+ lease:[["임대인 소유 난방기구를 수리하는 경우에만 제출","h"],["임대인 서명 후 사진으로 업로드"]]};
 const helpHTML=k=>(HELP[k]||[]).map(([t,c])=>`<li class="${c||""}">${CS.esc(t)}</li>`).join("");
 const has=id=>{const e=$("#c_"+id);return !!(e&&String(e.value||"").trim())};
 const got=k=>{const b=document.querySelector(`[data-got="${k}"]`);return !!(b&&b.checked)};
@@ -43,14 +43,14 @@ function fold(d){if(d.querySelector(".dhd"))return;const k=d.dataset.doc,b=d.que
   const sm=bd.querySelector(":scope>small");if(sm&&HELP[k]){const u=document.createElement("ul");u.className="dhelp";u.innerHTML=helpHTML(k);sm.replaceWith(u)}
   d.append(hd,bd);
   if(SIGNABLE.includes(k)){const s=document.createElement("div");s.className="dsig";bd.insertBefore(s,bd.firstChild);
-    const f=bd.querySelector(".files");if(f){const t=document.createElement("details");t.className="dpaper";t.innerHTML="<summary>종이에 받았다면 사진으로 올리기</summary>";bd.insertBefore(t,f);t.appendChild(f)}}
+    const f=bd.querySelector(".files");if(f){const t=document.createElement("details");t.className="dpaper";t.innerHTML="<summary>종이 서명본 사진 업로드</summary>";bd.insertBefore(t,f);t.appendChild(f)}}
   hd.onclick=()=>{bd.hidden=!bd.hidden;d.classList.toggle("open",!bd.hidden)};
   paint(d)}
 function paint(d){const k=d.dataset.doc,ok=got(k),sg=SIGS[k];d.classList.toggle("done",ok);
   d.querySelector(".dst").textContent=ok?(sg?"서명 완료":"완료"):d.querySelector(".dtg.req")?"필요":"";
   const s=d.querySelector(".dsig");if(s){const f=SIGN.FORMS[k];
     s.innerHTML=sg?`<div class="dsg-ok">${sg.png?`<img src="${sg.png}" alt="서명">`:'<span class="dsg-ic">✍</span>'}<div><b>서명 완료</b><small>${new Date(sg.signed_at).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"numeric",minute:"2-digit"}).replace(". ","/").replace(".","")} · ${sg.who==="대리인"?CS.esc(sg.proxy_name)+"("+CS.esc(sg.proxy_rel)+")":"대상자 본인"}</small></div><button type="button" class="upl" data-resign="${k}">다시 받기</button></div>`
-      :`<button type="button" class="btn dsg-go" data-sign="${k}">서명 받기</button><small class="dsg-h">${CS.esc(f.src)} · 화면에서 내용을 읽어 드리고 손가락으로 서명받아요. 종이 양식에 서명이 들어간 채로 복지관에서 출력해요.</small>`}}
+      :`<button type="button" class="btn dsg-go" data-sign="${k}">서명 받기</button><small class="dsg-h">${CS.esc(f.src)} · 화면의 내용을 읽어 드린 뒤 손가락으로 서명을 받습니다.<br>서명은 종이 양식에 들어간 상태로 복지관에서 출력합니다.</small>`}}
 function refresh(){document.querySelectorAll(".wz-pane .doc").forEach(paint);
   {const ch=$("#c_chips .chip2");if(ch){const n=missing().length;ch.textContent=`서류 ${NEED.length-n}/${NEED.length}`;ch.className="chip2 "+(n?"amber":"ok")}document.querySelectorAll("#c_chips .chip2.warn,#c_chips .chip2.info").forEach(x=>x.remove())}
   document.querySelectorAll(".wz-dot").forEach((x,i)=>{x.classList.toggle("ok",stepDone(i));x.classList.toggle("cur",i===cur)});
@@ -59,11 +59,11 @@ function refresh(){document.querySelectorAll(".wz-pane .doc").forEach(paint);
 const bar=(a,b)=>`<div class="wz-cnt"><b>필수 ${a}/${b} 완료</b><i><u style="width:${b?a/b*100:0}%"></u></i></div>`;
 function review(){const r=$("#wz_rev");if(!r)return;
   const m=missing(),bt=$(".wz-tell"),ms=$("#wz_miss"),af=$(".wz-after"),mode=(CC&&CC.visit_mode)||"추천자",done=CC&&CC.w_done_at;
-  if(done){bt.disabled=true;bt.textContent="제출했어요 · 복지관 확인 중";ms.innerHTML="";af.hidden=false;af.innerHTML=origBox()+'<p class="wz-fix">고칠 게 있으면 복지관 담당자에게 말씀해 주세요.</p>'}
-  else if(mode==="복지관"&&!window.__asVisitor){bt.hidden=true;ms.innerHTML='<p class="wz-ok">복지관이 방문하는 가구라 제출할 필요가 없어요. 아는 내용만 적어 주세요.</p>'}
-  else{bt.hidden=false;bt.disabled=!!m.length;bt.textContent="제출하기";af.hidden=true;ms.innerHTML=m.length?`<div class="wz-miss"><b>아직 없는 필수 항목 ${m.length}개</b>${m.map(([k,l,st])=>`<button type="button" data-go="${st}">${l}<span>${st===2?"3단계":"4단계"} ›</span></button>`).join("")}</div>`:'<p class="wz-ok">✓ 필수 서류와 서명이 다 있어요. 제출할 수 있어요.</p>'}
-  {const nx=$("#wz_next");if(nx&&cur===5){nx.disabled=!!(bt.disabled||bt.hidden);nx.textContent=bt.hidden?"제출할 필요 없어요":bt.textContent}}
-  r.innerHTML=STEPS.slice(0,5).map(([t],i)=>{const ok=stepDone(i),opt=i===4;return `<button type="button" class="wz-ri${ok?" ok":opt?" skip":""}" data-go="${i}"><i>${ok?"✓":i+1}</i><span><b>${t}</b><small>${ok?(i===2?"업로드 완료":i===3?"서명 완료":"입력 완료"):opt?"해당 없으면 넘어가도 돼요":i===2?`필수 서류 ${cnt(QUAL).join("/")}`:i===3?`서명 ${cnt(SIGNABLE).join("/")}`:"아직 비어 있어요"}</small></span><em>${ok?"":"채우기 ›"}</em></button>`}).join("")}
+  if(done){bt.disabled=true;bt.textContent="제출 완료 · 복지관 확인 중";ms.innerHTML="";af.hidden=false;af.innerHTML=origBox()+'<p class="wz-fix">수정이 필요한 경우 복지관 담당자에게 문의해 주십시오.</p>'}
+  else if(mode==="복지관"&&!window.__asVisitor){bt.hidden=true;ms.innerHTML='<p class="wz-ok">복지관 방문 가구는 제출하지 않아도 됩니다.<br>확인된 내용만 입력해 주세요.</p>'}
+  else{bt.hidden=false;bt.disabled=!!m.length;bt.textContent="제출하기";af.hidden=true;ms.innerHTML=m.length?`<div class="wz-miss"><b>누락된 필수 항목 ${m.length}개</b>${m.map(([k,l,st])=>`<button type="button" data-go="${st}">${l}<span>${st===2?"3단계":"4단계"} ›</span></button>`).join("")}</div>`:'<p class="wz-ok">✓ 필수 서류와 서명이 모두 확인되었습니다.<br>제출할 수 있습니다.</p>'}
+  {const nx=$("#wz_next");if(nx&&cur===5){nx.disabled=!!(bt.disabled||bt.hidden);nx.textContent=bt.hidden?"제출 대상 아님":bt.textContent}}
+  r.innerHTML=STEPS.slice(0,5).map(([t],i)=>{const ok=stepDone(i),opt=i===4;return `<button type="button" class="wz-ri${ok?" ok":opt?" skip":""}" data-go="${i}"><i>${ok?"✓":i+1}</i><span><b>${t}</b><small>${ok?(i===2?"업로드 완료":i===3?"서명 완료":"입력 완료"):opt?"해당 없으면 생략 가능":i===2?`필수 서류 ${cnt(QUAL).join("/")}`:i===3?`서명 ${cnt(SIGNABLE).join("/")}`:"미입력"}</small></span><em>${ok?"":"입력 ›"}</em></button>`}).join("")}
 
 function go(i){cur=Math.max(0,Math.min(5,i));document.querySelectorAll(".wz-pane").forEach((p,j)=>p.hidden=j!==cur);
   $("#wz_t").innerHTML=`<small>${cur+1} / 6단계</small><b>${STEPS[cur][0]}</b>`;
@@ -79,9 +79,9 @@ function build(c,r){const form=$("#cedit .cs-form");if(!form||document.getElemen
   const visit=byH("가정방문"),energy=byH("에너지 상담"),docs=byH("증빙 서류"),eff=byH("에너지 효율");
   const allDocs=[...docs.querySelectorAll(".doc")];allDocs.forEach(fold);
   const mk=(h,ks,id,sub)=>{const cd=document.createElement("div");cd.className="cs-card";cd.innerHTML=`<h3>${h}</h3><p class="wz-sub">${sub}</p><div id="${id}"></div><div class="dlist"></div>`;ks.forEach(k=>{const d=allDocs.find(x=>x.dataset.doc===k);if(d)cd.querySelector(".dlist").appendChild(d)});return cd};
-  const q=mk("자격 확인 서류",QUAL,"wz_q","선정 기준에 맞는지 확인하는 서류예요. 누르면 펼쳐져요. 다 올린 서류는 초록색으로 바뀌어요."),
-        s=mk("제출 서류 · 서명",SUBM,"wz_s","협회와 복지관에 내는 서류예요. 대상자에게 화면으로 읽어 드리고 폰에 서명받으면 돼요.");
-  const rv=document.createElement("div");rv.className="cs-card";rv.innerHTML=`<h3>확인하고 제출</h3><p class="wz-sub">필수 서류와 서명이 모두 있어야 제출할 수 있어요. 서류를 나중에 받았으면 다 올린 뒤 제출해 주세요.</p><div id="wz_rev" class="wz-rev"></div><div id="wz_miss"></div><button type="button" class="btn wz-tell">제출하기</button><p class="wz-after" hidden></p>`;
+  const q=mk("자격 확인 서류",QUAL,"wz_q","선정 기준 확인용 서류입니다.<br>항목을 누르면 상세 내용이 표시됩니다.<br>업로드가 완료된 서류는 초록색으로 표시됩니다."),
+        s=mk("제출 서류 · 서명",SUBM,"wz_s","협회와 복지관에 제출하는 서류입니다.<br>대상자에게 화면의 내용을 읽어 드린 뒤 휴대폰으로 서명을 받아 주세요.");
+  const rv=document.createElement("div");rv.className="cs-card";rv.innerHTML=`<h3>확인하고 제출</h3><p class="wz-sub">필수 서류와 서명이 모두 있어야 제출할 수 있습니다.<br>서류를 추후 받은 경우 모두 업로드한 뒤 제출해 주세요.</p><div id="wz_rev" class="wz-rev"></div><div id="wz_miss"></div><button type="button" class="btn wz-tell">제출하기</button><p class="wz-after" hidden></p>`;
   const panes=[visit,energy,q,s,eff,rv].map(x=>{const p=document.createElement("div");p.className="wz-pane";p.appendChild(x);return p});
   const rest=document.createElement("div");rest.hidden=true;cards.filter(x=>![visit,energy,docs,eff].includes(x)).forEach(x=>rest.appendChild(x));docs.hidden=true;rest.appendChild(docs);
   const nav=document.createElement("div");nav.className="wz";
@@ -93,7 +93,7 @@ function build(c,r){const form=$("#cedit .cs-form");if(!form||document.getElemen
   $("#cedit").classList.add("wz-on");
   $("#wz_prev").onclick=()=>go(cur-1);
   $("#wz_next").onclick=()=>{if(cur===5){const t=$(".wz-tell");if(t&&!t.disabled&&!t.hidden)submit(t);return}const from=cur;$("#c_save").click();if(cur<5)go(cur+1);
-    if(from===2||from===3){const m=missing().filter(x=>x[2]===from);if(m.length)toast(`아직 없는 서류: ${m.map(x=>x[1]).join(", ")}\n나중에 받아서 올려도 돼요`)}};
+    if(from===2||from===3){const m=missing().filter(x=>x[2]===from);if(m.length)toast(`누락된 서류: ${m.map(x=>x[1]).join(", ")}\n추후 업로드할 수 있습니다.`)}};
   try{members(c)}catch(err){console.error(err)}
   try{equip();guardian()}catch(err){console.error(err)}
   {const hp=$("#c_hi_premium");if(hp){const row=hp.closest(".cs-row2")||hp.closest("label");row.style.display="none"}}/* 건보료는 증빙으로 확인 · 관리 화면에서 입력 */
@@ -101,11 +101,11 @@ function build(c,r){const form=$("#cedit .cs-form");if(!form||document.getElemen
 
 /* 추천서 내용: 가정방문 화면 맨 위에 접어서 (보기만) */
 function refCard(r){const e=CS.esc,v=x=>Array.isArray(x)?x.join(", "):(x??""),d=document.createElement("details");d.className="refc";
-  const kv=[["세대주",r.is_head==="예"?"대상자 본인":r.is_head==="아니오"?`아니오${r.head_name?" ("+r.head_name+")":""}`:r.is_head],["가구원 수",r.household_size?r.household_size+"명":""],["실제 함께 사는 분",r.live_with],["소득",r.income],["수급 종류",v(r.recipient_kinds)],["에너지바우처",r.voucher],["난방",r.heating],["본인 명의 통장",r.account],["집",[r.housing_tenure,v(r.housing_risk)].filter(Boolean).join(" · ")],["고장 난 난방기구",r.heater_broken],["요금 체납",v(r.arrears)],["다른 지원",r.other_support]].filter(([,x])=>x&&String(x).trim());
+  const kv=[["세대주",r.is_head==="예"?"대상자 본인":r.is_head==="아니오"?`아니오${r.head_name?" ("+r.head_name+")":""}`:r.is_head],["가구원 수",r.household_size?r.household_size+"명":""],["실제 거주 가구원",r.live_with],["소득",r.income],["수급 종류",v(r.recipient_kinds)],["에너지바우처",r.voucher],["난방",r.heating],["본인 명의 통장",r.account],["집",[r.housing_tenure,v(r.housing_risk)].filter(Boolean).join(" · ")],["고장 난 난방기구",r.heater_broken],["요금 체납",v(r.arrears)],["다른 지원",r.other_support]].filter(([,x])=>x&&String(x).trim());
   d.innerHTML=`<summary><b>추천서 내용 보기</b><span>${e(r.worker_org||"")} ${e(r.worker_name||"")} 선생님 추천${r.urgency?` · 긴급도 ${e(r.urgency)}`:""}</span></summary>
   <div class="refb">${r.reason?`<h4>추천 사유</h4><p>${e(r.reason)}</p>`:""}${r.risk_note?`<h4>건강·생활 위험</h4><p>${e(r.risk_note)}</p>`:""}
   ${kv.length?`<dl>${kv.map(([k,x])=>`<dt>${e(k)}</dt><dd>${e(x)}</dd>`).join("")}</dl>`:""}
-  <p class="refn">추천서와 실제가 다르면 1단계 현황 메모에 적어 주세요.</p></div>`;return d}
+  <p class="refn">추천서 내용과 실제가 다른 경우 1단계 현황 메모에 기록해 주세요.</p></div>`;return d}
 
 /* 냉·난방 설비: 여러 개 고르기 (저장은 기존 칸에 "가스보일러, 선풍기"처럼) */
 const EQ=[["난방",["가스보일러","기름보일러","연탄보일러","전기장판","전기난로·히터","온풍기"]],["냉방",["에어컨","선풍기","냉풍기"]],["",["냉·난방기 없음"]]];
@@ -124,7 +124,7 @@ function guardian(){const inp=$("#c_guardian");if(!inp||inp.dataset.gx)return;in
   const t=inp.value||"",ph=(t.match(/0\d{1,2}[-\s.]?\d{3,4}[-\s.]?\d{4}/)||[""])[0],rest=t.replace(ph,"").replace(/[·()]/g," ").trim().split(/\s+/).filter(Boolean);
   const rel=rest.find(x=>GREL.includes(x))||"",nm=rest.filter(x=>x!==rel).join(" ");
   inp.type="hidden";const box=document.createElement("div");box.className="gx";
-  box.innerHTML=`<b>안부 확인 보호자 <small>없으면 비워 두세요</small></b><div class="gxr"><input data-g="n" placeholder="이름" maxlength="20" value="${CS.esc(nm)}"><select data-g="r"><option value="">관계</option>${GREL.map(x=>`<option${x===rel?" selected":""}>${x}</option>`).join("")}</select><input data-g="p" type="tel" inputmode="tel" placeholder="010-0000-0000" maxlength="13" value="${CS.esc(ph)}"></div>`;
+  box.innerHTML=`<b>안부 확인 보호자 <small>없으면 비워 두십시오</small></b><div class="gxr"><input data-g="n" placeholder="이름" maxlength="20" value="${CS.esc(nm)}"><select data-g="r"><option value="">관계</option>${GREL.map(x=>`<option${x===rel?" selected":""}>${x}</option>`).join("")}</select><input data-g="p" type="tel" inputmode="tel" placeholder="010-0000-0000" maxlength="13" value="${CS.esc(ph)}"></div>`;
   const row=lab.closest(".cs-row2");lab.style.display="none";lab.after(box);if(row){row.after(box);row.style.display=row.querySelectorAll("label:not([style*='none'])").length?"":"none"}
   const sync=()=>{const n=box.querySelector('[data-g=n]').value.trim(),r=box.querySelector('[data-g=r]').value,p=box.querySelector('[data-g=p]').value.trim();inp.value=[n,r?"("+r+")":"",p].filter(Boolean).join(" ");inp.dispatchEvent(new Event("input",{bubbles:true}))};
   box.addEventListener("input",e=>{if(e.target.dataset.g==="p"){const d=e.target.value.replace(/\D/g,"").slice(0,11);e.target.value=d.length>7?d.slice(0,3)+"-"+d.slice(3,d.length-4)+"-"+d.slice(-4):d.length>3?d.slice(0,3)+"-"+d.slice(3):d}e.stopPropagation();sync()});
@@ -140,7 +140,7 @@ function members(c){const ta=$("#c_members");if(!ta||ta.dataset.mx)return;ta.dat
   const fmtB=b=>{b=b.replace(/\D/g,"");if(b.length===8)return b.slice(0,4)+"."+b.slice(4,6)+"."+b.slice(6);if(b.length===6){let y=+b.slice(0,2);y+=y>new Date().getFullYear()%100?1900:2000;return y+"."+b.slice(2,4)+"."+b.slice(4)}return b};
   function sync(){ta.value=L.filter(x=>x.n.trim()).map(x=>[x.n.trim(),fmtB(x.b),x.r].filter(Boolean).join(" ")).join(" / ");ta.dispatchEvent(new Event("input",{bubbles:true}));box.querySelector(".mx-n").textContent=L.filter(x=>x.n.trim()).length+"명"}
   function draw(){const e=CS.esc;
-    box.innerHTML=`<div class="mx-h"><b>가구원</b><span class="mx-n"></span><small>등본에 나온 사람을 한 명씩 넣어 주세요</small></div>`+L.map((x,i)=>`<div class="mx-r" data-i="${i}"><select data-f="r" aria-label="관계">${REL.map(r=>`<option${r===x.r?" selected":""}>${r}</option>`).join("")}${x.r&&!REL.includes(x.r)?`<option selected>${e(x.r)}</option>`:""}</select><input data-f="n" placeholder="이름" maxlength="20" value="${e(x.n)}"><input data-f="b" placeholder="생년월일 6자리" inputmode="numeric" maxlength="10" value="${e(x.b)}">${i?`<button type="button" class="mx-x" aria-label="빼기">✕</button>`:"<span></span>"}</div>`).join("")+`<button type="button" class="mx-add">+ 가구원 추가</button>`;sync()}
+    box.innerHTML=`<div class="mx-h"><b>가구원</b><span class="mx-n"></span><small>등본에 기재된 가구원을 한 명씩 입력해 주세요</small></div>`+L.map((x,i)=>`<div class="mx-r" data-i="${i}"><select data-f="r" aria-label="관계">${REL.map(r=>`<option${r===x.r?" selected":""}>${r}</option>`).join("")}${x.r&&!REL.includes(x.r)?`<option selected>${e(x.r)}</option>`:""}</select><input data-f="n" placeholder="이름" maxlength="20" value="${e(x.n)}"><input data-f="b" placeholder="생년월일 6자리" inputmode="numeric" maxlength="10" value="${e(x.b)}">${i?`<button type="button" class="mx-x" aria-label="삭제">✕</button>`:"<span></span>"}</div>`).join("")+`<button type="button" class="mx-add">+ 가구원 추가</button>`;sync()}
   box.addEventListener("input",e=>{const r=e.target.closest(".mx-r");if(!r)return;e.stopPropagation();L[+r.dataset.i][e.target.dataset.f]=e.target.value;sync()});
   box.addEventListener("change",e=>{const r=e.target.closest(".mx-r");if(!r)return;e.stopPropagation();L[+r.dataset.i][e.target.dataset.f]=e.target.value;sync()});
   box.addEventListener("click",e=>{if(e.target.closest(".mx-add")){L.push({n:"",b:"",r:L.length===1?"배우자":"기타"});draw();const ins=box.querySelectorAll('.mx-r:last-of-type input[data-f=n]');if(ins[0])ins[0].focus();return}
@@ -150,33 +150,33 @@ function members(c){const ta=$("#c_members");if(!ta||ta.dataset.mx)return;ta.dat
 document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g&&g.closest(".wz-on")&&!g.closest(".back")){go(+g.dataset.go);return}
   const s=e.target.closest("[data-sign],[data-resign]");if(s){const k=s.dataset.sign||s.dataset.resign;
     const vi=$("#c_visitor");if(vi&&vi.value.trim())P.visitor=vi.value.trim();
-    SIGN.open(k,P,async rec=>{const m=$("#c_msg");if(m)m.textContent="서명을 저장하는 중…";
+    SIGN.open(k,P,async rec=>{const m=$("#c_msg");if(m)m.textContent="서명 저장 중…";
       try{const nc=await rpc("oncool_w_sign",{p_token:TOKEN,p_case:CID,p_form:k,p:{png:rec.png,ans:rec.ans,who:rec.who,proxy_name:rec.proxy_name,proxy_rel:rec.proxy_rel,visitor:rec.visitor}});
         SIGS[k]=Object.assign({},(nc&&nc.signs||{})[k]||rec,{png:rec.png});
         const cb=document.querySelector(`[data-got="${k}"]`);if(cb&&!cb.checked){cb.checked=true;cb.dispatchEvent(new Event("change",{bubbles:true}))}
-        window.__signs=SIGS;refresh();if(m)m.textContent="서명을 저장했어요"}
-      catch(err){if(m)m.textContent="";alert(/session/.test(err.message)?"다시 들어와 주세요.":/locked/.test(err.message)?"사례판정 단계라 서명을 바꿀 수 없어요.":"서명을 저장하지 못했어요. 잠시 뒤에 다시 해 주세요.")}});return}
+        window.__signs=SIGS;refresh();if(m)m.textContent="서명이 저장되었습니다"}
+      catch(err){if(m)m.textContent="";alert(/session/.test(err.message)?"다시 로그인해 주세요.":/locked/.test(err.message)?"사례판정 단계에서는 서명을 변경할 수 없습니다.":"서명을 저장하지 못했습니다.\n잠시 후 다시 시도해 주세요.")}});return}
   const t=e.target.closest(".wz-tell");if(t&&!t.disabled)submit(t)});
 function toast(msg){let el=$(".wz-toast");if(!el){el=document.createElement("div");el.className="wz-toast";document.body.appendChild(el)}el.textContent=msg;el.classList.add("on");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("on"),3200)}
 function mir(bt){const nx=$("#wz_next");if(nx&&cur===5){nx.disabled=bt.disabled;nx.textContent=bt.textContent}}
-async function submit(bt){if(missing().length){review();return}bt.disabled=true;bt.textContent="저장하는 중…";mir(bt);
+async function submit(bt){if(missing().length){review();return}bt.disabled=true;bt.textContent="저장 중…";mir(bt);
   const m=$("#c_msg");if(m)m.textContent="";$("#c_save").click();
-  for(let i=0;i<40;i++){await new Promise(r=>setTimeout(r,150));const t=m?m.textContent:"";if(t==="저장했어요")break;if(/못|끝났/.test(t)){bt.disabled=false;bt.textContent="제출하기";mir(bt);return}}
-  bt.textContent="제출하는 중…";mir(bt);
+  for(let i=0;i<40;i++){await new Promise(r=>setTimeout(r,150));const t=m?m.textContent:"";if(t==="저장되었습니다")break;if(/못|끝났/.test(t)){bt.disabled=false;bt.textContent="제출하기";mir(bt);return}}
+  bt.textContent="제출 중…";mir(bt);
   try{const r=await rpc("oncool_w_done",{p_token:TOKEN,p_case:CID});Object.assign(CC,r||{w_done_at:new Date().toISOString()});review();doneModal()}
-  catch(err){bt.disabled=false;bt.textContent="제출하기";mir(bt);alert(/session/.test(err.message)?"다시 들어와 주세요.":/missing/.test(err.message)?"필수 서류나 서명이 빠져 있어요.":"제출하지 못했어요. 잠시 뒤에 다시 해 주세요.")}}
+  catch(err){bt.disabled=false;bt.textContent="제출하기";mir(bt);alert(/session/.test(err.message)?"다시 로그인해 주세요.":/missing/.test(err.message)?"필수 서류 또는 서명이 누락되었습니다.":"제출하지 못했습니다.\n잠시 후 다시 시도해 주세요.")}}
 document.addEventListener("change",e=>{if(e.target.closest(".wz-on"))refresh()});
 document.addEventListener("cs:saved",e=>{const c=e.detail;if(!CC||!c||c.id!==CC.id)return;if(c!==CC)Object.assign(CC,c);refresh();if(cur===5)review()});
 document.addEventListener("input",e=>{if(e.target.closest(".wz-on"))refresh()});
 setInterval(()=>{if($(".wz-on"))document.querySelectorAll(".wz-pane .doc").forEach(paint)},1200);
 const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,arguments);try{build(c,r||{})}catch(err){console.error(err)}return x};
 window.WIZ={go,refresh};
-/* 제출 뒤: 증빙서류 원본 안내 (사진으로 올린 서류만, 전자서명한 서류·현장 사진 제외) */
+/* 제출 뒤: 증빙서류 원본 안내 (사진으로 업로드한 서류만, 전자서명한 서류·현장 사진 제외) */
 function origList(){return CS.DOCS.filter(d=>!["etc","confirm"].includes(d.k)&&got(d.k)&&!SIGS[d.k]).map(d=>d.l.replace(/\s*\(.*\)\s*$/,""))}
 function origBox(){const L=origList();if(!L.length)return"";const sg=SIGNABLE.some(k=>SIGS[k]);
-  return `<div class="wz-orig"><b>증빙서류 원본은 복지관에 제출해 주세요</b><ul>${L.map(x=>`<li>${CS.esc(x)}</li>`).join("")}</ul><small>사진으로 올린 서류만 적었어요.${sg?"<br>화면에서 서명한 동의서·약정서는 따로 제출하지 않으셔도 돼요.":""}</small></div>`}
+  return `<div class="wz-orig"><b>증빙서류 원본은 복지관에 제출해 주세요</b><ul>${L.map(x=>`<li>${CS.esc(x)}</li>`).join("")}</ul><small>사진으로 업로드한 서류만 표시됩니다.${sg?"<br>화면에서 서명한 동의서·약정서는 별도로 제출하지 않으셔도 됩니다.":""}</small></div>`}
 function doneModal(){wzCss();const m=document.createElement("div");m.className="wz-dm";
-  m.innerHTML=`<div class="wz-dmb" role="dialog" aria-modal="true" aria-label="제출 완료"><div class="wz-dmi">✓</div><h2>제출해 주셔서 감사합니다</h2><p>복지관에서 서류를 검토한 뒤 담당자가 연락드릴게요.</p>${origBox()}<button type="button" class="btn">확인</button></div>`;
+  m.innerHTML=`<div class="wz-dmb" role="dialog" aria-modal="true" aria-label="제출 완료"><div class="wz-dmi">✓</div><h2>제출해 주셔서 감사합니다.</h2><p>서류 검토 후 담당자가 연락드리겠습니다.</p>${origBox()}<button type="button" class="btn">확인</button></div>`;
   m.querySelector("button").onclick=()=>m.remove();document.body.appendChild(m)}
 function wzCss(){if(document.getElementById("wz-dm-css"))return;const st=document.createElement("style");st.id="wz-dm-css";st.textContent=`
 .wz-dm{position:fixed;inset:0;z-index:80;background:rgba(15,20,40,.5);display:grid;place-items:center;padding:20px;word-break:keep-all}
