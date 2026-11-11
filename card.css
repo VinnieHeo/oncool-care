@@ -209,3 +209,49 @@ label.upl{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
 .sg-left{font-size:12.5px;line-height:1.35}
 /* 마지막 단계: 아래 버튼이 제출하기 */
 .wz-on .wz-tell{display:none!important}.wz-acts #wz_next:disabled{background:#c9cede;box-shadow:none;color:#fff;opacity:1}
+
+/* 효율개선 항목 */
+.cs-card .eff-h{margin:2px 0 6px;font-size:12px;font-weight:800;color:var(--pri)}
+.cs-card .cs-checks+.eff-h{margin-top:12px}
+.cs-card .eff-etc{margin-top:10px}
+.wz-on .cs-card .cs-checks{display:flex;flex-wrap:wrap;gap:6px}
+.wz-on .cs-card .cs-checks label{position:relative;height:38px;padding:0 12px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);font-size:14px;font-weight:600;cursor:pointer}
+.wz-on .cs-card .cs-checks label input{position:absolute;opacity:0;pointer-events:none}
+.wz-on .cs-card .cs-checks label:has(input:checked){background:var(--pri);border-color:var(--pri);color:#fff}
+.wz-on .cs-card .cs-checks label:has(input:checked)::before{content:"✓"}
+
+/* 직원 화면(컴퓨터): 여백·입력칸 줄여 한 화면에 더 많이 */
+@media (min-width:900px){
+.staff-ui #cedit{padding:14px 16px}
+.staff-ui #cedit .cs-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
+.staff-ui #cedit .cs-card{padding:10px 14px 4px;border-radius:12px;box-shadow:none}
+.staff-ui #cedit .cs-card h3{font-size:14px;margin:0 0 8px}
+.staff-ui #cedit .cs-card label{font-size:12px;gap:3px;margin-bottom:8px}
+.staff-ui #cedit .cs-card input,.staff-ui #cedit .cs-card select{height:34px;min-height:34px;font-size:13.5px;border-radius:8px;padding:0 9px}
+.staff-ui #cedit .cs-card input[type=date]{min-height:34px;line-height:34px}
+.staff-ui #cedit .cs-card input[type=checkbox],.staff-ui #cedit .cs-card input[type=radio]{height:auto;min-height:0;width:auto}
+.staff-ui #cedit .cs-card textarea{min-height:54px;height:auto;font-size:13.5px;padding:6px 9px;border-radius:8px}
+.staff-ui #cedit .cs-row2{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.staff-ui #cedit .cs-sec,.staff-ui #cedit .sec{margin:4px 0 6px}
+.staff-ui #cedit hr,.staff-ui #cedit .cs-hr{margin:6px 0}
+
+.staff-ui #cedit .cs-sub{margin:4px 0 6px;padding-top:6px}
+.staff-ui #cedit .cs-card[style*="grid-column"]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px;align-items:start}
+.staff-ui #cedit .cs-card[style*="grid-column"]>*:not(.doc){grid-column:1/-1}
+.staff-ui #cedit .cs-card .doc{padding:8px 10px;margin:0 0 8px;border-radius:10px}
+.staff-ui #cedit .cs-card .doc small{margin-top:3px;line-height:1.4;font-size:11.5px}
+.staff-ui #cedit .cs-card .upls{display:flex!important;flex-wrap:wrap;gap:6px;margin-top:6px}
+.staff-ui #cedit .cs-card .upls .upl{min-height:0;height:30px;flex-direction:row!important;padding:0 10px;border-radius:8px;font-size:12px;gap:5px}
+.staff-ui #cedit .cs-card .upls .upl::before{width:15px;height:15px}
+.staff-ui #cedit .kw-r{padding:5px 10px}
+
+.staff-ui .wrap{max-width:1500px}
+.staff-ui h1{font-size:22px;margin:4px 0 6px}
+.staff-ui .ntop{margin:2px 0 8px}
+.staff-ui .vtabs{margin:4px 0 8px}
+.staff-ui .card{padding:12px 14px;margin-bottom:8px}
+.staff-ui .bar{padding:6px 8px;margin-bottom:8px}
+.staff-ui td,.staff-ui th{padding:6px 10px}
+.staff-ui #cedit .vmode{margin:8px 0;gap:8px}
+.staff-ui #cedit .sms textarea{min-height:56px}
+}
