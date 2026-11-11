@@ -59,7 +59,7 @@ function refresh(){document.querySelectorAll(".wz-pane .doc").forEach(paint);
 const bar=(a,b)=>`<div class="wz-cnt"><b>필수 ${a}/${b} 완료</b><i><u style="width:${b?a/b*100:0}%"></u></i></div>`;
 function review(){const r=$("#wz_rev");if(!r)return;
   const m=missing(),bt=$(".wz-tell"),ms=$("#wz_miss"),af=$(".wz-after"),mode=(CC&&CC.visit_mode)||"추천자",done=CC&&CC.w_done_at;
-  if(done){bt.disabled=true;bt.textContent="제출했어요 · 복지관 확인 중";ms.innerHTML="";af.hidden=false;af.textContent="고칠 게 있으면 복지관 담당자에게 말씀해 주세요."}
+  if(done){bt.disabled=true;bt.textContent="제출했어요 · 복지관 확인 중";ms.innerHTML="";af.hidden=false;af.innerHTML=origBox()+'<p class="wz-fix">고칠 게 있으면 복지관 담당자에게 말씀해 주세요.</p>'}
   else if(mode==="복지관"&&!window.__asVisitor){bt.hidden=true;ms.innerHTML='<p class="wz-ok">복지관이 방문하는 가구라 제출할 필요가 없어요. 아는 내용만 적어 주세요.</p>'}
   else{bt.hidden=false;bt.disabled=!!m.length;bt.textContent="제출하기";af.hidden=true;ms.innerHTML=m.length?`<div class="wz-miss"><b>아직 없는 필수 항목 ${m.length}개</b>${m.map(([k,l,st])=>`<button type="button" data-go="${st}">${l}<span>${st===2?"3단계":"4단계"} ›</span></button>`).join("")}</div>`:'<p class="wz-ok">✓ 필수 서류와 서명이 다 있어요. 제출할 수 있어요.</p>'}
   {const nx=$("#wz_next");if(nx&&cur===5){nx.disabled=!!(bt.disabled||bt.hidden);nx.textContent=bt.hidden?"제출할 필요 없어요":bt.textContent}}
@@ -163,7 +163,7 @@ async function submit(bt){if(missing().length){review();return}bt.disabled=true;
   const m=$("#c_msg");if(m)m.textContent="";$("#c_save").click();
   for(let i=0;i<40;i++){await new Promise(r=>setTimeout(r,150));const t=m?m.textContent:"";if(t==="저장했어요")break;if(/못|끝났/.test(t)){bt.disabled=false;bt.textContent="제출하기";mir(bt);return}}
   bt.textContent="제출하는 중…";mir(bt);
-  try{const r=await rpc("oncool_w_done",{p_token:TOKEN,p_case:CID});Object.assign(CC,r||{w_done_at:new Date().toISOString()});review();toast("제출했어요. 복지관이 확인하고 연락드려요.")}
+  try{const r=await rpc("oncool_w_done",{p_token:TOKEN,p_case:CID});Object.assign(CC,r||{w_done_at:new Date().toISOString()});review();doneModal()}
   catch(err){bt.disabled=false;bt.textContent="제출하기";mir(bt);alert(/session/.test(err.message)?"다시 들어와 주세요.":/missing/.test(err.message)?"필수 서류나 서명이 빠져 있어요.":"제출하지 못했어요. 잠시 뒤에 다시 해 주세요.")}}
 document.addEventListener("change",e=>{if(e.target.closest(".wz-on"))refresh()});
 document.addEventListener("cs:saved",e=>{const c=e.detail;if(!CC||!c||c.id!==CC.id)return;if(c!==CC)Object.assign(CC,c);refresh();if(cur===5)review()});
@@ -171,4 +171,21 @@ document.addEventListener("input",e=>{if(e.target.closest(".wz-on"))refresh()});
 setInterval(()=>{if($(".wz-on"))document.querySelectorAll(".wz-pane .doc").forEach(paint)},1200);
 const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,arguments);try{build(c,r||{})}catch(err){console.error(err)}return x};
 window.WIZ={go,refresh};
+/* 제출 뒤: 증빙서류 원본 안내 (사진으로 올린 서류만, 전자서명한 서류·현장 사진 제외) */
+function origList(){return CS.DOCS.filter(d=>!["etc","confirm"].includes(d.k)&&got(d.k)&&!SIGS[d.k]).map(d=>d.l.replace(/\s*\(.*\)\s*$/,""))}
+function origBox(){const L=origList();if(!L.length)return"";const sg=SIGNABLE.some(k=>SIGS[k]);
+  return `<div class="wz-orig"><b>증빙서류 원본은 복지관에 제출해 주세요</b><ul>${L.map(x=>`<li>${CS.esc(x)}</li>`).join("")}</ul><small>사진으로 올린 서류만 적었어요.${sg?"<br>화면에서 서명한 동의서·약정서는 따로 제출하지 않으셔도 돼요.":""}</small></div>`}
+function doneModal(){wzCss();const m=document.createElement("div");m.className="wz-dm";
+  m.innerHTML=`<div class="wz-dmb" role="dialog" aria-modal="true" aria-label="제출 완료"><div class="wz-dmi">✓</div><h2>제출해 주셔서 감사합니다</h2><p>복지관에서 서류를 검토한 뒤 담당자가 연락드릴게요.</p>${origBox()}<button type="button" class="btn">확인</button></div>`;
+  m.querySelector("button").onclick=()=>m.remove();document.body.appendChild(m)}
+function wzCss(){if(document.getElementById("wz-dm-css"))return;const st=document.createElement("style");st.id="wz-dm-css";st.textContent=`
+.wz-dm{position:fixed;inset:0;z-index:80;background:rgba(15,20,40,.5);display:grid;place-items:center;padding:20px;word-break:keep-all}
+.wz-dmb{background:var(--surface,#fff);color:var(--ink,#141a2e);border-radius:22px;padding:26px 22px 20px;max-width:380px;width:100%;max-height:90vh;overflow:auto;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.wz-dmi{width:60px;height:60px;border-radius:50%;background:var(--green-soft,#e3f5ec);color:var(--green,#16a06a);font-size:30px;font-weight:800;display:grid;place-items:center;margin:0 auto 12px}
+.wz-dmb h2{margin:0 0 8px;font-size:20px}.wz-dmb>p{margin:0 0 16px;color:var(--mute,#4a5068);font-size:15px;line-height:1.55}.wz-dmb .btn{width:100%}
+.wz-orig{background:var(--warm-soft,#fff6e8);border:1px solid color-mix(in srgb,var(--warm,#b8640f) 30%,transparent);border-radius:14px;padding:14px;text-align:left;margin:0 0 16px;word-break:keep-all}
+.wz-orig b{display:block;color:var(--warm,#b8640f);font-size:15px;margin-bottom:6px}.wz-orig ul{margin:0;padding-left:18px;font-size:14.5px;line-height:1.7;color:var(--ink,#141a2e)}
+.wz-orig small{display:block;color:var(--mute,#7a6a50);font-size:13px;margin-top:6px;line-height:1.5}
+.wz-after{text-align:left}.wz-fix{text-align:center;margin:0}`;document.head.appendChild(st)}
+wzCss();
 })();
