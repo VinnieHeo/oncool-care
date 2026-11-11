@@ -50,6 +50,102 @@ function detect(c){const s=Math.min(1,360/Math.max(c.width,c.height)),w=Math.max
   for(let i=0;i<N;i++){if(lab[i]!==bl)continue;const x=i%w,y=(i/w)|0,a=x+y,dd=x-y;if(a<tl[2])tl=[x,y,a];if(a>br[2])br=[x,y,a];if(dd>tr[2])tr=[x,y,dd];if(dd<bo[2])bo=[x,y,dd]}
   const q=[tl,tr,br,bo].map(p=>[p[0]/s,p[1]/s]);let ar=0;for(let i=0;i<4;i++){const[x1,y1]=q[i],[x2,y2]=q[(i+1)%4];ar+=x1*y2-x2*y1}
   return Math.abs(ar/2)<c.width*c.height*.1?null:q}
+/* 종이 찾기 v3: 밝기 경계 직선(허프) + 종이색 안쪽/바깥쪽 확인으로 네 변을 고름. 실패하면 v2(색 덩어리) */
+function detect3(c){
+  const s=Math.min(1,420/Math.max(c.width,c.height)),w=Math.max(16,Math.round(c.width*s)),h=Math.max(16,Math.round(c.height*s)),N=w*h;
+  const t=document.createElement("canvas");t.width=w;t.height=h;const tx=t.getContext("2d");tx.drawImage(c,0,0,w,h);const d=tx.getImageData(0,0,w,h).data;
+  const R=new Float32Array(N),G=new Float32Array(N),B=new Float32Array(N),L=new Float32Array(N);
+  for(let i=0;i<N;i++){R[i]=d[i*4];G[i]=d[i*4+1];B[i]=d[i*4+2];L[i]=.299*R[i]+.587*G[i]+.114*B[i]}
+  const Rb=blur(R,w,h,2),Gb=blur(G,w,h,2),Bb=blur(B,w,h,2),Lb=blur(L,w,h,2);
+  /* 종이 기준: 가운데 상자 밝기 상위값, 채도(색 진함) */
+  const C=new Float32Array(N);for(let i=0;i<N;i++)C[i]=Math.max(Rb[i],Gb[i],Bb[i])-Math.min(Rb[i],Gb[i],Bb[i]);const Db=blur(C,w,h,2);
+  const cx0=(w*.3)|0,cx1=(w*.7)|0,cy0=(h*.3)|0,cy1=(h*.7)|0,ls=[];for(let y=cy0;y<cy1;y++)for(let x=cx0;x<cx1;x++)ls.push(Lb[y*w+x]);ls.sort((a,b)=>a-b);const Lp=ls[(ls.length*.8)|0]||200;
+  const paper=i=>Lb[i]>Lp*.7&&Db[i]<48;
+  /* 경계 세기: 밝기 + 종이색 거리 */
+  const gx=new Float32Array(N),gy=new Float32Array(N),mg=new Float32Array(N);
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;
+    const a=(f)=>[f[i-w+1]+2*f[i+1]+f[i+w+1]-f[i-w-1]-2*f[i-1]-f[i+w-1],f[i+w-1]+2*f[i+w]+f[i+w+1]-f[i-w-1]-2*f[i-w]-f[i-w+1]];
+    const[l1,l2]=a(Lb),[d1,d2]=a(Db);const X=l1-d1*.6,Y=l2-d2*.6;gx[i]=X;gy[i]=Y;mg[i]=Math.hypot(X,Y)}
+  const ms=Array.from(mg).filter(v=>v>0).sort((a,b)=>a-b);const thr=ms[(ms.length*.78)|0]||1;
+  /* 허프 */
+  const NT=180,diag=Math.ceil(Math.hypot(w,h)),NR=diag*2+1,acc=new Float32Array(NT*NR),cs=[],sn=[];for(let k=0;k<NT;k++){cs.push(Math.cos(k*Math.PI/NT));sn.push(Math.sin(k*Math.PI/NT))}
+  for(let y=2;y<h-2;y++)for(let x=2;x<w-2;x++){const i=y*w+x;if(mg[i]<thr)continue;let th=Math.atan2(gy[i],gx[i]);if(th<0)th+=Math.PI;const k0=Math.round(th/Math.PI*NT);const wv=Math.min(3,mg[i]/thr);
+    for(let dk=-6;dk<=6;dk++){const k=(k0+dk+NT)%NT;const r=Math.round(x*cs[k]+y*sn[k])+diag;acc[k*NR+r]+=wv}}
+  /* 봉우리 */
+  const peaks=[];for(let k=0;k<NT;k++)for(let r=1;r<NR-1;r++){const v=acc[k*NR+r];if(v<w*.15)continue;let mx=true;
+    for(let dk=-4;dk<=4&&mx;dk++)for(let dr=-6;dr<=6;dr++){if(!dk&&!dr)continue;const kk=(k+dk+NT)%NT,rr=r+dr;if(rr<0||rr>=NR)continue;const u=acc[kk*NR+rr];if(u>v||(u===v&&(dk<0||(dk===0&&dr<0)))){mx=false;break}}
+    if(mx)peaks.push({k,r:r-diag,v})}
+  peaks.sort((a,b)=>b.v-a.v);const P=peaks.filter(p=>p.k>=45&&p.k<135).slice(0,30).concat(peaks.filter(p=>p.k<45||p.k>=135).slice(0,30));
+  const CX=w/2,CY=h/2;
+  /* 각 직선: 종이 쪽(가운데 쪽)이 종이색, 바깥이 덜 종이색인지 */
+  function side(L1){const c1=cs[L1.k],s1=sn[L1.k],rr=L1.r;const sgn=(CX*c1+CY*s1-rr)>0?1:-1;let n=0,pos=0,diff=0,pt=0,pp=0;
+    /* 직선을 따라 점 찍기 */const tx2=-s1,ty2=c1,x0=c1*rr,y0=s1*rr;
+    for(let tt=-diag;tt<=diag;tt+=3){const x=x0+tx2*tt,y=y0+ty2*tt;if(x<4||y<4||x>w-5||y>h-5)continue;const xi=(x+sgn*c1*6)|0,yi=(y+sgn*s1*6)|0,xo=(x-sgn*c1*6)|0,yo=(y-sgn*s1*6)|0;
+      if(xo<0||yo<0||xo>=w||yo>=h){continue}const ii=yi*w+xi,io=yo*w+xo,pv=(Lb[ii]-Lb[io])/Lp*100+(Db[io]-Db[ii])*.8;n++;diff+=pv;if(pv>6)pos++;
+      for(const o of[14,22,32,44,58]){const xa=(x-sgn*c1*o)|0,ya=(y-sgn*s1*o)|0;if(xa<0||ya<0||xa>=w||ya>=h)break;pt++;if(paper(ya*w+xa))pp++}}
+    return n?{fr:pos/n,df:diff/n,n,of:pt?pp/pt:0}:{fr:0,df:0,n:0,of:0}}
+  P.forEach(p=>{const sd=side(p);p.fr=sd.fr;p.df=sd.df;p.of=sd.of;p.sc=p.v*(.15+sd.fr)*(sd.df>0?1:.3)*Math.pow(1-sd.of,2)});
+  /* 방향 나누기: 가로선(법선 ≈ 90°), 세로선 */
+  const isH=p=>p.k>=45&&p.k<135;const above=p=>{/* 가로선이 가운데보다 위? */const yAt=(p.r-CX*cs[p.k])/sn[p.k];return yAt<CY};const leftOf=p=>{const xAt=(p.r-CY*sn[p.k])/cs[p.k];return xAt<CX};
+  const top=P.filter(p=>isH(p)&&above(p)).sort((a,b)=>b.sc-a.sc).slice(0,6),bot=P.filter(p=>isH(p)&&!above(p)).sort((a,b)=>b.sc-a.sc).slice(0,6),
+        lef=P.filter(p=>!isH(p)&&leftOf(p)).sort((a,b)=>b.sc-a.sc).slice(0,6),rig=P.filter(p=>!isH(p)&&!leftOf(p)).sort((a,b)=>b.sc-a.sc).slice(0,6);
+  const X=(a,b)=>{const det=cs[a.k]*sn[b.k]-sn[a.k]*cs[b.k];if(Math.abs(det)<1e-6)return null;return[(a.r*sn[b.k]-b.r*sn[a.k])/det,(cs[a.k]*b.r-cs[b.k]*a.r)/det]};
+  let best=null,bsc=-1;const W2=w*.12,H2=h*.12;
+  for(const T of top)for(const Bo of bot)for(const Le of lef)for(const Ri of rig){const q=[X(T,Le),X(T,Ri),X(Bo,Ri),X(Bo,Le)];if(q.some(p=>!p||p[0]<-W2||p[1]<-H2||p[0]>w+W2||p[1]>h+H2))continue;
+    let ar=0,cv=true;for(let i=0;i<4;i++){const a=q[i],b=q[(i+1)%4],cc=q[(i+2)%4];ar+=a[0]*b[1]-b[0]*a[1];if(((b[0]-a[0])*(cc[1]-b[1])-(b[1]-a[1])*(cc[0]-b[0]))<=0)cv=false}
+    ar=ar/2;if(!cv||ar<N*.18)continue;const sc=(T.sc+Bo.sc+Le.sc+Ri.sc)*Math.pow(Math.min(1,ar/N),1.2);if(sc>bsc){bsc=sc;best=q}}
+  if(!best)return null;
+  return best.map(([x,y])=>[Math.max(0,Math.min(c.width,x/s)),Math.max(0,Math.min(c.height,y/s))])}
+
+/* 종이 찾기 v2: 가운데 종이 색 기준 → 색 거리 문턱 → 닫기·열기 → 가운데 덩어리 → 구멍 메우기 → 볼록껍질 → 4점 */
+function detect2(c){
+  const s=Math.min(1,420/Math.max(c.width,c.height)),w=Math.max(16,Math.round(c.width*s)),h=Math.max(16,Math.round(c.height*s)),N=w*h;
+  const t=document.createElement("canvas");t.width=w;t.height=h;const tx=t.getContext("2d");tx.drawImage(c,0,0,w,h);const d=tx.getImageData(0,0,w,h).data;
+  const R=new Float32Array(N),G=new Float32Array(N),B=new Float32Array(N),L=new Float32Array(N);
+  for(let i=0;i<N;i++){R[i]=d[i*4];G[i]=d[i*4+1];B[i]=d[i*4+2];L[i]=.299*R[i]+.587*G[i]+.114*B[i]}
+  const bl=(a,r)=>blur(a,w,h,r);const Rb=bl(R,2),Gb=bl(G,2),Bb=bl(B,2),Lb=bl(L,2);
+  /* 종이 색: 가운데 상자에서 밝은 쪽 절반의 중앙값 */
+  const cx0=(w*.3)|0,cx1=(w*.7)|0,cy0=(h*.3)|0,cy1=(h*.7)|0,ls=[];
+  for(let y=cy0;y<cy1;y++)for(let x=cx0;x<cx1;x++)ls.push(Lb[y*w+x]);ls.sort((a,b)=>a-b);const lmed=ls[(ls.length*.6)|0];
+  const rs=[],gs=[],bs=[];for(let y=cy0;y<cy1;y++)for(let x=cx0;x<cx1;x++){const i=y*w+x;if(Lb[i]>=lmed){rs.push(Rb[i]);gs.push(Gb[i]);bs.push(Bb[i])}}
+  const med=a=>{a.sort((x,y)=>x-y);return a[(a.length/2)|0]};const pr=med(rs),pg=med(gs),pb=med(bs),pl=.299*pr+.587*pg+.114*pb;
+  /* 색 거리 (밝기는 그늘을 생각해 덜 따짐) */
+  const D=new Float32Array(N);let mx=0;
+  for(let i=0;i<N;i++){const k=Lb[i]>1?pl/Lb[i]:1;const dr=Rb[i]*k-pr,dg=Gb[i]*k-pg,db=Bb[i]*k-pb;const chroma=Math.abs(dr)+Math.abs(dg)+Math.abs(db);const dl=Math.max(0,pl-Lb[i]);D[i]=chroma+dl*.7;if(D[i]>mx)mx=D[i]}
+  const hist=new Array(256).fill(0);for(let i=0;i<N;i++)hist[Math.min(255,(D[i]/mx*255)|0)]++;
+  let sum=0;for(let i=0;i<256;i++)sum+=i*hist[i];let sB=0,wB=0,best=0,th=60;for(let i=0;i<256;i++){wB+=hist[i];if(!wB)continue;const wF=N-wB;if(!wF)break;sB+=i*hist[i];const mB=sB/wB,mF=(sum-sB)/wF,v=wB*wF*(mB-mF)*(mB-mF);if(v>best){best=v;th=i}}
+  let T=th/255*mx;T=Math.max(28,Math.min(110,T));
+  let m=new Uint8Array(N);for(let i=0;i<N;i++)m[i]=D[i]<T?1:0;
+  const mor=(a,r,dil)=>{/* 사각 창 팽창/침식 (가로·세로 분리) */const o=new Uint8Array(N),t2=new Uint8Array(N);
+    for(let y=0;y<h;y++){let c2=0;for(let x=-r;x<w;x++){if(x+r<w)c2+=a[y*w+x+r];if(x-r-1>=0)c2-=a[y*w+x-r-1];if(x>=0){const n=Math.min(x+r,w-1)-Math.max(x-r,0)+1;t2[y*w+x]=dil?(c2>0?1:0):(c2===n?1:0)}}}
+    for(let x=0;x<w;x++){let c2=0;for(let y=-r;y<h;y++){if(y+r<h)c2+=t2[(y+r)*w+x];if(y-r-1>=0)c2-=t2[(y-r-1)*w+x];if(y>=0){const n=Math.min(y+r,h-1)-Math.max(y-r,0)+1;o[y*w+x]=dil?(c2>0?1:0):(c2===n?1:0)}}}return o};
+  m=mor(mor(m,4,1),4,0);/* 닫기: 글자 구멍 */m=mor(mor(m,3,0),3,1);/* 열기: 가는 다리 끊기 */
+  /* 가운데에서 가장 큰 덩어리 */
+  const lab=new Int32Array(N).fill(-1),size=[];let id=0;const sk=[];
+  for(let i=0;i<N;i++){if(!m[i]||lab[i]>=0)continue;let n=0;sk.push(i);lab[i]=id;while(sk.length){const p=sk.pop();n++;const x=p%w,y=(p/w)|0;
+    if(x>0&&m[p-1]&&lab[p-1]<0){lab[p-1]=id;sk.push(p-1)}if(x<w-1&&m[p+1]&&lab[p+1]<0){lab[p+1]=id;sk.push(p+1)}if(y>0&&m[p-w]&&lab[p-w]<0){lab[p-w]=id;sk.push(p-w)}if(y<h-1&&m[p+w]&&lab[p+w]<0){lab[p+w]=id;sk.push(p+w)}}size.push(n);id++}
+  const cnt=new Map();for(let y=cy0;y<cy1;y++)for(let x=cx0;x<cx1;x++){const l=lab[y*w+x];if(l>=0)cnt.set(l,(cnt.get(l)||0)+1)}
+  let pick=-1,pc=0;cnt.forEach((v,k)=>{const sc=v+size[k]*.2;if(sc>pc){pc=sc;pick=k}});if(pick<0)return null;
+  /* 구멍 메우기: 바깥에서 닿지 않는 곳은 안쪽 */
+  const out=new Uint8Array(N);const q=[];for(let x=0;x<w;x++){q.push(x,(h-1)*w+x)}for(let y=0;y<h;y++){q.push(y*w,y*w+w-1)}
+  for(const p of q)if(lab[p]!==pick&&!out[p])out[p]=1;let qi=0;const qq=q.filter(p=>out[p]);while(qi<qq.length){const p=qq[qi++],x=p%w,y=(p/w)|0;for(const n of[x>0?p-1:-1,x<w-1?p+1:-1,y>0?p-w:-1,y<h-1?p+w:-1])if(n>=0&&!out[n]&&lab[n]!==pick){out[n]=1;qq.push(n)}}
+  let area=0;const pts=[];for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;if(out[i])continue;area++;const e=x===0||y===0||x===w-1||y===h-1||out[i-1]||out[i+1]||out[i-w]||out[i+w];if(e)pts.push([x+.5,y+.5])}
+  if(area<N*.12||area>N*.985||pts.length<8)return null;
+  /* 볼록껍질 */
+  pts.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);const lo=[],up=[];
+  for(const p of pts){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p)}
+  for(let i=pts.length-1;i>=0;i--){const p=pts[i];while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p)}
+  let hull=lo.slice(0,-1).concat(up.slice(0,-1));
+  /* 4점으로 줄이기: 가장 작은 삼각형부터 빼기 */
+  while(hull.length>4){let bi=0,ba=1e18;for(let i=0;i<hull.length;i++){const a=hull[(i-1+hull.length)%hull.length],b=hull[i],cc=hull[(i+1)%hull.length];const ar=Math.abs(cr(a,b,cc));if(ar<ba){ba=ar;bi=i}}hull.splice(bi,1)}
+  if(hull.length<4)return null;
+  /* 왼위·오위·오아래·왼아래 순서 */
+  const cxm=hull.reduce((s2,p)=>s2+p[0],0)/4,cym=hull.reduce((s2,p)=>s2+p[1],0)/4;hull.sort((a,b)=>Math.atan2(a[1]-cym,a[0]-cxm)-Math.atan2(b[1]-cym,b[0]-cxm));
+  let st0=0,bs0=1e18;hull.forEach((p,i)=>{if(p[0]+p[1]<bs0){bs0=p[0]+p[1];st0=i}});const qd=[0,1,2,3].map(k=>hull[(st0+k)%4]);
+  let ar2=0;for(let i=0;i<4;i++){const[x1,y1]=qd[i],[x2,y2]=qd[(i+1)%4];ar2+=x1*y2-x2*y1}if(Math.abs(ar2/2)<N*.12)return null;
+  return qd.map(([x,y])=>[Math.max(0,Math.min(c.width,x/s)),Math.max(0,Math.min(c.height,y/s))])}
+
+function findPaper(c){let q=null;try{q=detect3(c)}catch(e){}if(!q){try{q=detect2(c)}catch(e){}}if(!q){try{q=detect(c)}catch(e){}}return q}
 function full(c){const m=Math.round(Math.min(c.width,c.height)*.04);return[[m,m],[c.width-m,m],[c.width-m,c.height-m],[m,c.height-m]]}
 function homography(s,d){const A=[],B=[];for(let i=0;i<4;i++){const[x,y]=s[i],[u,v]=d[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);B.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);B.push(v)}
   for(let c=0;c<8;c++){let p=c;for(let r=c+1;r<8;r++)if(Math.abs(A[r][c])>Math.abs(A[p][c]))p=r;[A[c],A[p]]=[A[p],A[c]];[B[c],B[p]]=[B[p],B[c]];for(let r=0;r<8;r++){if(r===c)continue;const f=A[r][c]/A[c][c];for(let k=c;k<8;k++)A[r][k]-=f*A[c][k];B[r]-=f*B[c]}}
@@ -102,18 +198,21 @@ function open(opt){ensureCss();close();st={opt,src:null,q:null,mode:"bw",warped:
 function pick(k){st.root.querySelector(`[data-f="${k}"]`).click()}
 function view(v){st.root.querySelectorAll("[data-v]").forEach(x=>x.hidden=x.dataset.v!==v);st.root.querySelector(".scn-b").scrollTop=0;if(v==="edit")draw()}
 function next(){const f=st.queue.shift();if(!f)return;view("pick");st.root.querySelector('[data-v="pick"] p').textContent="사진을 여는 중…";
-  const url=URL.createObjectURL(f),im=new Image();im.onload=()=>{URL.revokeObjectURL(url);const s=Math.min(1,2200/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);st.src=c;st.q=detect(c)||full(c);view("edit")};
+  const url=URL.createObjectURL(f),im=new Image();im.onload=()=>{URL.revokeObjectURL(url);const s=Math.min(1,2200/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);st.src=c;st.q=findPaper(c)||full(c);st.base=null;view("edit")};
   im.onerror=()=>{URL.revokeObjectURL(url);st.root.querySelector('[data-v="pick"] p').textContent="이 사진은 열 수 없어요. 다른 사진을 골라 주세요. (아이폰 HEIC 사진은 ‘카메라로 찍기’로 다시 찍으면 돼요)";view("pick")};im.src=url}
 function draw(){if(!st||!st.src||st.root.querySelector('[data-v="edit"]').hidden)return;const cv=st.cv,ctx=cv.getContext("2d"),W=cv.parentElement.clientWidth||340,dpr=Math.min(2,devicePixelRatio||1),S=st.src;st.sc=W/S.width;
-  cv.width=Math.round(W*dpr);cv.height=Math.round(S.height*st.sc*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.drawImage(S,0,0,W,S.height*st.sc);const p=st.q.map(([x,y])=>[x*st.sc,y*st.sc]);
+  const cw=Math.round(W*dpr),ch=Math.round(S.height*st.sc*dpr);if(cv.width!==cw||cv.height!==ch){cv.width=cw;cv.height=ch;st.base=null}
+  if(!st.base||st.base.src!==S||st.base.w!==cw){const b=document.createElement("canvas");b.width=cw;b.height=ch;b.getContext("2d").drawImage(S,0,0,cw,ch);st.base={c:b,src:S,w:cw}}
+  ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(st.base.c,0,0);ctx.setTransform(dpr,0,0,dpr,0,0);const p=st.q.map(([x,y])=>[x*st.sc,y*st.sc]);
   ctx.save();ctx.beginPath();ctx.rect(0,0,W,S.height*st.sc);ctx.moveTo(p[0][0],p[0][1]);for(let i=3;i>=0;i--)ctx.lineTo(p[i][0],p[i][1]);ctx.closePath();ctx.fillStyle="rgba(10,13,30,.45)";ctx.fill("evenodd");ctx.restore();
   ctx.beginPath();p.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.lineWidth=2;ctx.strokeStyle="#7d93ff";ctx.stroke();
   p.forEach(([x,y],i)=>{ctx.beginPath();ctx.arc(x,y,st.drag===i?13:10,0,7);ctx.fillStyle="rgba(74,99,231,.9)";ctx.fill();ctx.lineWidth=3;ctx.strokeStyle="#fff";ctx.stroke()});
   if(st.drag>=0){const[x,y]=st.q[st.drag],R=56,Z=2.4,lx=x*st.sc<W/2?W-R-10:R+10,ly=R+10;ctx.save();ctx.beginPath();ctx.arc(lx,ly,R,0,7);ctx.clip();ctx.fillStyle="#000";ctx.fillRect(lx-R,ly-R,R*2,R*2);const sw=R*2/(Z*st.sc);ctx.drawImage(S,x-sw/2,y-sw/2,sw,sw,lx-R,ly-R,R*2,R*2);ctx.restore();
     ctx.beginPath();ctx.arc(lx,ly,R,0,7);ctx.lineWidth=3;ctx.strokeStyle="#fff";ctx.stroke();ctx.beginPath();ctx.moveTo(lx-10,ly);ctx.lineTo(lx+10,ly);ctx.moveTo(lx,ly-10);ctx.lineTo(lx,ly+10);ctx.strokeStyle="#7d93ff";ctx.lineWidth=2;ctx.stroke()}}
 function xy(e){const r=st.cv.getBoundingClientRect();return[(e.clientX-r.left)/st.sc,(e.clientY-r.top)/st.sc]}
-function pd(e){const[x,y]=xy(e);let bi=-1,bd=1e9;st.q.forEach(([qx,qy],i)=>{const d=Math.hypot(qx-x,qy-y)*st.sc;if(d<bd){bd=d;bi=i}});if(bd<44){st.drag=bi;st.ptr=e.pointerId;st.cv.setPointerCapture(e.pointerId);draw();e.preventDefault()}}
-function pm(e){if(st.drag<0||e.pointerId!==st.ptr)return;const[x,y]=xy(e);st.q[st.drag]=[Math.max(0,Math.min(st.src.width,x)),Math.max(0,Math.min(st.src.height,y))];draw()}
+function pd(e){const[x,y]=xy(e);let bi=-1,bd=1e9;st.q.forEach(([qx,qy],i)=>{const d=Math.hypot(qx-x,qy-y)*st.sc;if(d<bd){bd=d;bi=i}});if(bd<48){st.drag=bi;st.ptr=e.pointerId;st.off=[st.q[bi][0]-x,st.q[bi][1]-y];st.cv.setPointerCapture(e.pointerId);draw();e.preventDefault()}}
+function redraw(){if(st.raf)return;st.raf=requestAnimationFrame(()=>{st.raf=0;draw()})}
+function pm(e){if(st.drag<0||e.pointerId!==st.ptr)return;e.preventDefault();const[x0,y0]=xy(e),o=st.off||[0,0],x=x0+o[0],y=y0+o[1];st.q[st.drag]=[Math.max(0,Math.min(st.src.width,x)),Math.max(0,Math.min(st.src.height,y))];redraw()}
 function pu(){if(st.drag<0)return;st.drag=-1;st.ptr=null;draw()}
 function busy(on){const box=st.root.querySelector(".scn-st");let b=box.querySelector(".scn-busy");if(on&&!b){b=el('<div class="scn-busy">보정하는 중…</div>');box.appendChild(b)}else if(!on&&b)b.remove()}
 function render(){const o=enhance(st.warped,st.mode),c=document.createElement("canvas");c.width=o.width;c.height=o.height;c.getContext("2d").putImageData(o,0,0);
@@ -125,7 +224,7 @@ async function onClick(e){const del=e.target.closest("[data-del]");if(del){const
   const m=e.target.closest("[data-m]");if(m){st.mode=m.dataset.m;st.root.querySelectorAll("[data-m]").forEach(x=>x.setAttribute("aria-pressed",x===m));await render();return}
   const a=e.target.closest("[data-a]");if(!a)return;const k=a.dataset.a;
   if(k==="close"){if(st.pages.length&&a.dataset.arm!=="1"){a.dataset.arm="1";a.textContent="담은 장 버리고 닫기";return}close()}
-  else if(k==="auto"){st.q=detect(st.src)||full(st.src);draw()}
+  else if(k==="auto"){st.q=findPaper(st.src)||full(st.src);draw()}
   else if(k==="full"){st.q=[[0,0],[st.src.width,0],[st.src.width,st.src.height],[0,st.src.height]];draw()}
   else if(k==="rot"){const S=st.src,c=document.createElement("canvas");c.width=S.height;c.height=S.width;const x=c.getContext("2d");x.translate(c.width,0);x.rotate(Math.PI/2);x.drawImage(S,0,0);const q=st.q.map(([qx,qy])=>[S.height-qy,qx]);st.q=[q[3],q[0],q[1],q[2]];st.src=c;draw()}
   else if(k==="warp"){busy(true);await new Promise(r=>setTimeout(r,30));st.size=outSize(st.q);st.warped=warp(st.src,st.q,st.size.W,st.size.H);busy(false);await render();view("result")}
