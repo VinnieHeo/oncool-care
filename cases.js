@@ -191,7 +191,10 @@ document.addEventListener("change",async e=>{const inp=e.target.closest("[data-u
   listFiles(k)},true);
 document.addEventListener("click",async e=>{const o=e.target.closest("[data-open]"),x=e.target.closest("[data-rm]");if(!curCase||(!o&&!x))return;
   if(o){const w=window.open("","_blank");try{const u=await B.open(curCase.id,`${curCase.id}/${o.dataset.open}`);if(w)w.location=u;else location.href=u}catch(e2){if(w)w.close();$("#c_msg").textContent="열지 못했어요"}}
-  if(x){if(x.dataset.arm!=="1"){x.dataset.arm="1";x.textContent="정말 삭제";return}try{await B.remove(curCase.id,`${curCase.id}/${x.dataset.rm}`)}catch(e2){$("#c_msg").textContent="삭제하지 못했어요";return}listFiles(x.dataset.rm.split("/")[0])}});
+  if(x){if(x.dataset.arm!=="1"){x.dataset.arm="1";x.textContent="정말 삭제";return}try{await B.remove(curCase.id,`${curCase.id}/${x.dataset.rm}`)}catch(e2){$("#c_msg").textContent="삭제하지 못했어요";return}const k=x.dataset.rm.split("/")[0];await listFiles(k);
+    /* 추천자 화면: 그 서류 사진을 다 지우면 ‘받음’을 풀고 바로 저장 (제출한 가구는 서버가 미제출로 되돌림) */
+    if(B.worker&&!((curCase.signs||{})[k])){let left=1;try{left=(await B.list(curCase.id,k)).length}catch(e3){}const cb=document.querySelector(`[data-got="${k}"]`);
+      if(!left&&cb&&cb.checked){cb.checked=false;refreshCalc();cb.dispatchEvent(new Event("change",{bubbles:true}));await saveCase();document.dispatchEvent(new CustomEvent("cs:saved",{detail:curCase}))}}}});
 
 
 /* 서류 스캔(찍어서 올리기) · 가구 서류 PDF */
