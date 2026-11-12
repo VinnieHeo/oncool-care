@@ -51,9 +51,28 @@ window.CS=(function(){
     return `<div class="goal"><b>선정 목표 40가구 이상 · 유형별 최소 4가구</b><div class="bar2"><i style="width:${pct}%;background:var(--green)"></i></div>
       <small>서류완비·상정·선정 ${tot}가구 / 40 · 방문 ${cases.length}가구</small>
       <div class="tcount">${["1","2","3","4"].map(t=>`<span class="chip2 ${by[t]>=4?"ok":"warn"}">${t}유형 ${by[t]}</span>`).join("")}</div></div>`}
-  function listHTML(cases,refs){const R=Object.fromEntries(refs.map(r=>[r.id,r]));
-    return `<div class="tw"><table><thead><tr><th>가구코드</th><th>대상자</th><th>거주동</th><th>가구원</th><th>유형</th><th>동절기 지원액</th><th>서류</th><th>방문일</th><th>단계</th></tr></thead><tbody>${
-      cases.map(c=>{const r=R[c.referral_id]||{},a=amounts(c),ds=docState(c);return `<tr data-cid="${c.id}" tabindex="0"><td>${esc(c.household_code)}</td><td><b>${esc(r.elder_name)}</b></td><td>${esc(r.dong)}</td><td>${c.v_household_size?c.v_household_size+"명":""}</td><td>${typeOf(c)?typeOf(c)+"유형"+(c.type_final?"":" (안)"):""}</td><td>${a?fmt(a.tot)+"원":""}</td><td class="dchk${ds.full?" full":""}">${ds.ok}/${ds.need}${ds.stale.length?" ⚠":""}</td><td>${esc(c.visit_date||"")}</td><td><span class="stg stg-${esc(c.stage)}">${esc(c.stage)}</span></td></tr>`}).join("")||'<tr><td colspan="9" style="color:var(--mute)">아직 방문 기록이 없습니다. 추천 접수에서 가구를 열고 ‘가정방문 기록 시작’을 눌러 주세요.</td></tr>'}</tbody></table></div>`}
+  /* 추천자 연락처 (눌러서 전화, 행 열림 방지) */
+  const tel=p=>{const d=String(p||"").replace(/\D/g,"");if(!/^0\d{8,10}$/.test(d))return "";const f=d.length===11?d.replace(/(\d{3})(\d{4})(\d{4})/,"$1-$2-$3"):d.replace(/(\d{2,3})(\d{3,4})(\d{4})/,"$1-$2-$3");return `<a class="wtel" href="tel:${d}" onclick="event.stopPropagation()">☎ ${f}</a>`};
+  /* 선정 심사 카드 (11/12): 업로드완료(확인할 차례)를 맨 앞, 나머지는 대상자 가나다순 · 추천 접수와 같은 색·배지 */
+  function cardHTML(c,r){const a=amounts(c),ds=docState(c),t=typeOf(c),pct=ds.need?Math.round(ds.ok/ds.need*100):0;
+    return `<div class="cc" data-cid="${c.id}" tabindex="0"><div class="cc-top"><div class="cc-nm"><b>${esc(r.elder_name)}</b><small>${esc(r.dong||"")}${c.v_household_size?" · "+c.v_household_size+"명":""}${c.household_code?" · "+esc(c.household_code):""}</small></div><span class="stg stg-${esc(c.stage)}">${esc(c.stage)}</span></div>
+      <div class="cc-mid">${t?`<span class="pill t${t}">${t}유형${c.type_final?"":" (안)"}</span>`:'<span class="pill">유형 미정</span>'}${a?`<span class="cc-amt">${fmt(a.tot)}원</span>`:""}${c.visit_date?`<span class="cc-vd">방문 ${esc(c.visit_date.slice(5).replace("-","/"))}</span>`:""}</div>
+      <div class="cc-doc${ds.full?" full":""}"><span>서류 ${ds.ok}/${ds.need}${ds.stale.length?" ⚠":""}</span><i><b style="width:${pct}%"></b></i></div>
+      <div class="cc-wk"><b>${esc(r.worker_name||"")}</b><small>${esc(r.worker_org||"")}</small>${tel(r.worker_phone)}</div></div>`}
+  function listHTML(cases,refs){const R=Object.fromEntries(refs.map(r=>[r.id,r]));const nm=c=>(R[c.referral_id]||{}).elder_name||"";
+    const tt=c=>(R[c.referral_id]||{}).is_test?1:0,L=[...cases].sort((a,b)=>tt(a)-tt(b)||nm(a).localeCompare(nm(b),"ko")),up=L.filter(c=>c.stage==="업로드완료"),rest=L.filter(c=>c.stage!=="업로드완료");
+    if(!L.length)return '<p class="cc-empty">아직 방문 기록이 없습니다. 추천 접수에서 가구를 열고 ‘가정방문 기록 시작’을 눌러 주세요.</p>';
+    return (up.length?`<h3 class="cc-h">확인할 차례 · 업로드완료 <b>${up.length}</b></h3><div class="cgrid">${up.map(c=>cardHTML(c,R[c.referral_id]||{})).join("")}</div>`:"")+
+      (rest.length?`<h3 class="cc-h">${up.length?"나머지 · ":""}가나다순 <b>${rest.length}</b></h3><div class="cgrid">${rest.map(c=>cardHTML(c,R[c.referral_id]||{})).join("")}</div>`:"")}
+  {const st=document.createElement("style");st.textContent=`.cc-h{font-size:14px;margin:14px 4px 8px;color:var(--mute);font-weight:800}.cc-h b{color:var(--ink)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
+.cc{background:var(--surface,#fff);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;cursor:pointer;min-width:0}
+.cc:hover,.cc:focus-visible{border-color:var(--pri);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--pri) 15%,transparent)}
+.cc.tst{opacity:.6}.cc-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.cc-nm{min-width:0}.cc-nm b{font-size:16px}.cc-nm small{display:block;color:var(--mute);font-size:12.5px;margin-top:1px}
+.cc-mid{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px}.cc-amt{font-weight:700}.cc-vd{color:var(--mute)}
+.cc-doc{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mute)}.cc-doc i{flex:1;height:6px;border-radius:9px;background:var(--line);overflow:hidden}.cc-doc i b{display:block;height:100%;background:var(--pri)}.cc-doc.full span{color:var(--green);font-weight:700}.cc-doc.full i b{background:var(--green)}
+.cc-wk{border-top:1px dashed var(--line);padding-top:8px;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;font-size:13px}.cc-wk small{color:var(--mute);font-size:12px}.cc-wk .wtel{margin-left:auto;font-size:12.5px;color:var(--pri);font-weight:600;text-decoration:none}
+.cc-empty{color:var(--mute);padding:12px}`;document.head.appendChild(st)}
   function viewHTML(c,r){const a=amounts(c),ds=docState(c),d=c.docs||{};
     const row=(l,v)=>v!==null&&v!==undefined&&String(v).trim()!==""&&!(Array.isArray(v)&&!v.length)?`<div class="dv-row"><span>${l}</span><span>${esc(Array.isArray(v)?v.join(", "):v)}</span></div>`:"";
     return `<div class="dv-head"><h2>${esc(r.elder_name||"")}</h2><div class="chips"><span class="stg stg-${esc(c.stage)}">${esc(c.stage)}</span>${typeOf(c)?`<span class="chip2 info">${typeOf(c)}유형 ${TYPES[typeOf(c)]}${c.type_final?"":" (안)"}</span>`:""}<span class="chip2 ${ds.full?"ok":"amber"}">서류 ${ds.ok}/${ds.need}</span>${ds.stale.length?`<span class="chip2 warn">신청일 기준 3개월 넘음: ${esc(ds.stale.join(", "))}</span>`:""}</div></div>
@@ -106,7 +125,7 @@ const b8=b=>{if(!/^\d{6}$/.test(b||""))return"";let y=+b.slice(0,2);y+=y>new Dat
 /* 효율개선: 협회 실적 입력 분야를 앞에, 이어서 복지관 항목 (한 묶음) · 기타는 내용 입력 */
 const EFF=["단열·창호 (뽁뽁이·문풍지)","고효율 LED 조명 교체","친환경 보일러 점검","서큘레이터·선풍기 보급"],EFF2=["열화상 진단","방한 물품","난방기구 수리","외부 집수리 연계","기타"];
 /* 단계 색: 업로드완료(확인할 차례) · 보완중(반려) (11/12) */
-{const st=document.createElement("style");st.textContent=".stg-업로드완료{background:var(--cool-soft);color:var(--cool);font-weight:800}.stg-보완중{background:var(--warm-soft);color:var(--warm);font-weight:800}";document.head.appendChild(st)}
+{const st=document.createElement("style");st.textContent=".stg-업로드완료{background:var(--violet-soft);color:var(--violet);font-weight:800}.stg-보완중{background:var(--warm-soft);color:var(--warm);font-weight:800}";document.head.appendChild(st)}
 /* 추천서 답변은 참고로만 보여 주고 자동 체크는 하지 않음 (11/12) */
 const effHint=r=>{const L=[];if(r&&r.heater_broken==="예")L.push("난방기구 고장");((r&&r.housing_risk)||[]).forEach(x=>L.push(x));return L.length?`<p class="eff-hint" style="margin:0 0 8px;font-size:13px;color:var(--mute);line-height:1.55">추천서에 적힌 내용: ${CS.esc(L.join(", "))}<br>현장에서 확인하고 필요한 항목을 골라 주세요.</p>`:""};
 const effHas=(L,x)=>(L||[]).includes(x)||(x===EFF[0]&&(L||[]).includes("방풍·단열 물품"));
