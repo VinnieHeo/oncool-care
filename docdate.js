@@ -43,7 +43,7 @@ const fmt=d=>d?d.replace(/-/g,"."):"";
 function rowHTML(c,k,msg){const v=((c.docs||{})[k]||{}).date;
   if(msg)return `<span class="dd-m">${msg}</span>`;
   if(!v)return B&&B.worker?"":`<span class="dd-m">발급일 없음</span><button type="button" class="dd-b" data-ddread="${k}">사진에서 읽기</button><button type="button" class="dd-b" data-ddedit="${k}">직접 입력</button>`;
-  const ok=within(c,v),W=B&&B.worker;return `<span class="dd-d">발급 ${fmt(v)}</span><b class="${ok?"dd-ok":"dd-no"}">${ok?"3개월 이내":W?"3개월 지남 · 복지관에서 확인할게요":"3개월 지남 · 새로 발급 필요"}</b>${W?"":`<button type="button" class="dd-b" data-ddedit="${k}">고치기</button>`}<button type="button" class="dd-b" data-ddread="${k}">다시 읽기</button>`}
+  const ok=within(c,v),W=B&&B.worker;return `<span class="dd-d">발급 ${fmt(v)}</span><b class="${ok?"dd-ok":"dd-no"}">${ok?"3개월 이내 발급 확인":W?"3개월 지남 · 복지관에서 확인할게요":"3개월 지남 · 새로 발급 필요"}</b>${W?"":`<button type="button" class="dd-b" data-ddedit="${k}">고치기</button>`}<button type="button" class="dd-b" data-ddread="${k}">다시 읽기</button>`}
 function paint(c,k,msg){const r=document.getElementById("dd_"+k);if(r)r.innerHTML=rowHTML(c,k,msg);const d=document.querySelector(`#cedit .doc[data-doc="${k}"]`),v=((c.docs||{})[k]||{}).date;if(d)d.classList.toggle("stale",!!v&&!within(c,v))}
 function setDate(c,k,v){c.docs=c.docs||{};c.docs[k]=Object.assign({got:false},c.docs[k]||{},{date:v||null});paint(c,k);const s=$("#c_save");if(s)s.click()}
 function run(c,k){BUSY=BUSY.then(async()=>{const cur=CSE.current();if(!cur||cur.id!==c.id)return;paint(c,k,"발급일 확인 중… 조금 걸릴 수 있어요. 다음 서류를 계속 올려 주세요.");
