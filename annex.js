@@ -29,11 +29,11 @@ function page(c,r,g){const v=c.vcall||{},birth=dot(c.v_birth||b8(r.birth));
   <table class="tb"><tr><td class="h">수행기관 확인자명</td><td>${esc(g.confirmer||"성명 / 직책")}</td></tr>
   <tr><td class="h">기 관 명</td><td rowspan="2" class="tall">(기관 직인)${g.stamp?`<img class="stamp" src="${g.stamp}" alt="직인">`:""}</td></tr><tr><td>${ORG}</td></tr></table></div>`}
 const ready=c=>c&&c.vcall&&c.vcall.ok&&c.vcall.res==="소진 확인"&&c.vcall.date;
-async function print(list){const w=window.open("","_blank");if(!w){alert("팝업이 차단되어 있습니다. 팝업을 허용해 주십시오.");return}
+async function print(list){const w=window.open("","_blank");if(!w){alert("팝업이 차단되어 있습니다. 팝업을 허용해 주세요.");return}
   w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>별첨 2 확인서</title><style>${CSS}</style></head><body><div class="bar">불러오는 중입니다.</div></body></html>`);
   let g;try{g=await cfg(true)}catch(x){w.document.body.innerHTML="설정을 불러오지 못했습니다: "+esc(x.message);return}
   const warn=[!g.confirmer?"확인자":"",!g.stamp?"직인":""].filter(Boolean);
-  w.document.open();w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>별첨 2 확인서</title><style>${CSS}</style></head><body><div class="bar"><span>${list.length}가구${warn.length?` · ${warn.join("·")} 설정이 없습니다. ‘확인자·직인 설정’에서 등록해 주십시오.`:""}</span><button onclick="print()">인쇄</button></div>${list.map(([c,r])=>page(c,r,g)).join("")}</body></html>`);w.document.close()}
+  w.document.open();w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>별첨 2 확인서</title><style>${CSS}</style></head><body><div class="bar"><span>${list.length}가구${warn.length?` · ${warn.join("·")} 설정이 없습니다. ‘확인자·직인 설정’에서 등록해 주세요.`:""}</span><button onclick="print()">인쇄</button></div>${list.map(([c,r])=>page(c,r,g)).join("")}</body></html>`);w.document.close()}
 function live(c){const q=id=>document.getElementById(id);if(!q("c_vc_ok"))return c;return Object.assign({},c,{vcall:{ok:q("c_vc_ok").checked,date:q("c_vc_date").value,bal:q("c_vc_bal").value,who:q("c_vc_who").value,res:q("c_vc_res").value},v_birth:(q("c_v_birth")||{}).value||c.v_birth})}
 function toPNG(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{const s=Math.min(1,500/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*s);cv.height=Math.round(im.height*s);const x=cv.getContext("2d");x.drawImage(im,0,0,cv.width,cv.height);
   const d=x.getImageData(0,0,cv.width,cv.height),p=d.data;for(let i=0;i<p.length;i+=4){const mx=Math.max(p[i],p[i+1],p[i+2]),mn=Math.min(p[i],p[i+1],p[i+2]);if(mx>215&&mx-mn<40)p[i+3]=0}x.putImageData(d,0,0);res(cv.toDataURL("image/png"))};im.src=fr.result};fr.readAsDataURL(file)})}
