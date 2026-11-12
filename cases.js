@@ -23,7 +23,7 @@ window.CS=(function(){
      4 인프라 취약 = 도시가스 미설치, 등유·LPG·화목·연탄 보일러 등 (질의응답: 등유·LPG·연탄 → 4유형) */
   const TYPES={"1":"저소득 에너지 취약","2":"바우처 한도 소진","3":"바우처 사각지대","4":"에너지 인프라 취약"};
   const FOUR=["기름(등유) 보일러","LPG","연탄"];
-  const ENV=["해당 없음","관리비에 포함해 냄","개별 난방기구만 씀(전기장판 등)","고시원·쪽방·원룸 등 일반 주거 아님","기타 (메모에 적기)"];
+  const ENV=["해당 없음","관리비에 포함해 냄","개별 난방기구만 씀(전기장판 등)","고시원·쪽방·원룸 등 일반 주거 아님","작년에 못 받았거나 못 씀","쓸 수 없어서 신청 안 함","기타 (메모에 적기)"];
   const isTarget=(v,inc,tg)=>v==="받는 중"||v==="받았는데 다 씀"||(inc==="기초생활수급자"&&tg==="있음");
   const hardEnv=env=>!!env&&env!=="해당 없음";
   const typeFrom=(v,h,inc,tg,env)=>{if(FOUR.includes(h))return "4";if(v==="받았는데 다 씀")return "2";
@@ -32,7 +32,7 @@ window.CS=(function(){
     const t=typeFrom(v,c.v_heating,inc,tg,env);
     if(t==="4")return "4유형 에너지 인프라 취약 (난방: "+c.v_heating+")";
     if(t)return t+"유형 "+TYPES[t]+(t==="1"&&inc==="기초생활수급자"&&!tg?" · 수급자라 바우처 대상 세대원이 있으면 1유형이 아닙니다":"");
-    if(isTarget(v,inc,tg))return env==="해당 없음"?"바우처 대상인데 2·3유형 조건이 안 보입니다 (2025 소진 아님 · 사용 어려운 환경 아님) → 위원회 판단 필요":"바우처 대상입니다 → ‘바우처 쓰기 어려운 환경’을 고르면 3유형인지 보입니다";
+    if(isTarget(v,inc,tg))return env==="해당 없음"?"바우처 대상인데 2·3유형 조건이 안 보입니다 (2025 소진 아님 · 사용 어려운 환경 아님) → 위원회 판단 필요":"바우처 대상입니다 → ‘바우처를 쓸 수 없는 사유’가 있으면 3유형, 없으면 이번 사업 대상이 아닙니다";
     return ""};
   const typeOf=c=>(c.type_final||"").replace(/[^1-4]/g,"")||typeFrom(c.v_voucher,c.v_heating,c.v_income,c.v_voucher_target,c.v_env);
   function amounts(c){const t=typeOf(c),n=Math.min(4,Math.max(1,+c.v_household_size||0));if(!t||!+c.v_household_size)return null;
@@ -60,7 +60,7 @@ window.CS=(function(){
     <p class="dv-sub">${c.household_code?esc(c.household_code)+" · ":""}방문 ${esc(c.visit_date||"미정")}${c.visitor?" · "+esc(c.visitor):""}</p>
     <div class="dv-grid">
       <div class="dv-card"><h3>협회 시스템 입력 항목</h3>${row("성별",c.v_gender)}${row("생년월일",c.v_birth)}${row("지원 기간",c.period)}${row("사업 참여 이력",c.participation)}${row("돌봄단 발굴",c.care_found)}</div>
-      <div class="dv-card"><h3>확인한 세대·소득</h3>${row("세대주 본인",c.v_is_head)}${row("세대주",[c.v_head_name,c.v_head_birth].filter(Boolean).join(" · "))}${row("가구원 수",c.v_household_size?c.v_household_size+"명":"")}${row("소득 구분",c.v_income)}${row("수급 종류",c.v_recipient_kinds)}${row("바우처",c.v_voucher)}${row("바우처 대상 세대원",c.v_voucher_target)}${row("바우처 쓰기 어려운 환경",c.v_env)}${row("난방 방식",c.v_heating)}${row("본인 명의 통장",c.v_account)}</div>
+      <div class="dv-card"><h3>확인한 세대·소득</h3>${row("세대주 본인",c.v_is_head)}${row("세대주",[c.v_head_name,c.v_head_birth].filter(Boolean).join(" · "))}${row("가구원 수",c.v_household_size?c.v_household_size+"명":"")}${row("소득 구분",c.v_income)}${row("수급 종류",c.v_recipient_kinds)}${row("바우처",c.v_voucher)}${row("바우처 대상 세대원",c.v_voucher_target)}${row("바우처를 쓸 수 없는 사유",c.v_env)}${row("난방 방식",c.v_heating)}${row("본인 명의 통장",c.v_account)}</div>
       <div class="dv-card"><h3>지원 금액 (동절기)</h3>${a?`<div class="amt-box">${a.list.map(([m,v])=>`<div>${m}<b>${fmt(v)}</b></div>`).join("")}<div class="tot">합계<b>${fmt(a.tot)}</b></div></div>`:'<p class="dv-empty">유형과 가구원 수를 확인하면 계산됩니다</p>'}</div>
       <div class="dv-card"><h3>증빙 서류</h3>${DOCS.map(x=>{const v=d[x.k]||{};return `<div class="dv-row"><span>${x.l}</span><span>${v.got?"받음"+(v.date?" · "+esc(v.date):""):'<span style="color:var(--mute);font-weight:400">아직</span>'}</span></div>`}).join("")}</div>
       <div class="dv-card"><h3>효율 개선 · 판정</h3>${row("필요 지원",c.eff_needs)}${row("효율 메모",c.eff_note)}${row("위원회 결과",c.committee_result)}${row("판정일",c.committee_date)}${row("판정 메모",c.committee_note)}${row("협회 승인",c.kaswc_approved)}</div>
@@ -82,7 +82,7 @@ window.CS=(function(){
       <h1>온앤쿨케어 초기상담지 (에너지 돌봄)</h1><p class="sub">안양시만안종합사회복지관 · 접수 ${v(r.receipt_no)}번${c.household_code?" · 가구코드 "+v(c.household_code):""}</p>
       ${sec("상담 정보",R("상담일",v(c.visit_date),"상담자",v(c.visitor))+R("추천자",v((r.worker_org||"")+" "+(r.worker_name||"")),"긴급도",v(r.urgency)))}
       ${sec("대상자",R("성명",v(r.elder_name),"생년월일·성별",v([c.v_birth||r.birth,c.v_gender||r.gender].filter(Boolean).join(" · ")))+R("연락처",v(r.phone),"거주동",v(r.dong))+R("실거주 주소",v((r.address||"").replace(" | ",", "))))}
-      ${sec("세대·소득·바우처",R("세대주",v(c.v_is_head==="예"?"본인":[c.v_head_name,c.v_head_birth].filter(Boolean).join(" · ")),"가구원 수",v(c.v_household_size?c.v_household_size+"명":""))+R("가구원(등본)",v(c.members)||v(r.live_with))+R("소득 구분",v([c.v_income,(c.v_recipient_kinds||[]).join("·")].filter(Boolean).join(" ")),"건강보험료 월액",v(c.hi_premium))+R("에너지바우처",v(c.v_voucher),"바우처 대상 세대원",v(c.v_voucher_target))+R("바우처 쓰기 어려운 환경",v(c.v_env)))}
+      ${sec("세대·소득·바우처",R("세대주",v(c.v_is_head==="예"?"본인":[c.v_head_name,c.v_head_birth].filter(Boolean).join(" · ")),"가구원 수",v(c.v_household_size?c.v_household_size+"명":""))+R("가구원(등본)",v(c.members)||v(r.live_with))+R("소득 구분",v([c.v_income,(c.v_recipient_kinds||[]).join("·")].filter(Boolean).join(" ")),"건강보험료 월액",v(c.hi_premium))+R("에너지바우처",v(c.v_voucher),"바우처 대상 세대원",v(c.v_voucher_target))+R("바우처를 쓸 수 없는 사유",v(c.v_env)))}
       ${sec("주거 에너지 환경",R("난방 방식",v(c.v_heating),"냉방 설비",v(c.cool_equip))+R("주거 형태",v(r.housing_tenure),"주거 위험",v(r.housing_risk))+R("설비 고장",v(r.heater_broken),"설비 소유",v(c.equip_owner))+R("월평균 냉·난방비",v([c.bill_avg,c.bill_checked?"고지서 "+c.bill_checked:""].filter(Boolean).join(" · ")),"체납",v([(r.arrears||[]).join("·"),c.arrears_months].filter(Boolean).join(" · ")))+R("단전·단가스 경험",v(c.cutoff),"타 에너지 지원",v(r.other_support))+R("본인 명의 통장",v(c.v_account)))}
       ${sec("건강·안전",R("건강·생활 위험",v(r.risk_note))+R("온열·한랭 취약성",v(c.heat_risk),"안부 확인 보호자",v(c.guardian)))}
       ${sec("판단",R("유형 판단",v(t?t+"유형 "+TYPES[t]:"")+(c.type_final?"":" (제안)"),"동절기 지원액",a?fmt(a.tot)+"원":"")+R("효율 개선 필요",v(c.eff_needs),"증빙 서류",`${ds.ok}/${ds.need}`+(ds.stale.length?" (3개월 넘음: "+v(ds.stale.join(", "))+")":""))+R("추천 사유",v(r.reason))+R("방문 현황·상담자 의견",v(c.visit_note).replace(/\n/g,"<br>"))+R("위원회 결과",v(c.committee_result),"판정일",v(c.committee_date)))}
@@ -150,7 +150,7 @@ function openCase(c,r){curCase=c;r=r||{};curRef=r;const e=CS.esc,d=c.docs||{};
      <div class="cs-row2"><label>세대주 성함<input type="text" id="c_v_head_name" maxlength="30" value="${e(c.v_head_name||"")}"></label><label>세대주 생년월일<input type="text" id="c_v_head_birth" maxlength="6" value="${e(c.v_head_birth||"")}"></label></div>
      <div class="cs-row2"><label>소득 구분<select id="c_v_income">${opt(["","기초생활수급자","차상위","저소득(건보료 기준)","기준 초과"],c.v_income)}</select></label><label>에너지바우처<select id="c_v_voucher">${opt2([["",""],["안 받음","안 받음"],["받았는데 다 씀","받았는데 다 씀 (2025 잔액 1만원 이하)"],["받는 중","받는 중"]],c.v_voucher||"")}</select></label></div>
      <label>바우처 대상 세대원 <small style="font-weight:400;color:var(--mute)">노인·영유아·장애인·임산부·중증/희귀/중증난치질환자·한부모·소년소녀가정·다자녀 (수급자면 바우처 대상)</small><select id="c_v_voucher_target">${opt(["","있음","없음"],c.v_voucher_target)}</select></label>
-     ${r.voucher_reason?`<p class="dv-sub" style="margin:0">추천 시 적은 바우처 미신청 사유: <b>${e(r.voucher_reason)}</b></p>`:""}<label>바우처 쓰기 어려운 환경 <small style="font-weight:400;color:var(--mute)">3유형 판단 근거 (공고문 2쪽) · 근거 사진·메모를 남겨 두세요</small><select id="c_v_env">${opt(["",...CS.ENV],c.v_env)}</select></label>
+     ${r.voucher_reason?`<p class="dv-sub" style="margin:0">추천 시 적은 바우처 미신청 사유: <b>${e(r.voucher_reason)}</b></p>`:""}<label>바우처를 쓸 수 없는 사유 <small style="font-weight:400;color:var(--mute)">3유형은 이 사유가 꼭 있어야 해요 · 근거 사진·메모를 남겨 주세요</small><select id="c_v_env">${opt(["",...CS.ENV],c.v_env)}</select></label>
      <div class="cs-row2"><label>난방 방식<select id="c_v_heating">${opt(["","도시가스","기름(등유) 보일러","LPG","연탄","전기","기타"],c.v_heating)}</select></label><label>본인 명의 통장<select id="c_v_account">${opt(["","있음","없음","압류 우려"],c.v_account)}</select></label></div></div>
    <div class="cs-card"${B.worker?" hidden":""}><h3>유형과 지원 금액</h3>
      <p class="dv-sub" style="margin:0 0 6px">확인한 정보로 본 제안: <b id="c_prop">${prop?e(prop):"정보 부족"}</b></p>
