@@ -105,6 +105,8 @@ const opt2=(arr,v)=>arr.map(([x,l])=>`<option value="${x}"${x===v?" selected":""
 const b8=b=>{if(!/^\d{6}$/.test(b||""))return"";let y=+b.slice(0,2);y+=y>new Date().getFullYear()%100?1900:2000;return `${y}-${b.slice(2,4)}-${b.slice(4,6)}`};
 /* 효율개선: 협회 실적 입력 분야를 앞에, 이어서 복지관 항목 (한 묶음) · 기타는 내용 입력 */
 const EFF=["단열·창호 (뽁뽁이·문풍지)","고효율 LED 조명 교체","친환경 보일러 점검","서큘레이터·선풍기 보급"],EFF2=["열화상 진단","방한 물품","난방기구 수리","외부 집수리 연계","기타"];
+/* 추천서 답변은 참고로만 보여 주고 자동 체크는 하지 않음 (11/12) */
+const effHint=r=>{const L=[];if(r&&r.heater_broken==="예")L.push("난방기구 고장");((r&&r.housing_risk)||[]).forEach(x=>L.push(x));return L.length?`<p class="eff-hint" style="margin:0 0 8px;font-size:13px;color:var(--mute);line-height:1.55">추천서에 적힌 내용: ${CS.esc(L.join(", "))}<br>현장에서 확인하고 필요한 항목을 골라 주세요.</p>`:""};
 const effHas=(L,x)=>(L||[]).includes(x)||(x===EFF[0]&&(L||[]).includes("방풍·단열 물품"));
 /* 2유형: 2025년 바우처 소진은 서류가 없어 1600-3190 공동 청취로 확인 → 복지관이 별첨 2 작성 (협회 확인 11/12) */
 const VC_ON=v=>["받았는데 다 씀","모름"].includes(v);
@@ -159,7 +161,7 @@ function openCase(c,r){curCase=c;r=r||{};curRef=r;const e=CS.esc,d=c.docs||{};
      ${CS.DOCS.filter(x=>!(B.worker&&x.k==="confirm")).map(x=>{const v=d[x.k]||{};return `<div class="doc" data-doc="${x.k}"><div class="doc-top"><b>${x.l}${x.req===1?' <span style="color:var(--warm);font-size:12px">필수</span>':typeof x.req==="string"?` <span style="color:var(--amber);font-size:12px">${x.req.slice(1).split("").join("·")}유형 필수</span>`:""}</b>
        <label><input type="checkbox" data-got="${x.k}"${v.got?" checked":""}> 받음</label>${x.dated?`<label>발급일 <input type="date" data-date="${x.k}" value="${e(v.date||"")}"></label>`:""}</div>${x.h?`<small>${x.h}</small>`:""}
        <div class="files" id="files-${x.k}"><span class="dv-empty">불러오는 중…</span></div>${x.k==="voucher"?vcallHTML(c,r):""}</div>`}).join("")}</div>
-   <div class="cs-card"><h3>에너지 효율 개선</h3><div class="cs-checks">${EFF.concat(EFF2).map(x=>`<label><input type="checkbox" data-eff="${x}"${effHas(c.eff_needs,x)?" checked":""}> ${x}</label>`).join("")}</div>
+   <div class="cs-card"><h3>에너지 효율 개선</h3>${effHint(r)}<div class="cs-checks">${EFF.concat(EFF2).map(x=>`<label><input type="checkbox" data-eff="${x}"${effHas(c.eff_needs,x)?" checked":""}> ${x}</label>`).join("")}</div>
      <label class="eff-etc"${effHas(c.eff_needs,"기타")?"":" hidden"}>기타 필요 내역<input type="text" id="c_eff_etc" maxlength="100" placeholder="필요한 물품이나 수리 내용을 입력해 주세요" value="${e(c.eff_etc||"")}"></label>
      <label style="margin-top:8px">메모<textarea id="c_eff_note" maxlength="1000">${e(c.eff_note||"")}</textarea></label></div>
    <div class="cs-card"${B.worker?" hidden":""}><h3>단계 · 판정</h3>
