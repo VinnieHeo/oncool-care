@@ -179,9 +179,9 @@ function openCase(c,r){curCase=c;r=r||{};curRef=r;const e=CS.esc,d=c.docs||{};
      <div id="c_amt"></div></div>
    ${B.worker?"":'<div class="cs-card kw-card"><h3>협회 사이트 입력용 요약 <small style="font-weight:400;color:var(--mute)">(onandcool.or.kr 대상자 등록 순서)</small></h3><div id="c_kaswc"></div></div>'}
    <div class="cs-card" style="grid-column:1/-1"><h3>증빙 서류 <small style="font-weight:400;color:var(--mute)">‘찍어서 올리기’는 종이를 반듯하게 펴고 하얗게 보정해서 올립니다 (담당자 계정만)</small></h3>${B.worker?"":'<div class="pdfrow"><button type="button" class="upl" id="c_pdf">서류 전체 PDF로 받기</button><span id="c_pdfmsg" class="dv-empty"></span></div>'}
-     ${CS.DOCS.filter(x=>!(B.worker&&x.k==="confirm")).map(x=>{const v=d[x.k]||{};return `<div class="doc" data-doc="${x.k}"><div class="doc-top"><b>${x.l}${x.req===1?' <span style="color:var(--warm);font-size:12px">필수</span>':typeof x.req==="string"?` <span style="color:var(--amber);font-size:12px">${x.req.slice(1).split("").join("·")}유형 필수</span>`:""}</b>
-       <label><input type="checkbox" data-got="${x.k}"${v.got?" checked":""}> 받음</label>${x.dated?`<label>발급일 <input type="date" data-date="${x.k}" value="${e(v.date||"")}"></label>`:""}</div>${x.h?`<small>${x.h}</small>`:""}
-       <div class="files" id="files-${x.k}"><span class="dv-empty">불러오는 중…</span></div>${x.k==="voucher"?vcallHTML(c,r):""}</div>`}).join("")}</div>
+     <div class="doc-mas">${CS.DOCS.filter(x=>!(B.worker&&x.k==="confirm")).map(x=>{const v=d[x.k]||{};return `<div class="doc" data-doc="${x.k}"><div class="doc-top"><b>${x.l}${x.req===1?' <span class="dreq" style="color:var(--warm);font-size:12px">필수</span>':typeof x.req==="string"?` <span class="dreq" data-req="${x.req}" style="color:var(--amber);font-size:12px">${x.req.slice(1).split("").join("·")}유형 필수</span>`:""}</b>
+       <label><input type="checkbox" data-got="${x.k}"${v.got?" checked":""}> 받음</label></div>${x.h?`<small>${x.h}</small>`:""}
+       <div class="files" id="files-${x.k}"><span class="dv-empty">불러오는 중…</span></div>${x.k==="voucher"?vcallHTML(c,r):""}</div>`}).join("")}</div></div>
    <div class="cs-card"><h3>에너지 효율 개선</h3>${effHint(r)}<div class="cs-checks">${EFF.concat(EFF2).map(x=>`<label><input type="checkbox" data-eff="${x}"${effHas(c.eff_needs,x)?" checked":""}> ${x}</label>`).join("")}</div>
      <label class="eff-etc"${effHas(c.eff_needs,"기타")?"":" hidden"}>기타 필요 내역<input type="text" id="c_eff_etc" maxlength="100" placeholder="필요한 물품이나 수리 내용을 입력해 주세요" value="${e(c.eff_etc||"")}"></label>
      <label style="margin-top:8px">메모<textarea id="c_eff_note" maxlength="1000">${e(c.eff_note||"")}</textarea></label></div>
@@ -200,8 +200,16 @@ function openCase(c,r){curCase=c;r=r||{};curRef=r;const e=CS.esc,d=c.docs||{};
   let arm=false;if($("#c_del"))$("#c_del").onclick=async()=>{if(!arm){arm=true;$("#c_del").textContent="정말 삭제 (올린 파일은 남습니다)";return}try{await B.del(c.id);$("#cedit").hidden=true;H.deleted(c.id)}catch(x){$("#c_msg").textContent="삭제하지 못했습니다"}};
   $("#cedit").scrollIntoView({behavior:"smooth",block:"start"});
 }
+/* 증빙 카드 (11/12): 받은 서류는 초록 카드 · 직원 화면은 이 가구 유형 기준으로 필수/해당 없음 표시 */
+function paintDocs(t){const ty=CS.typeOf(t);document.querySelectorAll("#cedit .doc[data-doc]").forEach(d=>{const gb=d.querySelector("[data-got]");d.classList.toggle("got",!!(gb&&gb.checked));
+    if(B.worker)return;const sp=d.querySelector(".dreq[data-req]");if(!sp)return;const rq=sp.dataset.req;
+    if(!ty){sp.textContent=rq.slice(1).split("").join("·")+"유형 필수";sp.style.color="var(--amber)";d.classList.remove("na")}
+    else if(rq.includes(ty)){sp.textContent="필수";sp.style.color="var(--warm)";d.classList.remove("na")}
+    else if(d.dataset.doc==="income"&&["2","3"].includes(ty)){sp.textContent="받아 두기";sp.style.color="var(--amber)";d.classList.remove("na")}
+    else{sp.textContent="";sp.style.color="var(--mute)";d.classList.add("na")}})}
+{const st=document.createElement("style");st.textContent=".staff-ui #cedit .doc.got{background:var(--green-soft);border-color:var(--green)}.staff-ui #cedit .doc.got .doc-top>label:first-of-type{color:var(--green);font-weight:800}.staff-ui #cedit .doc.na{opacity:.6}.staff-ui #cedit .doc-mas{grid-column:1/-1;column-count:2;column-gap:10px}.staff-ui #cedit .doc-mas>.doc{break-inside:avoid;display:inline-block;width:100%;box-sizing:border-box}@media (max-width:760px){.staff-ui #cedit .doc-mas{column-count:1}}";document.head.appendChild(st)}
 function formCase(){const c=curCase,g=id=>$("#c_"+id),docs={};
-  CS.DOCS.forEach(x=>{const gb=document.querySelector(`[data-got="${x.k}"]`);if(!gb){docs[x.k]=(c.docs||{})[x.k]||{got:false,date:null};return}const got=gb.checked,dt=document.querySelector(`[data-date="${x.k}"]`);docs[x.k]={got,date:dt&&dt.value||null}});
+  CS.DOCS.forEach(x=>{const gb=document.querySelector(`[data-got="${x.k}"]`);if(!gb){docs[x.k]=(c.docs||{})[x.k]||{got:false,date:null};return}const got=gb.checked,dt=document.querySelector(`[data-date="${x.k}"]`);docs[x.k]={got,date:dt?(dt.value||null):(((c.docs||{})[x.k]||{}).date||null)}});
   return {visit_date:g("visit_date").value||null,visitor:g("visitor").value.trim()||null,visit_note:g("visit_note").value.trim()||null,
     v_is_head:g("v_is_head").value||null,v_head_name:g("v_head_name").value.trim()||null,v_head_birth:g("v_head_birth").value.trim()||null,v_household_size:+g("v_household_size").value||null,
     v_income:g("v_income").value||null,v_voucher_target:g("v_voucher_target").value||null,v_env:g("v_env").value||null,v_gender:g("v_gender").value||null,v_birth:g("v_birth").value||null,period:g("period").value,participation:g("participation").value,care_found:g("care_found").value||null,v_voucher:g("v_voucher").value||null,v_heating:g("v_heating").value||null,v_account:g("v_account").value||null,
@@ -209,13 +217,13 @@ function formCase(){const c=curCase,g=id=>$("#c_"+id),docs={};
     eff_needs:[...document.querySelectorAll("[data-eff]:checked")].map(x=>x.dataset.eff),eff_note:g("eff_note").value.trim()||null,eff_etc:(g("eff_etc")&&document.querySelector('[data-eff="기타"]:checked')?g("eff_etc").value.trim():"")||null,
     members:g("members").value.trim()||null,hi_premium:g("hi_premium").value.trim()||null,cool_equip:g("cool_equip").value||null,bill_avg:g("bill_avg").value.trim()||null,bill_checked:g("bill_checked").value||null,arrears_months:g("arrears_months").value.trim()||null,cutoff:g("cutoff").value.trim()||null,equip_owner:g("equip_owner").value||null,heat_risk:g("heat_risk").value||null,guardian:g("guardian").value.trim()||null,
     stage:g("stage").value,household_code:g("household_code").value.trim()||null,committee_result:g("committee_result").value||null,committee_date:g("committee_date").value||null,committee_note:g("committee_note").value.trim()||null,kaswc_approved:g("kaswc_approved").value||null}}
-function refreshCalc(){if(!curCase)return;const t=Object.assign({},curCase,formCase());{const vb=$("#c_vcall");if(vb)vb.hidden=!(t.vcall&&t.vcall.ok)&&!VC_ON(t.v_voucher||curRef.voucher)}const a=CS.amounts(t),ds=CS.docState(t);
+function refreshCalc(){if(!curCase)return;const t=Object.assign({},curCase,formCase());paintDocs(t);{const vb=$("#c_vcall");if(vb)vb.hidden=!(t.vcall&&t.vcall.ok)&&!VC_ON(t.v_voucher||curRef.voucher)}const a=CS.amounts(t),ds=CS.docState(t);
   $("#c_prop").textContent=CS.proposed(t)||"정보 부족";if(!B.worker)kaswc(t);
   $("#c_amt").innerHTML=a?`<div class="amt-box">${a.list.map(([m,v])=>`<div>${m}<b>${CS.fmt(v)}</b></div>`).join("")}<div class="tot">동절기 합계<b>${CS.fmt(a.tot)}</b></div></div>`:'<p class="dv-empty">유형과 가구원 수를 넣으면 계산됩니다</p>';
   $("#c_chips").innerHTML=`<span class="stg stg-${CS.esc(t.stage)}">${CS.esc(t.stage)}</span><span class="chip2 ${ds.full?"ok":"amber"}">서류 ${ds.ok}/${ds.need}</span>${ds.stale.length?`<span class="chip2 warn">신청일 기준 3개월 넘음: ${CS.esc(ds.stale.join(", "))}</span>`:""}${ds.full&&["조사중","업로드완료"].includes(t.stage)?'<span class="chip2 info">서류가 다 모였습니다 → 단계를 ‘서류완비’로</span>':""}`}
 async function saveCase(){const up=formCase();$("#c_save").disabled=true;
   try{const nc=await B.save(curCase.id,up);Object.assign(curCase,nc||up);$("#c_msg").textContent="저장되었습니다";H.saved(curCase)}
-  catch(x){$("#c_msg").textContent=/session/.test(x.message)?"편집 시간이 끝났습니다. 다시 편집 비밀번호를 넣어 주세요":"저장하지 못했습니다: "+x.message}
+  catch(x){$("#c_msg").textContent=/session/.test(x.message)?"편집 시간이 끝났습니다. 닫기 후 비밀번호로 다시 들어와 주세요":"저장하지 못했습니다: "+x.message}
   finally{$("#c_save").disabled=false}}
 /* 협회 사이트 입력용 요약: 협회 대상자 등록 화면과 같은 순서 · 항목마다 복사 */
 const KEV={"1유형":"건강보험료 납부확인서 (의료급여 수급자는 수급자증명서)","2유형":"2026년 에너지이용권 결정통지서 + 확인서(별첨 2, 1600-3190 공동 청취로 2025년 소진 확인)","3유형":"결정통지서 또는 바우처 대상 증빙 + 확인서(별첨 3)","4유형":"건강보험료 납부확인서 또는 수급자증명서 + 확인서(별첨 4)"};
@@ -243,18 +251,20 @@ async function shrink(file){if(!/^image\//.test(file.type)||file.type==="image/h
 document.addEventListener("change",async e=>{const inp=e.target.closest("[data-up]");if(!inp||!curCase)return;e.stopPropagation();const k=inp.dataset.up;
   for(const f of inp.files){const b=await shrink(f);const ext=b.type==="application/pdf"?"pdf":b.type==="image/png"?"png":b.type==="image/heic"?"heic":"jpg";
     try{await B.upload(curCase.id,k,b,b.type||f.type||"image/jpeg")}catch(x){$("#c_msg").textContent="올리지 못했습니다: "+x.message}}
-  const cb=document.querySelector(`[data-got="${k}"]`);if(cb&&!cb.checked){cb.checked=true;refreshCalc();$("#c_msg").textContent="파일을 올려 ‘받음’에 체크했습니다. 저장을 눌러 주세요"}
+  const cb=document.querySelector(`[data-got="${k}"]`);if(cb&&!cb.checked){cb.checked=true;refreshCalc();autoGot()}
   listFiles(k)},true);
 document.addEventListener("click",async e=>{const o=e.target.closest("[data-open]"),x=e.target.closest("[data-rm]");if(!curCase||(!o&&!x))return;
   if(o){const w=window.open("","_blank");try{const u=await B.open(curCase.id,`${curCase.id}/${o.dataset.open}`);if(w)w.location=u;else location.href=u}catch(e2){if(w)w.close();$("#c_msg").textContent="열지 못했습니다"}}
   if(x){if(x.dataset.arm!=="1"){x.dataset.arm="1";x.textContent="삭제 확인";return}try{await B.remove(curCase.id,`${curCase.id}/${x.dataset.rm}`)}catch(e2){$("#c_msg").textContent="삭제하지 못했습니다";return}const k=x.dataset.rm.split("/")[0];await listFiles(k);
     /* 추천자 화면: 그 서류 사진을 다 지우면 ‘받음’을 풀고 바로 저장 (제출한 가구는 서버가 미제출로 되돌림) */
-    if(B.worker&&!((curCase.signs||{})[k])){let left=1;try{left=(await B.list(curCase.id,k)).length}catch(e3){}const cb=document.querySelector(`[data-got="${k}"]`);
+    if(!((curCase.signs||{})[k])){let left=1;try{left=(await B.list(curCase.id,k)).length}catch(e3){}const cb=document.querySelector(`[data-got="${k}"]`);
       if(!left&&cb&&cb.checked){cb.checked=false;refreshCalc();cb.dispatchEvent(new Event("change",{bubbles:true}));await saveCase();document.dispatchEvent(new CustomEvent("cs:saved",{detail:curCase}))}}}});
 
 
 /* 서류 스캔(찍어서 올리기) · 가구 서류 PDF */
-function markGot(k){const cb=document.querySelector(`[data-got="${k}"]`);if(cb&&!cb.checked){cb.checked=true;refreshCalc();$("#c_msg").textContent="파일을 올려 ‘받음’에 체크했습니다. 저장을 눌러 주세요"}}
+/* 사진을 올리면 ‘받음’ 자동 체크 후 바로 저장 (11/12) */
+async function autoGot(){$("#c_msg").textContent="사진을 올려 ‘받음’으로 바꿨습니다. 저장 중…";await saveCase();if($("#c_msg").textContent==="저장되었습니다")$("#c_msg").textContent="사진을 올려 ‘받음’으로 바꾸고 저장했습니다"}
+function markGot(k){const cb=document.querySelector(`[data-got="${k}"]`);if(cb&&!cb.checked){cb.checked=true;refreshCalc();autoGot()}}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-scan]");if(!b||!curCase)return;const k=b.dataset.scan,doc=CS.DOCS.find(x=>x.k===k);
   if(!window.SCAN){$("#c_msg").textContent="스캔 기능을 불러오지 못했습니다. ‘파일 첨부’를 이용해 주세요";return}
   const cid=curCase.id;SCAN.open({title:doc?doc.l:"서류",from:b.dataset.from,onDone:async blobs=>{for(const bl of blobs)await B.upload(cid,k,bl,"image/jpeg");if(curCase&&curCase.id===cid){markGot(k);listFiles(k)}}})});
