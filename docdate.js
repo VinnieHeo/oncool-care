@@ -12,12 +12,17 @@ async function prep(blob){const url=URL.createObjectURL(blob);const im=await new
   const k=Math.min(2,2400/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);const x=cv.getContext("2d");x.drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(url);
   const d=x.getImageData(0,0,cv.width,cv.height),p=d.data;let mn=255,mx=0;for(let i=0;i<p.length;i+=4){const g=.299*p[i]+.587*p[i+1]+.114*p[i+2];p[i]=g;if(g<mn)mn=g;if(g>mx)mx=g}
   const r=Math.max(1,mx-mn);for(let i=0;i<p.length;i+=4){const g=(p[i]-mn)*255/r;p[i]=p[i+1]=p[i+2]=g}x.putImageData(d,0,0);return cv}
-/* 날짜 찾기: ‘발급’이 있는 줄을 먼저, 없으면 생년월일·전입·납부기간 줄을 빼고 오늘 이전의 가장 늦은 날짜 */
+/* 날짜 찾기 (11/12 고침): ① ‘발급’ 줄의 날짜 ② ‘2026년 11월 12일’처럼 년·월·일로 쓴 날짜(등본·확인서의 발급일 표기, 글자가 조금 틀려도 읽음)
+   ③ 둘 다 없으면 표 안 날짜(신고일·전입·변경·출생 등)를 뺀 가장 늦은 날짜 */
 const DRE=/(20\d{2})\s*[.\-\/년]\s*(\d{1,2})\s*[.\-\/월]\s*(\d{1,2})/g;
+const KRE=/(20\d{2})\s*(?:년|[^\d\s])?\d?\s*(\d{1,2})\s*월\s*(\d{1,2})/g;
 function iso(y,m,d){m=+m;d=+d;if(m<1||m>12||d<1||d>31)return "";return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`}
-function parse(t){const L=String(t||"").split(/\n/);const today=new Date().toISOString().slice(0,10);
-  for(const l of L){if(/발\s*급/.test(l)){DRE.lastIndex=0;const m=DRE.exec(l);if(m){const v=iso(m[1],m[2],m[3]);if(v&&v<=today)return v}}}
-  let best="";for(const l of L){if(/생\s*년|생일|전\s*입|출생|납부\s*기간|기간/.test(l))continue;DRE.lastIndex=0;let m;while((m=DRE.exec(l))){const v=iso(m[1],m[2],m[3]);if(v&&v<=today&&v>best)best=v}}
+const SKIP=/생\s*년|생일|전\s*입|출생|납부\s*기간|기간|신\s*고|변\s*경|등\s*록|현\s*주\s*소|세\s*대\s*주|사\s*유|일\s*자/;
+function all(re,l){const o=[];re.lastIndex=0;let m;while((m=re.exec(l))){const v=iso(m[1],m[2],m[3]);if(v)o.push(v)}return o}
+function parse(t){const L=String(t||"").split(/\n/);const today=new Date().toISOString().slice(0,10);const ok=v=>v&&v<=today;
+  for(const l of L){if(/발\s*급/.test(l)&&!/번\s*호/.test(l)){const v=all(DRE,l).concat(all(KRE,l)).find(ok);if(v)return v}}
+  let best="";for(const l of L){if(/생\s*년|생일|출생/.test(l))continue;for(const v of all(KRE,l))if(ok(v)&&v>best)best=v}if(best)return best;
+  for(const l of L){if(SKIP.test(l))continue;for(const v of all(DRE,l))if(ok(v)&&v>best)best=v}
   return best}
 async function readDate(cid,k,onPrep){const fs=(await B.list(cid,k)||[]).filter(f=>f.mimetype!=="application/pdf"&&!/\.pdf$/i.test(f.name||""));if(!fs.length)return {none:true};
   const f=fs[fs.length-1];const u=await B.open(cid,`${cid}/${k}/${f.name}`);const bl=await (await fetch(u)).blob();const cv=await prep(bl);const w=await worker(onPrep);const {data}=await w.recognize(cv);return {date:parse(data.text||"")}}
