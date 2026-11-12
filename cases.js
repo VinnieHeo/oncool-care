@@ -109,7 +109,7 @@ const effHas=(L,x)=>(L||[]).includes(x)||(x===EFF[0]&&(L||[]).includes("방풍·
 /* 2유형: 2025년 바우처 소진은 서류가 없어 1600-3190 공동 청취로 확인 → 복지관이 별첨 2 작성 (협회 확인 11/12) */
 const VC_ON=v=>["받았는데 다 씀","모름"].includes(v);
 function vcallHTML(c,r){const v=c.vcall||{},e=CS.esc,show=v.ok||VC_ON(c.v_voucher||(r||{}).voucher);
-  return `<div class="vcall" id="c_vcall"${show?"":" hidden"}><b>2025년 바우처 소진 확인 (2유형)</b><p>2025년 사용 내역은 따로 발급되는 서류가 없습니다.<br>대상자가 에너지바우처 콜센터(1600-3190)에 전화하고 담당자가 함께 들어 주십시오.</p>
+  return `<div class="vcall" id="c_vcall"${show?"":" hidden"}><b>2025년 바우처 소진 확인 (2유형)</b><p>2025년 사용 내역은 따로 발급되는 서류가 없습니다.<br>대상자가 에너지바우처 콜센터(1600-3190)에 전화하고 담당자가 함께 들어 주세요.</p>
    <label class="vc-ck"><input type="checkbox" id="c_vc_ok"${v.ok?" checked":""}> 함께 들으며 2025년 잔액이 1만 원 이하임을 확인하였습니다.</label>
    <div class="cs-row2"><label>확인일<input type="date" id="c_vc_date" value="${e(v.date||"")}"></label><label>2025년 잔액 (들은 금액)<input type="text" id="c_vc_bal" maxlength="20" placeholder="예) 3,200원" value="${e(v.bal||"")}"></label></div>
    <div class="cs-row2"><label>함께 들은 사람<input type="text" id="c_vc_who" maxlength="30" placeholder="이름" value="${e(v.who||"")}"></label><label>결과<select id="c_vc_res">${opt(["","소진 확인","1만 원 초과","조회 안 됨"],v.res||"")}</select></label></div></div>`}
