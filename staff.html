@@ -134,7 +134,7 @@ a.sbtn{text-decoration:none;display:inline-block}
 <p class="foot">편집 비밀번호로 들어오면 가정방문 기록과 증빙 서류를 고칠 수 있고, 고친 사람 이름이 남아요. 내용은 외부에 공유하지 말아 주세요.</p>
 </div>
 <script src="detail.js?v=12"></script>
-<script src="scan.js?v=6"></script><script src="cases.js?v=28"></script><script src="sign.js?v=6"></script><script src="judge.js?v=2"></script><script src="annex.js?v=2"></script><script src="docreq.js?v=2"></script><script src="faqs.js?v=1"></script>
+<script src="scan.js?v=6"></script><script src="cases.js?v=28"></script><script src="sign.js?v=6"></script><script src="judge.js?v=2"></script><script src="annex.js?v=2"></script><script src="docreq.js?v=2"></script><script src="pay.js?v=1"></script><script src="faqs.js?v=1"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const $=s=>document.querySelector(s);
@@ -284,6 +284,7 @@ SIGN.staffHook(rpcS,()=>ETOK);
 JUDGE.hook(rpcS,()=>ETOK,()=>CASES,()=>rows);
 ANNEX.hook(rpcS,()=>ETOK,()=>CASES,()=>rows);
 DOCREQ.staff(rpcS,()=>ETOK);
+PAY.hook(rpcS,()=>ETOK,()=>CASES,()=>rows,()=>EDNAME);
 FAQS.hook(rpcS,()=>ETOK);
 if(ETOK)loadEd().catch(()=>{ETOK="";try{sessionStorage.removeItem("oc_etok")}catch(e){}});
 /* 공개 숫자 (이름 없음) */
