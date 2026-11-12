@@ -88,7 +88,7 @@ window.CS=(function(){
     </div>`}
 
   /* 초기상담지 출력 (A4 한 장) */
-  function printSheet(c,r){r=r||{};const v=x=>esc(Array.isArray(x)?x.join(", "):(x??""));const t=typeOf(c),a=amounts(c),ds=docState(c),d=c.docs||{};
+  function printSheet(c,r,ret){r=r||{};const v=x=>esc(Array.isArray(x)?x.join(", "):(x??""));const t=typeOf(c),a=amounts(c),ds=docState(c),d=c.docs||{};
     const R=(l,x,l2,x2)=>l2===undefined?`<tr><th>${l}</th><td colspan="3">${x}</td></tr>`:`<tr><th>${l}</th><td>${x}</td><th>${l2}</th><td>${x2}</td></tr>`;
     const sec=(h,rows)=>`<h3>■ ${h}</h3><table>${rows}</table>`;
     const html=`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>초기상담지_${v(r.elder_name)}</title><style>
@@ -107,7 +107,7 @@ window.CS=(function(){
       ${sec("판단",R("유형 판단",v(t?t+"유형 "+TYPES[t]:"")+(c.type_final?"":" (제안)"),"동절기 지원액",a?fmt(a.tot)+"원":"")+R("효율 개선 필요",v(c.eff_needs),"증빙 서류",`${ds.ok}/${ds.need}`+(ds.stale.length?" (3개월 넘음: "+v(ds.stale.join(", "))+")":""))+R("추천 사유",v(r.reason))+R("방문 현황·상담자 의견",v(c.visit_note).replace(/\n/g,"<br>"))+R("위원회 결과",v(c.committee_result),"판정일",v(c.committee_date)))}
       <p class="sign">상담자 ${v(c.visitor)}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(서명)</p>
       <p class="note">※ 추천 페이지 입력 내용과 가정방문 기록으로 자동 작성된 상담지입니다. 출력 ${new Date().toLocaleDateString("ko-KR")}</p></body></html>`;
-    const w=window.open("","_blank");if(!w){alert("팝업이 막혀 있습니다. 팝업을 허용해 주세요.");return}w.document.open();w.document.write(html);w.document.close()}
+    if(ret)return html;const w=window.open("","_blank");if(!w){alert("팝업이 막혀 있습니다. 팝업을 허용해 주세요.");return}w.document.open();w.document.write(html);w.document.close()}
   function csv(cases,refs){const R=Object.fromEntries(refs.map(r=>[r.id,r]));const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
     const head=["가구코드","대상자","생년월일","성별","지원 기간","사업 참여 이력","돌봄단 발굴","연락처","거주동","주소","세대주 본인","세대주","가구원 수","소득 구분","수급 종류","바우처","바우처 대상 세대원","바우처 쓰기 어려운 환경","난방","유형","동절기 지원액","월별 지급","서류","3개월 지난 서류","방문일","방문자","방문 메모","효율 개선","단계","위원회 결과","판정일","협회 승인","추천자"];
     const lines=[head.map(q).join(",")].concat(cases.map(c=>{const r=R[c.referral_id]||{},a=amounts(c),ds=docState(c);return [c.household_code,r.elder_name,c.v_birth||r.birth,c.v_gender||r.gender,c.period,c.participation,c.care_found,r.phone,r.dong,(r.address||"").replace(" | ",", "),c.v_is_head,[c.v_head_name,c.v_head_birth].filter(Boolean).join(" "),c.v_household_size,c.v_income,(c.v_recipient_kinds||[]).join("·"),c.v_voucher,c.v_voucher_target,c.v_env,c.v_heating,typeOf(c)?typeOf(c)+"유형 "+TYPES[typeOf(c)]:"",a?a.tot:"",a?a.list.map(([m,v])=>m+" "+v).join(" / "):"",`${ds.ok}/${ds.need}`,ds.stale.join("·"),c.visit_date,c.visitor,c.visit_note,(c.eff_needs||[]).join("·"),c.stage,c.committee_result,c.committee_date,c.kaswc_approved,`${r.worker_org||"생활지원사"} ${r.worker_name||""}`].map(q).join(",")}));
