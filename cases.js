@@ -200,6 +200,12 @@ function openCase(c,r){curCase=c;r=r||{};curRef=r;const e=CS.esc,d=c.docs||{};
   let arm=false;if($("#c_del"))$("#c_del").onclick=async()=>{if(!arm){arm=true;$("#c_del").textContent="정말 삭제 (올린 파일은 남습니다)";return}try{await B.del(c.id);$("#cedit").hidden=true;H.deleted(c.id)}catch(x){$("#c_msg").textContent="삭제하지 못했습니다"}};
   $("#cedit").scrollIntoView({behavior:"smooth",block:"start"});
 }
+/* 긴 메모 칸은 내용만큼 자동으로 늘어남 (11/12) */
+function growTA(t){if(!t||!t.offsetParent)return;t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px"}
+function growAll(){document.querySelectorAll("#cedit textarea").forEach(growTA)}
+document.addEventListener("input",e=>{if(e.target&&e.target.tagName==="TEXTAREA")growTA(e.target)});
+document.addEventListener("click",()=>requestAnimationFrame(growAll));
+{const st=document.createElement("style");st.textContent="#cedit textarea{overflow-y:hidden;resize:vertical}";document.head.appendChild(st)}
 /* 증빙 카드 (11/12): 받은 서류는 초록 카드 · 직원 화면은 이 가구 유형 기준으로 필수/해당 없음 표시 */
 function paintDocs(t){const ty=CS.typeOf(t);document.querySelectorAll("#cedit .doc[data-doc]").forEach(d=>{const gb=d.querySelector("[data-got]");d.classList.toggle("got",!!(gb&&gb.checked));
     if(B.worker)return;const sp=d.querySelector(".dreq[data-req]");if(!sp)return;const rq=sp.dataset.req;
@@ -217,7 +223,7 @@ function formCase(){const c=curCase,g=id=>$("#c_"+id),docs={};
     eff_needs:[...document.querySelectorAll("[data-eff]:checked")].map(x=>x.dataset.eff),eff_note:g("eff_note").value.trim()||null,eff_etc:(g("eff_etc")&&document.querySelector('[data-eff="기타"]:checked')?g("eff_etc").value.trim():"")||null,
     members:g("members").value.trim()||null,hi_premium:g("hi_premium").value.trim()||null,cool_equip:g("cool_equip").value||null,bill_avg:g("bill_avg").value.trim()||null,bill_checked:g("bill_checked").value||null,arrears_months:g("arrears_months").value.trim()||null,cutoff:g("cutoff").value.trim()||null,equip_owner:g("equip_owner").value||null,heat_risk:g("heat_risk").value||null,guardian:g("guardian").value.trim()||null,
     stage:g("stage").value,household_code:g("household_code").value.trim()||null,committee_result:g("committee_result").value||null,committee_date:g("committee_date").value||null,committee_note:g("committee_note").value.trim()||null,kaswc_approved:g("kaswc_approved").value||null}}
-function refreshCalc(){if(!curCase)return;const t=Object.assign({},curCase,formCase());paintDocs(t);{const vb=$("#c_vcall");if(vb)vb.hidden=!(t.vcall&&t.vcall.ok)&&!VC_ON(t.v_voucher||curRef.voucher)}const a=CS.amounts(t),ds=CS.docState(t);
+function refreshCalc(){if(!curCase)return;const t=Object.assign({},curCase,formCase());paintDocs(t);requestAnimationFrame(growAll);{const vb=$("#c_vcall");if(vb)vb.hidden=!(t.vcall&&t.vcall.ok)&&!VC_ON(t.v_voucher||curRef.voucher)}const a=CS.amounts(t),ds=CS.docState(t);
   $("#c_prop").textContent=CS.proposed(t)||"정보 부족";if(!B.worker)kaswc(t);
   $("#c_amt").innerHTML=a?`<div class="amt-box">${a.list.map(([m,v])=>`<div>${m}<b>${CS.fmt(v)}</b></div>`).join("")}<div class="tot">동절기 합계<b>${CS.fmt(a.tot)}</b></div></div>`:'<p class="dv-empty">유형과 가구원 수를 넣으면 계산됩니다</p>';
   $("#c_chips").innerHTML=`<span class="stg stg-${CS.esc(t.stage)}">${CS.esc(t.stage)}</span><span class="chip2 ${ds.full?"ok":"amber"}">서류 ${ds.ok}/${ds.need}</span>${ds.stale.length?`<span class="chip2 warn">신청일 기준 3개월 넘음: ${CS.esc(ds.stale.join(", "))}</span>`:""}${ds.full&&["조사중","업로드완료"].includes(t.stage)?'<span class="chip2 info">서류가 다 모였습니다 → 단계를 ‘서류완비’로</span>':""}`}
