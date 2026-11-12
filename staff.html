@@ -99,12 +99,12 @@ a.sbtn{text-decoration:none;display:inline-block}
 <div class="stats" id="pstats"></div>
 <section class="card" id="login" style="max-width:420px">
   <h2>비밀번호</h2>
-  <p class="hint">추천받은 가구의 개인정보가 있어서 비밀번호를 넣어야 볼 수 있어요. 보기만 할 때는 열람 비밀번호, 가정방문 기록과 증빙 서류를 고칠 때는 편집 비밀번호를 넣어요.</p>
-  <div class="q" id="enq" hidden><label for="en" style="font-size:13px;color:var(--mute)">이름 (누가 고쳤는지 기록돼요)</label><input type="text" id="en" maxlength="20" autocomplete="name"></div>
-  <div class="q"><input type="password" id="pw" autocomplete="current-password" aria-label="비밀번호" placeholder="열람 비밀번호"></div>
-  <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px"><input type="checkbox" id="edmode" style="width:18px;height:18px"> 가정방문 기록·서류를 고치러 왔어요 (편집 비밀번호)</label>
+  <p class="hint">추천받은 가구의 개인정보가 있어서 비밀번호를 넣어야 볼 수 있어요.<br>이름은 처음 한 번만 넣으면 이 기기에서 기억해요.</p>
+  <div class="q" id="enq"><label for="en" style="font-size:13px;color:var(--mute)">이름 (누가 고쳤는지 기록돼요)</label><input type="text" id="en" maxlength="20" autocomplete="name"></div>
+  <div class="q"><input type="password" id="pw" autocomplete="current-password" aria-label="비밀번호" placeholder="비밀번호"></div>
+  <input type="checkbox" id="edmode" checked hidden>
   <p class="err" id="lerr" hidden></p>
-  <div style="margin-top:12px"><button class="btn" id="lbtn" type="button">보기</button></div>
+  <div style="margin-top:12px"><button class="btn" id="lbtn" type="button">들어가기</button></div>
 </section>
 <div id="app" hidden>
   <div class="vtabs" role="tablist"><button role="tab" id="vt-ref" aria-selected="true" type="button">추천 접수</button><button role="tab" id="vt-case" aria-selected="false" type="button">선정 심사 <span id="ccnt"></span></button></div>
@@ -125,14 +125,14 @@ a.sbtn{text-decoration:none;display:inline-block}
     <button class="sbtn" id="reload" type="button">새로고침</button>
     <button class="sbtn" id="csv" type="button">엑셀(CSV) 받기</button>
     <span class="chip2 info" id="edbadge" hidden></span>
-    <button class="sbtn" id="out" type="button">닫기</button>
+    <button class="sbtn" id="chpw" type="button" hidden>비밀번호 바꾸기</button><button class="sbtn" id="out" type="button">닫기</button>
   </div>
   <div class="tw"><table><thead><tr><th>번호</th><th>접수</th><th>대상자</th><th>거주동</th><th>가구원</th><th>소득</th><th>예상 유형</th><th>난방</th><th>통장</th><th>긴급</th><th>추천자</th><th>상태</th><th>가구코드</th></tr></thead><tbody id="tb"></tbody></table></div>
   <p class="hint" id="cnt" style="margin:8px 2px"></p>
   <section class="card panel" id="detail" hidden></section>
   </div>
 </div>
-<p class="foot">편집 비밀번호로 들어오면 가정방문 기록과 증빙 서류를 고칠 수 있고, 고친 사람 이름이 남아요. 내용은 외부에 공유하지 말아 주세요.</p>
+<p class="foot">들어오면 가정방문 기록과 증빙 서류를 고칠 수 있고, 고친 사람 이름이 남아요. 내용은 외부에 공유하지 말아 주세요.</p>
 </div>
 <script src="detail.js?v=12"></script>
 <script src="scan.js?v=7"></script><script src="cases.js?v=30"></script><script src="acct.js?v=1"></script><script src="sign.js?v=6"></script><script src="judge.js?v=2"></script><script src="annex.js?v=2"></script><script src="docreq.js?v=2"></script><script src="pay.js?v=3"></script><script src="faqs.js?v=1"></script>
@@ -151,18 +151,19 @@ async function load(p){const res=await fetchList(p);
   if(!res.ok){$("#lerr").textContent=res.reason==="locked"?"틀린 비밀번호가 많아 잠시 잠겼어요. 15분 뒤에 다시 해 주세요.":"비밀번호가 맞지 않아요.";$("#lerr").hidden=false;return false}
   PASS=p;rows=res.rows||[];CASES=res.cases||[];ccnt();renderCases();renderStats(res.stats);render();$("#login").hidden=true;$("#pstats").hidden=true;$("#app").hidden=false;return true}
 let ETOK="",EDNAME="";try{ETOK=sessionStorage.getItem("oc_etok")||"";EDNAME=sessionStorage.getItem("oc_ename")||""}catch(e){}
-$("#edmode").onchange=()=>{$("#enq").hidden=!$("#edmode").checked;$("#pw").placeholder=$("#edmode").checked?"편집 비밀번호":"열람 비밀번호"};
+/* 로그인 하나로 통합 (11/12): 비밀번호 하나로 편집까지 · 이름은 기기에 기억 */
+try{const n=localStorage.getItem("oc_edname");if(n)$("#en").value=n}catch(e){}
 async function rpcS(fn,b){const r=await fetch(SB+"/rest/v1/rpc/"+fn,{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify(b)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||("HTTP "+r.status));return j}
 async function loadEd(){const res=await rpcS("oncool_ed_data",{p_token:ETOK});rows=res.rows||[];CASES=res.cases||[];ccnt();renderStats(res.stats);render();renderCases();
-  $("#edbadge").hidden=false;$("#edbadge").textContent="편집 중 · "+EDNAME;$("#login").hidden=true;$("#pstats").hidden=true;$("#app").hidden=false}
+  $("#edbadge").hidden=false;$("#edbadge").textContent="편집 중 · "+EDNAME;$("#chpw").hidden=false;$("#login").hidden=true;$("#pstats").hidden=true;$("#app").hidden=false}
 async function edLogin(){const name=$("#en").value.trim();if(!name){$("#lerr").textContent="이름을 넣어 주세요.";$("#lerr").hidden=false;$("#en").focus();return}
   const res=await rpcS("oncool_ed_login",{p_pass:$("#pw").value,p_name:name});
-  if(!res.ok){$("#lerr").textContent=res.reason==="locked"?"틀린 비밀번호가 많아 잠시 잠겼어요. 15분 뒤에 다시 해 주세요.":"편집 비밀번호가 맞지 않아요.";$("#lerr").hidden=false;return}
-  ETOK=res.token;EDNAME=res.name;try{sessionStorage.setItem("oc_etok",ETOK);sessionStorage.setItem("oc_ename",EDNAME)}catch(e){}$("#pw").value="";await loadEd()}
+  if(!res.ok){$("#lerr").textContent=res.reason==="locked"?"틀린 비밀번호가 많아 잠시 잠겼어요. 15분 뒤에 다시 해 주세요.":"비밀번호가 맞지 않아요.";$("#lerr").hidden=false;return}
+  ETOK=res.token;EDNAME=res.name;try{sessionStorage.setItem("oc_etok",ETOK);sessionStorage.setItem("oc_ename",EDNAME);localStorage.setItem("oc_edname",EDNAME)}catch(e){}$("#pw").value="";await loadEd()}
 $("#lbtn").onclick=async()=>{if($("#edmode").checked){$("#lerr").hidden=true;$("#lbtn").disabled=true;try{await edLogin()}catch(e){$("#lerr").textContent="연결이 안 돼요. 잠시 뒤에 다시 해 주세요.";$("#lerr").hidden=false}finally{$("#lbtn").disabled=false}return}$("#lerr").hidden=true;$("#lbtn").disabled=true;try{const ok=await load($("#pw").value);if(ok)$("#pw").value=""}catch(e){$("#lerr").textContent="연결이 안 돼요. 잠시 뒤에 다시 해 주세요.";$("#lerr").hidden=false}finally{$("#lbtn").disabled=false}};
 $("#pw").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing)$("#lbtn").click()});
 $("#reload").onclick=()=>load(PASS).catch(()=>{});
-$("#out").onclick=()=>{ETOK="";EDNAME="";try{sessionStorage.removeItem("oc_etok");sessionStorage.removeItem("oc_ename")}catch(e){}$("#edbadge").hidden=true;$("#cedit").hidden=true;PASS="";rows=[];$("#tb").innerHTML="";$("#detail").hidden=true;$("#app").hidden=true;$("#login").hidden=false;$("#pstats").hidden=false;pub()};
+$("#out").onclick=()=>{$("#chpw").hidden=true;{const x=$("#pwbox");if(x)x.remove()}ETOK="";EDNAME="";try{sessionStorage.removeItem("oc_etok");sessionStorage.removeItem("oc_ename")}catch(e){}$("#edbadge").hidden=true;$("#cedit").hidden=true;PASS="";rows=[];$("#tb").innerHTML="";$("#detail").hidden=true;$("#app").hidden=true;$("#login").hidden=false;$("#pstats").hidden=false;pub()};
 function renderStats(s){if(!s)return;
   const it=[["추천",s.total],["1유형",s.type1],["2유형",s.type2],["3유형",s.type3],["유형 미확인",s.type_unknown,1],["4유형 후보",s.type4_candidates],["통장 없음·압류",s.no_account,1],["긴급 ‘상’",s.urgent,1],["선정",s.selected],["추천한 사람",s.workers]];
   $("#stats").innerHTML=it.map(([l,v,w])=>`<div class="st${w&&v?" w":""}"><b>${v??0}</b><span>${l}</span></div>`).join("");
@@ -173,6 +174,17 @@ function render(){const f=filtered();
   $("#tb").innerHTML=f.map(r=>`<tr data-id="${r.id}" class="${r.id===selId?"sel":""}${r.is_test?" tst":""}" tabindex="0"><td>${r.receipt_no}</td><td>${d(r.created_at)}</td><td><b>${esc(r.elder_name)}</b>${r.is_test?' <span class="tbadge">테스트</span>':""}</td><td>${esc(r.dong)}</td><td>${r.household_size?r.household_size+"명":""}</td><td>${esc(r.income)}</td><td>${tpill(r)}</td><td>${esc(r.heating)}</td><td class="${["없음","압류 우려"].includes(r.account)?"flag":""}">${esc(r.account)}</td><td class="${r.urgency==="상"?"flag":""}">${esc(r.urgency)}</td><td>${esc(who(r))}</td><td><span class="st s-${esc(r.status)}">${esc(r.status)}</span></td><td>${esc(r.household_code)}</td></tr>`).join("")||'<tr><td colspan="13" style="color:var(--mute)">아직 추천이 없어요.</td></tr>';
   {const nt=rows.filter(r=>r.is_test).length;$("#cnt").textContent=`${f.length}건 표시 · 실제 추천 ${rows.length-nt}건`+(nt?` (테스트 ${nt}건 제외)`:"")}
 }
+$("#chpw").onclick=()=>{if($("#pwbox")){$("#pwbox").remove();return}
+  $("#chpw").closest("div").insertAdjacentHTML("afterend",`<section class="card" id="pwbox" style="max-width:420px;margin-top:10px"><h2 style="font-size:16px">비밀번호 바꾸기</h2><p class="hint">바꾸면 열려 있던 모든 관리 화면이 로그아웃돼요.<br>새 비밀번호는 8자리 이상, 공개된 번호(대표번호·고유번호 등)는 피해 주세요.</p>
+   <div class="q"><input type="password" id="pw0" autocomplete="current-password" placeholder="지금 비밀번호"></div><div class="q"><input type="password" id="pw1" autocomplete="new-password" placeholder="새 비밀번호"></div><div class="q"><input type="password" id="pw2" autocomplete="new-password" placeholder="새 비밀번호 한 번 더"></div>
+   <p class="err" id="pwerr" hidden></p><div style="margin-top:10px;display:flex;gap:6px"><button class="btn" id="pwgo" type="button">바꾸기</button><button class="sbtn" id="pwno" type="button">취소</button></div></section>`);
+  $("#pwno").onclick=()=>$("#pwbox").remove();
+  $("#pwgo").onclick=async()=>{const er=t=>{$("#pwerr").textContent=t;$("#pwerr").hidden=false};const a=$("#pw1").value,b=$("#pw2").value;
+    if(a.length<8)return er("새 비밀번호는 8자리 이상으로 해 주세요.");if(a!==b)return er("새 비밀번호 두 칸이 서로 달라요.");
+    $("#pwgo").disabled=true;try{const r=await rpcS("oncool_ed_set_pass",{p_token:ETOK,p_old:$("#pw0").value,p_new:a});
+      if(!r.ok)return er(r.reason==="short"?"새 비밀번호는 8자리 이상으로 해 주세요.":"지금 비밀번호가 맞지 않아요.");
+      $("#out").click();$("#lerr").textContent="비밀번호를 바꿨어요. 새 비밀번호로 들어와 주세요.";$("#lerr").hidden=false}
+    catch(x){er(/session/.test(x.message)?"편집 시간이 끝났어요. 다시 들어와서 바꿔 주세요.":"바꾸지 못했어요. 잠시 뒤에 다시 해 주세요.")}finally{const g=$("#pwgo");if(g)g.disabled=false}}};
 ["fs","ft"].forEach(i=>$("#"+i).onchange=render);$("#fq").oninput=render;$("#reload").onclick=load;
 $("#tb").addEventListener("click",e=>{const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id)});
 $("#tb").addEventListener("keydown",e=>{if(e.key==="Enter"){const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id)}});
@@ -201,7 +213,7 @@ $("#cfs").onchange=renderCases;$("#ccsv").onclick=()=>CS.csv(realC(),rows);
 $("#clist").addEventListener("click",e=>{const tr=e.target.closest("tr[data-cid]");if(!tr)return;const c=CASES.find(x=>x.id===tr.dataset.cid);const r=rows.find(x=>x.id===c.referral_id)||{};
   if(ETOK){$("#cview").hidden=true;CSE.open(c,r);return}
   $("#cview").hidden=false;$("#cview").innerHTML=CS.viewHTML(c,r)+'<p class="hint" style="margin-top:10px">증빙 파일 원본은 담당자 관리 페이지에서만 열 수 있어요.</p><div class="acts"><button class="sbtn" type="button" id="cvclose">닫기</button></div>';$("#cvclose").onclick=()=>$("#cview").hidden=true;$("#cview").scrollIntoView({behavior:"smooth",block:"start"})});
-function alert2(x){const m=/session/.test(x.message)?"편집 시간이 끝났어요. 닫기 후 편집 비밀번호로 다시 들어와 주세요.":"처리하지 못했어요: "+x.message;$("#cnt").textContent=m}
+function alert2(x){const m=/session/.test(x.message)?"편집 시간이 끝났어요. 닫기 후 비밀번호로 다시 들어와 주세요.":"처리하지 못했어요: "+x.message;$("#cnt").textContent=m}
 /* 편집 백엔드: 비밀번호 세션 + 증빙 파일 함수 */
 const EFN=SB+"/functions/v1/oncool-evidence";
 async function efn(b){const r=await fetch(EFN,{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify(Object.assign({token:ETOK},b))});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||("HTTP "+r.status));return j}
