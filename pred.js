@@ -24,7 +24,7 @@ let P=null;
 function html(r){const br=s=>esc(s).replace(/\n/g,"<br>");
   return `<div class="pd-res"><div class="pd-k">입력하신 내용으로 보면</div><div class="pd-t">${r.t?`${r.t}유형 (${esc(r.name)})으로 예상됩니다.`:"유형은 가정방문 후에 정해집니다."}</div><p>${br(r.why)}<br>최종 유형은 복지관 사례판정위원회에서 정합니다.</p>${r.warn.map(w=>`<p class="pd-w">${br(w)}</p>`).join("")}</div>
   <div class="card pd-docs"><h3>가정방문 때 준비할 서류</h3><ol>${r.docs.map(([a,b])=>`<li>${esc(a)}${b?` <small>(${esc(b)})</small>`:""}</li>`).join("")}</ol></div>
-  <div class="card pd-next"><h3>다음 단계: 가정방문과 증빙서류 업로드</h3><p>추천은 가정방문을 하고 증빙서류를 올려야 접수가 완료됩니다.<br>방문하실 때 이 화면에서 바로 진행해 주십시오.</p></div>
+  <div class="card pd-next"><h3>다음 단계: 가정방문과 증빙서류 업로드</h3><p>추천은 가정방문을 하고 증빙서류를 올려야 접수가 완료됩니다.<br>방문하실 때 이 화면에서 바로 진행해 주세요.</p></div>
   <p class="err" id="pd_err" hidden></p>
   <button class="btn" type="button" id="pd_go">가정방문 시작하기</button>
   <button class="btn sec" type="button" id="pd_save">오늘은 저장만 하기</button>
@@ -35,13 +35,13 @@ function show(p){P=p;const el=document.getElementById("pred");el.innerHTML=html(
   document.getElementById("pd_go").onclick=()=>send(true);document.getElementById("pd_save").onclick=()=>send(false)}
 async function send(go){const err=document.getElementById("pd_err"),bs=[...document.querySelectorAll("#pd_go,#pd_save")];showErr(err,"");bs.forEach(b=>b.disabled=true);
   try{const r=await rpc("oncool_w_submit",{p_token:TOKEN,p:P});
-    if(!(r>0)){showErr(err,"지금은 접수가 많습니다. 잠시 후 다시 눌러 주십시오.");return}
+    if(!(r>0)){showErr(err,"지금은 접수가 많습니다. 잠시 후 다시 눌러 주세요.");return}
     P=null;document.getElementById("f").reset();
     if(go){MINE=await rpc("oncool_w_list",{p_token:TOKEN});const ref=(MINE||[]).find(x=>x.receipt_no===r);
       if(ref){const b=document.createElement("button");b.type="button";b.hidden=true;b.dataset.hr=ref.id;document.body.appendChild(b);b.click();b.remove();return}}
     document.getElementById("rno").textContent=r;
-    document.getElementById("dmsg").innerHTML="추천이 저장되었습니다.<br>가정방문을 하고 증빙서류를 올려야 접수가 완료됩니다.<br>‘내 추천 목록’에서 이어서 진행해 주십시오.";view("done")}
-  catch(x){showErr(err,/session/.test(x.message)?"다시 로그인이 필요합니다. 새 창에서 로그인한 뒤 다시 눌러 주십시오. 입력한 내용은 그대로 있습니다.":"보내지 못했습니다. 인터넷 연결을 확인하고 다시 눌러 주십시오. 입력한 내용은 그대로 있습니다.")}
+    document.getElementById("dmsg").innerHTML="추천이 저장되었습니다.<br>가정방문을 하고 증빙서류를 올려야 접수가 완료됩니다.<br>‘내 추천 목록’에서 이어서 진행해 주세요.";view("done")}
+  catch(x){showErr(err,/session/.test(x.message)?"다시 로그인이 필요합니다. 새 창에서 로그인한 뒤 다시 눌러 주세요. 입력한 내용은 그대로 있습니다.":"보내지 못했습니다. 인터넷 연결을 확인하고 다시 눌러 주세요. 입력한 내용은 그대로 있습니다.")}
   finally{bs.forEach(b=>b.disabled=false)}}
 {const st=document.createElement("style");st.textContent=`#pred{display:flex;flex-direction:column;gap:12px}
 .pd-res{background:linear-gradient(135deg,color-mix(in srgb,var(--warm) 10%,var(--surface)),var(--surface));border:1.5px solid var(--warm);border-radius:18px;padding:18px}
