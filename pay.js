@@ -16,14 +16,15 @@ function rows(){const M={};GR().forEach(x=>M[x.id]=x);
     .sort((a,b)=>(a[0].household_code||"~").localeCompare(b[0].household_code||"~")||(a[1].receipt_no-b[1].receipt_no))}
 function due(c){const a=CS.amounts(c);if(!a)return null;const x=a.list.find(([m])=>m===TABS[tab][2]);return x?x[1]:0}
 const rec=c=>PAYS.find(p=>p.case_id===c.id&&p.month===TABS[tab][0]&&p.season==="난방");
-async function load(){try{PAYS=await R("oncool_ed_payments",{p_token:T()})||[]}catch(x){msg="불러오지 못했습니다: "+x.message}}
+let ACS={};const ac=c=>ACS[c.id]||null,acM=c=>{const a=ac(c);return a&&a.no?`${esc(a.bank||"")} ${esc(window.ACCT?ACCT.mask(a.no):"")}${a.st==="읽기만 됨"?' <span class="pw">확인 필요</span>':""}`:'<span class="pn">없음</span>'};
+async function load(){try{PAYS=await R("oncool_ed_payments",{p_token:T()})||[];ACS=await R("oncool_ed_accts",{p_token:T()})||{}}catch(x){msg="불러오지 못했습니다: "+x.message}}
 function defaults(c){const t=typeNo(c);return {case_id:c.id,season:"난방",month:TABS[tab][0],amount:due(c),paid_on:TABS[tab][3],method:t==="4"?"기타":"대상자 명의 계좌이체",receipt:"미수취",energy:engOf(c.v_heating)||"",usage:"",note:`${TABS[tab][1]}분 난방비 지급`,kaswc:false}}
 function listHTML(L){const S={n:0,sum:0,paid:0,norc:0,nokw:0};
   const tr=L.map(([c,r])=>{const p=rec(c),a=due(c),t=typeNo(c);if(a){S.n++;S.sum+=a}if(p&&p.paid_on)S.paid++;if(p&&p.receipt!=="수취")S.norc++;if(p&&!p.kaswc_at)S.nokw++;
     return `<tr class="${sel===c.id?"on":""}" data-pc="${c.id}"><td>${esc(c.household_code||"")}</td><td><b>${esc(r.elder_name)}</b></td><td>${t?t+"유형":"유형 미정"} · ${esc(c.v_household_size||"?")}인</td><td>${a===null?'<span class="pw">유형·인원 필요</span>':a===0?'<span class="pm">대상 월 아님</span>':won(p&&p.amount!=null?p.amount:a)}</td>
-    <td>${p&&p.paid_on?esc(p.paid_on.slice(5).replace("-","/")):""}</td><td>${p?esc(p.method||""):""}</td><td>${p?(p.receipt==="수취"?'<span class="pk">수취</span>':'<span class="pn">미수취</span>'):""}</td><td>${p?esc(p.energy||""):""}</td><td>${p?esc(p.usage||""):""}</td><td>${p?(p.kaswc_at?'<span class="pk">입력 완료</span>':'<span class="pw">입력 전</span>'):""}</td></tr>`}).join("");
+    <td>${p&&p.paid_on?esc(p.paid_on.slice(5).replace("-","/")):""}</td><td>${p?esc(p.method||""):""}</td><td>${t==="4"?'<span class="pm">필요 없음</span>':acM(c)}</td><td>${p?(p.receipt==="수취"?'<span class="pk">수취</span>':'<span class="pn">미수취</span>'):""}</td><td>${p?esc(p.energy||""):""}</td><td>${p?esc(p.usage||""):""}</td><td>${p?(p.kaswc_at?'<span class="pk">입력 완료</span>':'<span class="pw">입력 전</span>'):""}</td></tr>`}).join("");
   return `<div class="py-sum"><div>대상 가구<b>${L.length}</b></div><div>이번 달 지급 예정<b>${won(S.sum)}</b></div><div>지급 기록<b class="pk">${S.paid}</b></div><div>수령증 미수취<b class="pn">${S.norc}</b></div><div>협회 입력 전<b class="pw">${S.nokw}</b></div></div>
-  ${L.length?`<div class="py-tw"><table class="py-t"><tr><th>가구코드</th><th>대상자</th><th>유형·인원</th><th>이번 달 금액</th><th>지급일</th><th>지급 방식</th><th>수령증</th><th>주 사용처</th><th>사용량</th><th>협회 입력</th></tr>${tr}</table></div>`:`<p class="py-e">${all?"표시할 가구가 없습니다.":"아직 ‘선정’ 단계인 가구가 없습니다. 사례판정 후 단계를 ‘선정’으로 바꾸면 여기에 나타납니다."}</p>`}`}
+  ${L.length?`<div class="py-tw"><table class="py-t"><tr><th>가구코드</th><th>대상자</th><th>유형·인원</th><th>이번 달 금액</th><th>지급일</th><th>지급 방식</th><th>계좌</th><th>수령증</th><th>주 사용처</th><th>사용량</th><th>협회 입력</th></tr>${tr}</table></div>`:`<p class="py-e">${all?"표시할 가구가 없습니다.":"아직 ‘선정’ 단계인 가구가 없습니다. 사례판정 후 단계를 ‘선정’으로 바꾸면 여기에 나타납니다."}</p>`}`}
 function formHTML(c,r){const p=Object.assign(defaults(c),rec(c)||{});const rad=(n,L,v)=>L.map(x=>`<label><input type="radio" name="py_${n}" value="${esc(x)}"${x===v?" checked":""}> ${esc(x)}</label>`).join("");
   return `<div class="card py-f"><div class="py-fh"><b>${esc(c.household_code||"")} ${esc(r.elder_name)} · ${TABS[tab][1]} 기록</b><button type="button" class="sbtn" data-pclose>닫기</button></div>
   <div class="py-g"><span>지원 구분</span><div>난방</div>
@@ -48,9 +49,9 @@ function paint(){const v=$("#vw-pay");if(!v)return;const L=rows(),cur=L.find(([c
    <div class="py-a"><button type="button" class="sbtn" data-pbulk>이번 달 지급 기록 일괄 만들기</button><button type="button" class="sbtn" data-pcsv>지급 명단 엑셀 받기</button><button type="button" class="sbtn" data-prcall>수령증 일괄 출력</button><span class="msg">${cur?"":esc(msg)}</span></div>
    <p class="hint">금액은 유형·가구원 수·지원 시작 월로 자동 계산합니다(천 원 단위 올림, 마지막 달 잔액).<br>가구를 누르면 협회 실적 입력과 같은 순서의 기록 칸이 열립니다.</p>
    ${cur?formHTML(cur[0],cur[1]):""}`}
-function csv(L){const h=["가구코드","성명","생년월일","유형","가구원수","지원 대상 월","지원 금액","지급 일자","지급 방식","수령증","주 사용처","에너지 사용량"];
+function csv(L){const h=["가구코드","성명","생년월일","유형","가구원수","지원 대상 월","지원 금액","지급 일자","지급 방식","은행","계좌번호","예금주","계좌 확인","수령증","주 사용처","에너지 사용량"];
   const q=s=>`"${String(s??"").replace(/"/g,'""')}"`;
-  const body=L.filter(([c])=>due(c)).map(([c,r])=>{const p=rec(c)||{};return [c.household_code,r.elder_name,c.v_birth||b8(r.birth),typeNo(c)?typeNo(c)+"유형":"",c.v_household_size,TABS[tab][0],p.amount??due(c),p.paid_on||TABS[tab][3],p.method||"",p.receipt||"",p.energy||"",p.usage||""].map(q).join(",")});
+  const body=L.filter(([c])=>due(c)).map(([c,r])=>{const p=rec(c)||{};return [c.household_code,r.elder_name,c.v_birth||b8(r.birth),typeNo(c)?typeNo(c)+"유형":"",c.v_household_size,TABS[tab][0],p.amount??due(c),p.paid_on||TABS[tab][3],p.method||"",(ac(c)||{}).bank||"",(ac(c)||{}).no?`="${ac(c).no}"`:"",(ac(c)||{}).holder||"",(ac(c)||{}).st||"",p.receipt||"",p.energy||"",p.usage||""].map(q).join(",")});
   const blob=new Blob(["﻿"+[h.map(q).join(",")].concat(body).join("\r\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`온앤쿨_지급명단_${TABS[tab][0]}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 /* 수령증: 협회 별첨 1 원본(별첨문서_261106.hwp) 문구·순서·표 그대로, 빈칸만 채움 */
 const RCSS=`@font-face{font-family:"AnxB";src:local("휴먼명조"),local("HumanMyeongjo"),local("함초롬바탕"),local("HCR Batang"),local("HCRBatang"),local("바탕"),local("Batang")}
