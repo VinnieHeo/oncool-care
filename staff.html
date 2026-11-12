@@ -47,6 +47,7 @@ body.embed #login .q input{padding:7px 10px;font-size:14px}
 body.embed #login>div[style]{margin:0!important}
 body.embed #login .btn{width:auto;padding:8px 18px;font-size:14px}
 body.embed #login .err{width:100%}
+tr.tst td{color:var(--mute);background:color-mix(in srgb,var(--mute) 8%,transparent)}tr.tst td b{color:var(--mute)}.tbadge{display:inline-block;font-size:11px;font-weight:700;padding:1px 6px;border-radius:99px;border:1px solid var(--mute);color:var(--mute);vertical-align:1px}
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="theme.css?v=1"><link rel="stylesheet" href="card.css?v=8"><meta name="color-scheme" content="light">
@@ -134,7 +135,7 @@ a.sbtn{text-decoration:none;display:inline-block}
 <p class="foot">편집 비밀번호로 들어오면 가정방문 기록과 증빙 서류를 고칠 수 있고, 고친 사람 이름이 남아요. 내용은 외부에 공유하지 말아 주세요.</p>
 </div>
 <script src="detail.js?v=12"></script>
-<script src="scan.js?v=6"></script><script src="cases.js?v=29"></script><script src="acct.js?v=1"></script><script src="sign.js?v=6"></script><script src="judge.js?v=2"></script><script src="annex.js?v=2"></script><script src="docreq.js?v=2"></script><script src="pay.js?v=2"></script><script src="faqs.js?v=1"></script>
+<script src="scan.js?v=6"></script><script src="cases.js?v=29"></script><script src="acct.js?v=1"></script><script src="sign.js?v=6"></script><script src="judge.js?v=2"></script><script src="annex.js?v=2"></script><script src="docreq.js?v=2"></script><script src="pay.js?v=3"></script><script src="faqs.js?v=1"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const $=s=>document.querySelector(s);
@@ -148,11 +149,11 @@ const d=s=>{const x=new Date(s);return `${x.getMonth()+1}/${x.getDate()} ${Strin
 async function fetchList(p){const r=await fetch(SB+"/rest/v1/rpc/oncool_staff_list",{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify({p_pass:p})});if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}
 async function load(p){const res=await fetchList(p);
   if(!res.ok){$("#lerr").textContent=res.reason==="locked"?"틀린 비밀번호가 많아 잠시 잠겼어요. 15분 뒤에 다시 해 주세요.":"비밀번호가 맞지 않아요.";$("#lerr").hidden=false;return false}
-  PASS=p;rows=res.rows||[];CASES=res.cases||[];$("#ccnt").textContent=CASES.length?`(${CASES.length})`:"";renderCases();renderStats(res.stats);render();$("#login").hidden=true;$("#pstats").hidden=true;$("#app").hidden=false;return true}
+  PASS=p;rows=res.rows||[];CASES=res.cases||[];ccnt();renderCases();renderStats(res.stats);render();$("#login").hidden=true;$("#pstats").hidden=true;$("#app").hidden=false;return true}
 let ETOK="",EDNAME="";try{ETOK=sessionStorage.getItem("oc_etok")||"";EDNAME=sessionStorage.getItem("oc_ename")||""}catch(e){}
 $("#edmode").onchange=()=>{$("#enq").hidden=!$("#edmode").checked;$("#pw").placeholder=$("#edmode").checked?"편집 비밀번호":"열람 비밀번호"};
 async function rpcS(fn,b){const r=await fetch(SB+"/rest/v1/rpc/"+fn,{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify(b)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||("HTTP "+r.status));return j}
-async function loadEd(){const res=await rpcS("oncool_ed_data",{p_token:ETOK});rows=res.rows||[];CASES=res.cases||[];$("#ccnt").textContent=CASES.length?`(${CASES.length})`:"";renderStats(res.stats);render();renderCases();
+async function loadEd(){const res=await rpcS("oncool_ed_data",{p_token:ETOK});rows=res.rows||[];CASES=res.cases||[];ccnt();renderStats(res.stats);render();renderCases();
   $("#edbadge").hidden=false;$("#edbadge").textContent="편집 중 · "+EDNAME;$("#login").hidden=true;$("#pstats").hidden=true;$("#app").hidden=false}
 async function edLogin(){const name=$("#en").value.trim();if(!name){$("#lerr").textContent="이름을 넣어 주세요.";$("#lerr").hidden=false;$("#en").focus();return}
   const res=await rpcS("oncool_ed_login",{p_pass:$("#pw").value,p_name:name});
@@ -169,8 +170,8 @@ function renderStats(s){if(!s)return;
 function filtered(){const s=$("#fs").value,t=$("#ft").value,q=$("#fq").value.trim();
   return rows.filter(r=>(!s||r.status===s)&&(!t||(t==="4"?is4(r):typeOf(r)===t))&&(!q||[r.elder_name,r.worker_name,r.dong].some(x=>(x||"").includes(q))))}
 function render(){const f=filtered();
-  $("#tb").innerHTML=f.map(r=>`<tr data-id="${r.id}" class="${r.id===selId?"sel":""}" tabindex="0"><td>${r.receipt_no}</td><td>${d(r.created_at)}</td><td><b>${esc(r.elder_name)}</b></td><td>${esc(r.dong)}</td><td>${r.household_size?r.household_size+"명":""}</td><td>${esc(r.income)}</td><td>${tpill(r)}</td><td>${esc(r.heating)}</td><td class="${["없음","압류 우려"].includes(r.account)?"flag":""}">${esc(r.account)}</td><td class="${r.urgency==="상"?"flag":""}">${esc(r.urgency)}</td><td>${esc(who(r))}</td><td><span class="st s-${esc(r.status)}">${esc(r.status)}</span></td><td>${esc(r.household_code)}</td></tr>`).join("")||'<tr><td colspan="13" style="color:var(--mute)">아직 추천이 없어요.</td></tr>';
-  $("#cnt").textContent=`${f.length}건 표시 · 전체 ${rows.length}건`;
+  $("#tb").innerHTML=f.map(r=>`<tr data-id="${r.id}" class="${r.id===selId?"sel":""}${r.is_test?" tst":""}" tabindex="0"><td>${r.receipt_no}</td><td>${d(r.created_at)}</td><td><b>${esc(r.elder_name)}</b>${r.is_test?' <span class="tbadge">테스트</span>':""}</td><td>${esc(r.dong)}</td><td>${r.household_size?r.household_size+"명":""}</td><td>${esc(r.income)}</td><td>${tpill(r)}</td><td>${esc(r.heating)}</td><td class="${["없음","압류 우려"].includes(r.account)?"flag":""}">${esc(r.account)}</td><td class="${r.urgency==="상"?"flag":""}">${esc(r.urgency)}</td><td>${esc(who(r))}</td><td><span class="st s-${esc(r.status)}">${esc(r.status)}</span></td><td>${esc(r.household_code)}</td></tr>`).join("")||'<tr><td colspan="13" style="color:var(--mute)">아직 추천이 없어요.</td></tr>';
+  {const nt=rows.filter(r=>r.is_test).length;$("#cnt").textContent=`${f.length}건 표시 · 실제 추천 ${rows.length-nt}건`+(nt?` (테스트 ${nt}건 제외)`:"")}
 }
 ["fs","ft"].forEach(i=>$("#"+i).onchange=render);$("#fq").oninput=render;$("#reload").onclick=load;
 $("#tb").addEventListener("click",e=>{const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id)});
@@ -179,7 +180,7 @@ const F=[["접수 번호","receipt_no"],["접수 일시","created_at",d],["추�
 function openD(id){selId=id;render();const r=rows.find(x=>x.id===id);if(!r)return;
   $("#detail").hidden=false;
   $("#detail").innerHTML=DV.html(r,{staff:true})+`<div class="acts">${ETOK?`<button class="sbtn pri" id="e_case" type="button">${CASES.find(c=>c.referral_id===r.id)?"선정 심사 카드 열기":"가정방문 기록 시작"}</button>`:""}<button class="sbtn" id="e_close" type="button">닫기</button></div>`;
-  if($("#e_case"))$("#e_case").onclick=async()=>{try{const c=await rpcS("oncool_ed_case_start",{p_token:ETOK,p_referral:r.id});const i=CASES.findIndex(x=>x.id===c.id);if(i<0)CASES.push(c);else CASES[i]=c;if(r.status==="접수")r.status="검토중";render();$("#ccnt").textContent=`(${CASES.length})`;vtab("case");renderCases();$("#cview").hidden=true;CSE.open(c,r)}catch(x){alert2(x)}};
+  if($("#e_case"))$("#e_case").onclick=async()=>{try{const c=await rpcS("oncool_ed_case_start",{p_token:ETOK,p_referral:r.id});const i=CASES.findIndex(x=>x.id===c.id);if(i<0)CASES.push(c);else CASES[i]=c;if(r.status==="접수")r.status="검토중";render();ccnt();vtab("case");renderCases();$("#cview").hidden=true;CSE.open(c,r)}catch(x){alert2(x)}};
   $("#e_close").onclick=()=>{selId=null;$("#detail").hidden=true;render()};
   $("#detail").scrollIntoView({behavior:"smooth",block:"start"});
 }
@@ -192,8 +193,11 @@ $("#reload").onclick=()=>(ETOK?loadEd():load(PASS)).catch(()=>{});
 let CASES=[];
 function vtab(w){$("#vt-ref").setAttribute("aria-selected",w==="ref");$("#vt-case").setAttribute("aria-selected",w==="case");$("#vw-ref").hidden=w!=="ref";$("#vw-case").hidden=w!=="case"}
 $("#vt-ref").onclick=()=>vtab("ref");$("#vt-case").onclick=()=>{vtab("case");renderCases()};
-function renderCases(){const f=$("#cfs").value;$("#cgoal").innerHTML=CS.goal(CASES);$("#clist").innerHTML=CS.listHTML(CASES.filter(c=>!f||c.stage===f),rows)}
-$("#cfs").onchange=renderCases;$("#ccsv").onclick=()=>CS.csv(CASES,rows);
+const isT=c=>{const r=rows.find(x=>x.id===c.referral_id);return !!(r&&r.is_test)},realC=()=>CASES.filter(c=>!isT(c));
+function ccnt(){const n=realC().length;$("#ccnt").textContent=n?`(${n})`:""}
+function renderCases(){const f=$("#cfs").value;$("#cgoal").innerHTML=CS.goal(realC());$("#clist").innerHTML=CS.listHTML(CASES.filter(c=>!f||c.stage===f),rows);
+  CASES.filter(isT).forEach(c=>{const tr=$("#clist").querySelector(`tr[data-cid="${c.id}"]`);if(tr){tr.classList.add("tst");const b=tr.cells[1];if(b)b.insertAdjacentHTML("beforeend",' <span class="tbadge">테스트</span>')}})}
+$("#cfs").onchange=renderCases;$("#ccsv").onclick=()=>CS.csv(realC(),rows);
 $("#clist").addEventListener("click",e=>{const tr=e.target.closest("tr[data-cid]");if(!tr)return;const c=CASES.find(x=>x.id===tr.dataset.cid);const r=rows.find(x=>x.id===c.referral_id)||{};
   if(ETOK){$("#cview").hidden=true;CSE.open(c,r);return}
   $("#cview").hidden=false;$("#cview").innerHTML=CS.viewHTML(c,r)+'<p class="hint" style="margin-top:10px">증빙 파일 원본은 담당자 관리 페이지에서만 열 수 있어요.</p><div class="acts"><button class="sbtn" type="button" id="cvclose">닫기</button></div>';$("#cvclose").onclick=()=>$("#cview").hidden=true;$("#cview").scrollIntoView({behavior:"smooth",block:"start"})});
@@ -208,7 +212,7 @@ CSE.init({
   async open(cid,path){return (await efn({action:"sign",case_id:cid,path})).url},
   async remove(cid,path){await efn({action:"remove",case_id:cid,path})},
   async revert(cid){try{await efn({action:"purge",case_id:cid})}catch(e){}await rpcS("oncool_ed_case_revert",{p_token:ETOK,p_case:cid})}
-},{reverted(c){CASES=CASES.filter(x=>x.id!==c.id);const r=rows.find(x=>x.id===c.referral_id);if(r){r.status="접수";r.household_code=null}$("#ccnt").textContent=CASES.length?`(${CASES.length})`:"";renderCases();render();vtab("ref");if(r)openD(r.id)},saved(c){const r=rows.find(x=>x.id===c.referral_id);if(r){r.status={"선정":"선정","탈락":"제외","보류":"보류"}[c.stage]||"검토중";r.household_code=c.household_code}renderCases();render()}});
+},{reverted(c){CASES=CASES.filter(x=>x.id!==c.id);const r=rows.find(x=>x.id===c.referral_id);if(r){r.status="접수";r.household_code=null}ccnt();renderCases();render();vtab("ref");if(r)openD(r.id)},saved(c){const r=rows.find(x=>x.id===c.referral_id);if(r){r.status={"선정":"선정","탈락":"제외","보류":"보류"}[c.stage]||"검토중";r.household_code=c.household_code}renderCases();render()}});
 /* 방문 방식 · 알림함 · 휴대폰 알림 · 추천자 문자 (2026-11-11) */
 const PFN=SB+"/functions/v1/oncool-push";
 let NOTIS=[],DUE="",PUSHN=0;
