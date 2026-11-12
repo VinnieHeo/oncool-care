@@ -183,7 +183,7 @@ function enhance(img,mode){if(mode==="raw")return img;const W=img.width,H=img.he
   return o}
 
 /* ---- 화면 ---- */
-function open(opt){ensureCss();close();st={opt,src:null,q:null,mode:"bw",warped:null,size:null,pages:[],queue:[],drag:-1,ptr:null,sc:1};
+function open(opt){ensureCss();close();st={opt,src:null,q:null,mode:"raw",warped:null,size:null,pages:[],queue:[],drag:-1,ptr:null,sc:1};
   const root=el(`<div class="scn" role="dialog" aria-modal="true" aria-label="서류 스캔"><div class="scn-p">
    <div class="scn-h"><b>${esc(opt.title||"서류")} 스캔</b><button type="button" data-a="close">닫기</button></div>
    <div class="scn-b">
@@ -193,7 +193,7 @@ function open(opt){ensureCss();close();st={opt,src:null,q:null,mode:"bw",warped:
       <div class="scn-row" style="margin-top:10px"><button type="button" class="sb" data-a="auto">자동 인식</button><button type="button" class="sb" data-a="full">사진 전체</button><button type="button" class="sb" data-a="rot">90° 회전</button></div>
       <div class="scn-row" style="margin-top:10px"><button type="button" class="sb pri grow" data-a="warp">다음</button></div></div>
     <div data-v="result" hidden>
-      <div class="scn-ch" role="group" aria-label="보정 방식"><button type="button" data-m="bw" aria-pressed="true">흑백 문서</button><button type="button" data-m="color" aria-pressed="false">컬러 문서</button><button type="button" data-m="raw" aria-pressed="false">보정 없이</button></div>
+      <div class="scn-ch" role="group" aria-label="보정 방식"><button type="button" data-m="raw" aria-pressed="true">원본</button><button type="button" data-m="bw" aria-pressed="false">흑백</button><button type="button" data-m="color" aria-pressed="false">컬러</button></div>
       <div class="scn-pp" style="margin-top:10px"><img alt="보정한 서류 미리보기"></div><p class="scn-m" data-meta></p>
       <div class="scn-row"><button type="button" class="sb" data-a="back">모서리 조정</button><button type="button" class="sb pri grow" data-a="keep">업로드</button></div></div>
    </div>
