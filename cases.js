@@ -13,7 +13,7 @@ window.CS=(function(){
     {k:"pledge",l:"용도 약정서",dated:0,req:1,h:"냉·난방비를 용도대로 쓰겠다는 약정"},
     {k:"lease",l:"임대인 사용 보장 협약서",dated:0,req:0,h:"임대인·타인 소유 냉·난방기구를 수리할 때만 필수 (공고문 3쪽)"},
     {k:"etc",l:"기타 서류·현장 사진",dated:0,req:0,h:"집 사진, 4유형 근거(도시가스 미공급 등) · 기관 기기로 촬영, 개인 메신저 전송 금지"}];
-  const STAGES=["조사중","서류완비","위원회상정","선정","보류","탈락"];
+  const STAGES=["조사중","업로드완료","보완중","서류완비","위원회상정","선정","보류","탈락"];
   const W={"1":[330000,470000,620000,800000],"2":[165000,235000,310000,400000],"3":[330000,470000,620000,800000],"4":[412500,587500,775000,1000000]};
   const MONTHS={11:["11/23","12/10","1/10","2/10"],12:["12/10","1/10","2/10"],1:["1/10","2/10"],2:["2/10"]};
   /* 유형 기준: 공고문(2차) 2쪽 · 신청 질의응답 2쪽
@@ -105,6 +105,8 @@ const opt2=(arr,v)=>arr.map(([x,l])=>`<option value="${x}"${x===v?" selected":""
 const b8=b=>{if(!/^\d{6}$/.test(b||""))return"";let y=+b.slice(0,2);y+=y>new Date().getFullYear()%100?1900:2000;return `${y}-${b.slice(2,4)}-${b.slice(4,6)}`};
 /* 효율개선: 협회 실적 입력 분야를 앞에, 이어서 복지관 항목 (한 묶음) · 기타는 내용 입력 */
 const EFF=["단열·창호 (뽁뽁이·문풍지)","고효율 LED 조명 교체","친환경 보일러 점검","서큘레이터·선풍기 보급"],EFF2=["열화상 진단","방한 물품","난방기구 수리","외부 집수리 연계","기타"];
+/* 단계 색: 업로드완료(확인할 차례) · 보완중(반려) (11/12) */
+{const st=document.createElement("style");st.textContent=".stg-업로드완료{background:var(--cool-soft);color:var(--cool);font-weight:800}.stg-보완중{background:var(--warm-soft);color:var(--warm);font-weight:800}";document.head.appendChild(st)}
 /* 추천서 답변은 참고로만 보여 주고 자동 체크는 하지 않음 (11/12) */
 const effHint=r=>{const L=[];if(r&&r.heater_broken==="예")L.push("난방기구 고장");((r&&r.housing_risk)||[]).forEach(x=>L.push(x));return L.length?`<p class="eff-hint" style="margin:0 0 8px;font-size:13px;color:var(--mute);line-height:1.55">추천서에 적힌 내용: ${CS.esc(L.join(", "))}<br>현장에서 확인하고 필요한 항목을 골라 주세요.</p>`:""};
 const effHas=(L,x)=>(L||[]).includes(x)||(x===EFF[0]&&(L||[]).includes("방풍·단열 물품"));
@@ -191,7 +193,7 @@ function formCase(){const c=curCase,g=id=>$("#c_"+id),docs={};
 function refreshCalc(){if(!curCase)return;const t=Object.assign({},curCase,formCase());{const vb=$("#c_vcall");if(vb)vb.hidden=!(t.vcall&&t.vcall.ok)&&!VC_ON(t.v_voucher||curRef.voucher)}const a=CS.amounts(t),ds=CS.docState(t);
   $("#c_prop").textContent=CS.proposed(t)||"정보 부족";if(!B.worker)kaswc(t);
   $("#c_amt").innerHTML=a?`<div class="amt-box">${a.list.map(([m,v])=>`<div>${m}<b>${CS.fmt(v)}</b></div>`).join("")}<div class="tot">동절기 합계<b>${CS.fmt(a.tot)}</b></div></div>`:'<p class="dv-empty">유형과 가구원 수를 넣으면 계산됩니다</p>';
-  $("#c_chips").innerHTML=`<span class="stg stg-${CS.esc(t.stage)}">${CS.esc(t.stage)}</span><span class="chip2 ${ds.full?"ok":"amber"}">서류 ${ds.ok}/${ds.need}</span>${ds.stale.length?`<span class="chip2 warn">신청일 기준 3개월 넘음: ${CS.esc(ds.stale.join(", "))}</span>`:""}${ds.full&&t.stage==="조사중"?'<span class="chip2 info">서류가 다 모였습니다 → 단계를 ‘서류완비’로</span>':""}`}
+  $("#c_chips").innerHTML=`<span class="stg stg-${CS.esc(t.stage)}">${CS.esc(t.stage)}</span><span class="chip2 ${ds.full?"ok":"amber"}">서류 ${ds.ok}/${ds.need}</span>${ds.stale.length?`<span class="chip2 warn">신청일 기준 3개월 넘음: ${CS.esc(ds.stale.join(", "))}</span>`:""}${ds.full&&["조사중","업로드완료"].includes(t.stage)?'<span class="chip2 info">서류가 다 모였습니다 → 단계를 ‘서류완비’로</span>':""}`}
 async function saveCase(){const up=formCase();$("#c_save").disabled=true;
   try{const nc=await B.save(curCase.id,up);Object.assign(curCase,nc||up);$("#c_msg").textContent="저장되었습니다";H.saved(curCase)}
   catch(x){$("#c_msg").textContent=/session/.test(x.message)?"편집 시간이 끝났습니다. 다시 편집 비밀번호를 넣어 주세요":"저장하지 못했습니다: "+x.message}
