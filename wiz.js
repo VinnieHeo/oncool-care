@@ -35,7 +35,7 @@ function cnt(ks){const ds=[...document.querySelectorAll(".wz-pane .doc")].filter
 /* 서류 한 줄로 접기 */
 function fold(d){if(d.querySelector(".dhd"))return;const k=d.dataset.doc,b=d.querySelector(".doc-top b");
   const nm=b?b.childNodes[0].textContent.trim():k,tag=b&&b.querySelector("span");const tg=tag?tag.textContent.trim():"";
-  const req=tg==="필수"||WREQ.includes(k);
+  const req=tg==="필수"||WREQ.includes(k)||(k==="voucher"&&["받았는데 다 씀","받는 중"].includes((window.__wref||{}).voucher));
   const hd=document.createElement("button");hd.type="button";hd.className="dhd";
   hd.innerHTML=`<span class="dic"></span><span class="dnm">${CS.esc(nm.replace(/\s*\(.*\)\s*$/,""))}<small>${CS.esc((nm.match(/\((.*)\)/)||[,""])[1])}</small></span>${req?'<span class="dtg req">필수</span>':'<span class="dtg">해당하면</span>'}<span class="dst"></span><span class="dch" aria-hidden="true"></span>`;
   const bd=document.createElement("div");bd.className="dbd";bd.hidden=true;while(d.firstChild)bd.appendChild(d.firstChild);
@@ -71,7 +71,7 @@ function go(i){cur=Math.max(0,Math.min(5,i));document.querySelectorAll(".wz-pane
   refresh();const top=$(".wz");if(top)top.scrollIntoView({block:"start"});
   const dot=document.querySelectorAll(".wz-dot")[cur];if(dot)dot.scrollIntoView({inline:"center",block:"nearest"})}
 
-function build(c,r){const form=$("#cedit .cs-form");if(!form||document.getElementById("c_pdf"))return;/* 추천자 화면만 */
+function build(c,r){window.__wref=r;const form=$("#cedit .cs-form");if(!form||document.getElementById("c_pdf"))return;/* 추천자 화면만 */
   const rb=/^\d{6}$/.test((r&&r.birth)||"")?r.birth:"",rb8=rb?((+rb.slice(0,2)>new Date().getFullYear()%100?"19":"20")+rb.slice(0,2)+"-"+rb.slice(2,4)+"-"+rb.slice(4)):"";
   P={name:r&&r.elder_name,birth:c.v_birth||rb8,bb:rb||(c.v_birth||"").replace(/-/g,"").slice(2),addr:(r&&r.address||"").replace(" | ",", "),phone:r&&r.phone||"",size:c.v_household_size||"",visitor:c.visitor||(r&&r.worker_name)||""};
   SIGS=Object.assign({},c.signs||{});CID=c.id;CC=c;
