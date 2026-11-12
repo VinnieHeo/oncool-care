@@ -44,7 +44,7 @@ function summary(c,r){const t=CS.typeOf(c),a=CS.amounts(c),d=c.docs||{},sg=c.sig
   <tr><th>냉방 설비</th><td>${esc(c.cool_equip||"")}</td><th>설비 소유</th><td>${esc(c.equip_owner||"")}</td></tr>
   <tr><th>한랭·온열 취약</th><td>${esc(c.heat_risk||"")}</td><th>안부 보호자</th><td>${esc(noPhone(c.guardian))}</td></tr></table>
   <h2>4. 선정 기준 확인</h2><div class="g2"><table><tr><th>소득</th><td>${esc(inc)}${v(r.recipient_kinds)?" ("+esc(v(r.recipient_kinds))+")":""}${c.hi_premium?"<br><small>건보료 "+esc(c.hi_premium)+"</small>":""}</td></tr>
-  <tr><th>바우처</th><td>${esc(vou)}${c.v_voucher_target?" · 대상 세대원 "+esc(c.v_voucher_target):""}${c.v_env&&c.v_env!=="해당 없음"?"<br><small>"+esc(c.v_env)+"</small>":""}</td></tr>
+  <tr><th>바우처</th><td>${esc(vou)}${r.voucher_reason?"<br><small>미신청 사유: "+esc(r.voucher_reason)+"</small>":""}${c.v_voucher_target?" · 대상 세대원 "+esc(c.v_voucher_target):""}${c.v_env&&c.v_env!=="해당 없음"?"<br><small>"+esc(c.v_env)+"</small>":""}</td></tr>
   <tr><th>제안 유형</th><td><b>${t?t+"유형":"판단 필요"}</b>${p?"<br><small>"+esc(p)+"</small>":""}</td></tr></table>
   ${a?`<table class="amt"><tr>${a.list.map(([m])=>`<th>${esc(m)}</th>`).join("")}<th>합계</th></tr><tr>${a.list.map(([,x])=>`<td>${CS.fmt(x)}</td>`).join("")}<td><b>${CS.fmt(a.tot)}</b></td></tr><tr><td colspan="${a.list.length+1}" style="text-align:left!important;font-size:8.5pt">${t}유형 · ${esc(c.v_household_size)}인 · ${esc(c.start_month||11)}월 시작 (단위: 원)</td></tr></table>`:`<div class="txt">유형과 가구원 수가 정해지면 지원 금액이 나와요</div>`}</div>
   <table style="margin-top:4px"><tr><th>효율 개선 필요</th><td>${esc(v(c.eff_needs))}${c.eff_note?" · "+esc(c.eff_note):""}</td></tr></table>
