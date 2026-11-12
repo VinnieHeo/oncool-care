@@ -45,7 +45,7 @@ function mount(c,r){CUR=c;REF=r||{};const d=document.querySelector('#cedit [data
   /* 직원 화면: 계좌는 목록에서 빠져 있으므로 따로 불러옴 */
   if(!W&&RPC&&!c.acct)RPC("oncool_ed_accts",{p_token:TOK()}).then(m=>{const a=m&&m[cid];if(!a||!CUR||CUR.id!==cid||!$("ac_bank"))return;CUR.acct=a;if(!val()){setVals(a);ST=a.st||"";BASE=cur();paintSt();warn()}}).catch(()=>{});
   box.addEventListener("input",()=>{ST=W?"현장 확인":"직원 수정";paintSt();warn()});
-  const read=async()=>{const b=$("ac_read");b.disabled=true;msg.textContent="사진을 읽는 중입니다. 처음에는 10초쯤 걸립니다.";
+  const read=async()=>{const b=$("ac_read");b.disabled=true;msg.textContent=window.Tesseract?"계좌번호 읽는 중… 조금 걸릴 수 있어요. 다음 서류를 계속 올려 주세요.":"처음 한 번만 준비 중이에요. 와이파이에서 더 빨라요. 다음 서류를 계속 올려 주세요.";
     try{const a=await readPhoto(cid);if(!CUR||CUR.id!==cid)return;setVals(a);ST="읽기만 됨";BASE=cur();paintSt();warn();
       msg.textContent=a.no?"읽었습니다. 통장과 같은지 확인한 뒤 ‘맞습니다’를 눌러 주세요.":"계좌번호를 찾지 못했습니다. 직접 입력해 주세요.";
       const s=$("c_msg");if(s)s.textContent="저장되지 않음"}
