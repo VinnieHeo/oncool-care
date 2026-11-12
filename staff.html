@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="oc-ver" content="2026-11-12c"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<html lang="ko"><head><meta charset="utf-8"><meta name="oc-ver" content="2026-11-12d"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <script>(function(){var ua=navigator.userAgent||"";if(!/KAKAOTALK/i.test(ua))return;try{location.href="kakaotalk://web/openExternal?url="+encodeURIComponent(location.href)}catch(e){}document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.style.cssText="background:#fff4d6;color:#7a5200;font-size:14px;line-height:1.5;padding:10px 14px;text-align:center;border-bottom:1px solid #e8c770";d.innerHTML="카카오톡 안에서는 홈 화면 추가와 알림 켜기가 안 돼요.<br>오른쪽 위 <b>⋮</b> 또는 아래 <b>⋯</b> → <b>다른 브라우저로 열기</b>를 눌러 주세요.";document.body.insertBefore(d,document.body.firstChild)})})();</script>
 <meta name="robots" content="noindex,nofollow">
 <title>온앤쿨케어 추천·선정 관리</title>
@@ -48,6 +48,7 @@ body.embed #login>div[style]{margin:0!important}
 body.embed #login .btn{width:auto;padding:8px 18px;font-size:14px}
 body.embed #login .err{width:100%}
 tr.tst td{color:var(--mute);background:color-mix(in srgb,var(--mute) 8%,transparent)}tr.tst td b{color:var(--mute)}.tbadge{display:inline-block;font-size:11px;font-weight:700;padding:1px 6px;border-radius:99px;border:1px solid var(--mute);color:var(--mute);vertical-align:1px}
+td.wk .wtel{display:block;margin-top:2px;font-size:12px;color:var(--pri);text-decoration:none;font-weight:600}td.wk b{display:block;font-weight:700}td.wk small{display:block;margin-top:2px;font-size:12px;color:var(--mute)}
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="theme.css?v=1"><link rel="stylesheet" href="card.css?v=8"><meta name="color-scheme" content="light">
@@ -120,7 +121,8 @@ a.sbtn{text-decoration:none;display:inline-block}
   <div class="bar">
     <select id="fs" aria-label="상태"><option value="">상태 전체</option><option>접수</option><option>검토중</option><option>선정</option><option>보류</option><option>제외</option></select>
     <select id="ft" aria-label="예상 유형"><option value="">유형 전체</option><option value="1">1유형</option><option value="2">2유형</option><option value="3">3유형</option><option value="?">유형 미확인</option><option value="4">4유형 후보</option></select>
-    <input type="text" id="fq" placeholder="이름·추천자·거주동 검색" aria-label="검색">
+    <select id="fo" aria-label="정렬"><option value="">접수 순</option><option value="w">추천자 순</option><option value="o">소속 순</option><option value="u">긴급한 순</option><option value="d">거주동 순</option></select>
+    <input type="text" id="fq" placeholder="이름·추천자·소속·거주동 검색" aria-label="검색">
     <span class="sp"></span>
     <button class="sbtn" id="reload" type="button">새로고침</button>
     <button class="sbtn" id="csv" type="button">엑셀(CSV) 받기</button>
@@ -141,6 +143,8 @@ const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let PASS="",rows=[],selId=null;
+/* 추천자 연락처: 눌러서 바로 전화 */
+const telL=p=>{const d=String(p||"").replace(/\D/g,"");if(!/^0\d{8,10}$/.test(d))return "";const f=d.length===11?d.replace(/(\d{3})(\d{4})(\d{4})/,"$1-$2-$3"):d.length===10&&d.startsWith("02")?d.replace(/(\d{2})(\d{4})(\d{4})/,"$1-$2-$3"):d.replace(/(\d{3})(\d{3,4})(\d{4})/,"$1-$2-$3");return `<a class="wtel" href="tel:${d}" onclick="event.stopPropagation()">☎ ${f}</a>`};
 const who=r=>`${r.worker_org||"생활지원사"} · ${r.worker_name||""}`;
 const typeOf=r=>r.voucher==="안 받음"?"1":r.voucher==="받았는데 다 씀"?"2":r.voucher==="받는 중"?"3":"?";
 const is4=r=>["기름(등유) 보일러","LPG","연탄"].includes(r.heating);
@@ -169,9 +173,13 @@ function renderStats(s){if(!s)return;
   $("#stats").innerHTML=it.map(([l,v,w])=>`<div class="st${w&&v?" w":""}"><b>${v??0}</b><span>${l}</span></div>`).join("");
 }
 function filtered(){const s=$("#fs").value,t=$("#ft").value,q=$("#fq").value.trim();
-  return rows.filter(r=>(!s||r.status===s)&&(!t||(t==="4"?is4(r):typeOf(r)===t))&&(!q||[r.elder_name,r.worker_name,r.dong].some(x=>(x||"").includes(q))))}
+  const L=rows.filter(r=>(!s||r.status===s)&&(!t||(t==="4"?is4(r):typeOf(r)===t))&&(!q||[r.elder_name,r.worker_name,r.worker_org,r.dong].some(x=>(x||"").includes(q))));
+  const o=$("#fo").value,U={"상":0,"중":1,"하":2},k=(a,b)=>(a||"힣").localeCompare(b||"힣","ko"),n=(a,b)=>a.receipt_no-b.receipt_no;
+  if(o==="w")L.sort((a,b)=>k(a.worker_name,b.worker_name)||n(a,b));else if(o==="o")L.sort((a,b)=>k(a.worker_org,b.worker_org)||k(a.worker_name,b.worker_name)||n(a,b));
+  else if(o==="u")L.sort((a,b)=>((U[a.urgency]??3)-(U[b.urgency]??3))||n(a,b));else if(o==="d")L.sort((a,b)=>k(a.dong,b.dong)||n(a,b));
+  return L}
 function render(){const f=filtered();
-  $("#tb").innerHTML=f.map(r=>`<tr data-id="${r.id}" class="${r.id===selId?"sel":""}${r.is_test?" tst":""}" tabindex="0"><td>${r.receipt_no}</td><td>${d(r.created_at)}</td><td><b>${esc(r.elder_name)}</b>${r.is_test?' <span class="tbadge">테스트</span>':""}</td><td>${esc(r.dong)}</td><td>${r.household_size?r.household_size+"명":""}</td><td>${esc(r.income)}</td><td>${tpill(r)}</td><td>${esc(r.heating)}</td><td class="${["없음","압류 우려"].includes(r.account)?"flag":""}">${esc(r.account)}</td><td class="${r.urgency==="상"?"flag":""}">${esc(r.urgency)}</td><td>${esc(who(r))}</td><td><span class="st s-${esc(r.status)}">${esc(r.status)}</span></td><td>${esc(r.household_code)}</td></tr>`).join("")||'<tr><td colspan="13" style="color:var(--mute)">아직 추천이 없어요.</td></tr>';
+  $("#tb").innerHTML=f.map(r=>`<tr data-id="${r.id}" class="${r.id===selId?"sel":""}${r.is_test?" tst":""}" tabindex="0"><td>${r.receipt_no}</td><td>${d(r.created_at)}</td><td><b>${esc(r.elder_name)}</b>${r.is_test?' <span class="tbadge">테스트</span>':""}</td><td>${esc(r.dong)}</td><td>${r.household_size?r.household_size+"명":""}</td><td>${esc(r.income)}</td><td>${tpill(r)}</td><td>${esc(r.heating)}</td><td class="${["없음","압류 우려"].includes(r.account)?"flag":""}">${esc(r.account)}</td><td class="${r.urgency==="상"?"flag":""}">${esc(r.urgency)}</td><td class="wk"><b>${esc(r.worker_name||"")}</b><small>${esc(r.worker_org||"생활지원사")}</small>${telL(r.worker_phone)}</td><td><span class="st s-${esc(r.status)}">${esc(r.status)}</span></td><td>${esc(r.household_code)}</td></tr>`).join("")||'<tr><td colspan="13" style="color:var(--mute)">아직 추천이 없어요.</td></tr>';
   {const nt=rows.filter(r=>r.is_test).length;$("#cnt").textContent=`${f.length}건 표시 · 실제 추천 ${rows.length-nt}건`+(nt?` (테스트 ${nt}건 제외)`:"")}
 }
 $("#chpw").onclick=()=>{if($("#pwbox")){$("#pwbox").remove();return}
@@ -185,7 +193,7 @@ $("#chpw").onclick=()=>{if($("#pwbox")){$("#pwbox").remove();return}
       if(!r.ok)return er(r.reason==="short"?"새 비밀번호는 8자리 이상으로 해 주세요.":"지금 비밀번호가 맞지 않아요.");
       $("#out").click();$("#lerr").textContent="비밀번호를 바꿨어요. 새 비밀번호로 들어와 주세요.";$("#lerr").hidden=false}
     catch(x){er(/session/.test(x.message)?"편집 시간이 끝났어요. 다시 들어와서 바꿔 주세요.":"바꾸지 못했어요. 잠시 뒤에 다시 해 주세요.")}finally{const g=$("#pwgo");if(g)g.disabled=false}}};
-["fs","ft"].forEach(i=>$("#"+i).onchange=render);$("#fq").oninput=render;$("#reload").onclick=load;
+["fs","ft","fo"].forEach(i=>$("#"+i).onchange=render);$("#fq").oninput=render;$("#reload").onclick=load;
 $("#tb").addEventListener("click",e=>{const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id)});
 $("#tb").addEventListener("keydown",e=>{if(e.key==="Enter"){const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id)}});
 const F=[["접수 번호","receipt_no"],["접수 일시","created_at",d],["추천자","worker_name"],["추천자 소속","worker_org"],["대상자","elder_name"],["생년월일","birth"],["성별","gender"],["연락처","phone"],["거주동","dong"],["주소","address"],["세대주 본인","is_head"],["세대주 성함","head_name"],["세대주 생년월일","head_birth"],["가구원 수","household_size"],["실제 동거","live_with"],["소득 구분","income"],["수급 종류","recipient_kinds",a=>(a||[]).join(", ")],["에너지바우처","voucher"],["난방 방식","heating"],["본인 명의 통장","account"],["고지서 사진","bill_photo"],["집","housing_tenure"],["주거 위험","housing_risk",a=>(a||[]).join(", ")],["난방기구 고장","heater_broken"],["요금 체납","arrears",a=>(a||[]).join(", ")],["긴급도","urgency"],["추천 사유","reason"],["건강·생활 위험","risk_note"],["다른 지원","other_support"]];
