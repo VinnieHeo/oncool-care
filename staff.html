@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="oc-ver" content="2026-11-12f"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<html lang="ko"><head><meta charset="utf-8"><meta name="oc-ver" content="2026-11-12h"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <script>(function(){var ua=navigator.userAgent||"";if(!/KAKAOTALK/i.test(ua))return;try{location.href="kakaotalk://web/openExternal?url="+encodeURIComponent(location.href)}catch(e){}document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.style.cssText="background:#fff4d6;color:#7a5200;font-size:14px;line-height:1.5;padding:10px 14px;text-align:center;border-bottom:1px solid #e8c770";d.innerHTML="카카오톡 안에서는 홈 화면 추가와 알림 켜기가 안 돼요.<br>오른쪽 위 <b>⋮</b> 또는 아래 <b>⋯</b> → <b>다른 브라우저로 열기</b>를 눌러 주세요.";document.body.insertBefore(d,document.body.firstChild)})})();</script>
 <meta name="robots" content="noindex,nofollow">
 <title>온앤쿨케어 추천·선정 관리</title>
@@ -137,7 +137,7 @@ a.sbtn{text-decoration:none;display:inline-block}
 <p class="foot">들어오면 가정방문 기록과 증빙 서류를 고칠 수 있고, 고친 사람 이름이 남아요. 내용은 외부에 공유하지 말아 주세요.</p>
 </div>
 <script src="detail.js?v=12"></script>
-<script src="upd.js?v=1"></script><script src="scan.js?v=7"></script><script src="cases.js?v=32"></script><script src="acct.js?v=1"></script><script src="sign.js?v=6"></script><script src="judge.js?v=2"></script><script src="annex.js?v=2"></script><script src="docreq.js?v=3"></script><script src="pay.js?v=3"></script><script src="faqs.js?v=1"></script>
+<script src="upd.js?v=1"></script><script src="scan.js?v=7"></script><script src="cases.js?v=34"></script><script src="acct.js?v=1"></script><script src="sign.js?v=6"></script><script src="judge.js?v=2"></script><script src="annex.js?v=2"></script><script src="docreq.js?v=3"></script><script src="pay.js?v=3"></script><script src="faqs.js?v=1"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const $=s=>document.querySelector(s);
@@ -216,9 +216,9 @@ $("#vt-ref").onclick=()=>vtab("ref");$("#vt-case").onclick=()=>{vtab("case");ren
 const isT=c=>{const r=rows.find(x=>x.id===c.referral_id);return !!(r&&r.is_test)},realC=()=>CASES.filter(c=>!isT(c));
 function ccnt(){const n=realC().length;$("#ccnt").textContent=n?`(${n})`:""}
 function renderCases(){const f=$("#cfs").value;$("#cgoal").innerHTML=CS.goal(realC());$("#clist").innerHTML=CS.listHTML(CASES.filter(c=>!f||c.stage===f),rows);
-  CASES.filter(isT).forEach(c=>{const tr=$("#clist").querySelector(`tr[data-cid="${c.id}"]`);if(tr){tr.classList.add("tst");const b=tr.cells[1];if(b)b.insertAdjacentHTML("beforeend",' <span class="tbadge">테스트</span>')}})}
+  CASES.filter(isT).forEach(c=>{const tr=$("#clist").querySelector(`[data-cid="${c.id}"]`);if(tr){tr.classList.add("tst");const b=tr.querySelector(".cc-nm b");if(b)b.insertAdjacentHTML("beforeend",' <span class="tbadge">테스트</span>')}})}
 $("#cfs").onchange=renderCases;$("#ccsv").onclick=()=>CS.csv(realC(),rows);
-$("#clist").addEventListener("click",e=>{const tr=e.target.closest("tr[data-cid]");if(!tr)return;const c=CASES.find(x=>x.id===tr.dataset.cid);const r=rows.find(x=>x.id===c.referral_id)||{};
+$("#clist").addEventListener("click",e=>{const tr=e.target.closest("[data-cid]");if(!tr)return;const c=CASES.find(x=>x.id===tr.dataset.cid);const r=rows.find(x=>x.id===c.referral_id)||{};
   if(ETOK){$("#cview").hidden=true;CSE.open(c,r);return}
   $("#cview").hidden=false;$("#cview").innerHTML=CS.viewHTML(c,r)+'<p class="hint" style="margin-top:10px">증빙 파일 원본은 담당자 관리 페이지에서만 열 수 있어요.</p><div class="acts"><button class="sbtn" type="button" id="cvclose">닫기</button></div>';$("#cvclose").onclick=()=>$("#cview").hidden=true;$("#cview").scrollIntoView({behavior:"smooth",block:"start"})});
 function alert2(x){const m=/session/.test(x.message)?"편집 시간이 끝났어요. 닫기 후 비밀번호로 다시 들어와 주세요.":"처리하지 못했어요: "+x.message;$("#cnt").textContent=m}
@@ -270,10 +270,10 @@ function ntop(){let d=$("#ntop");if(!ETOK){if(d)d.remove();return}
   if($("#nread"))$("#nread").onclick=async()=>{try{await rpcS("oncool_ed_notis_read",{p_token:ETOK});const t=new Date().toISOString();NOTIS.forEach(x=>x.read_at=x.read_at||t);ntop();ndecor()}catch(e){}};
   $("#dueIn").onchange=async ev=>{const v=ev.target.value;try{await rpcS("oncool_ed_due",{p_token:ETOK,p_date:v||null});DUE=v;ev.target.style.borderColor="var(--green)"}catch(e){ev.target.style.borderColor="var(--warm)"}};
   d.querySelector("#npanel").addEventListener("click",ev=>{const b=ev.target.closest(".ni");if(!b)return;$("#npanel").hidden=true;ngo(b.dataset.nc,b.dataset.nr)})}
-function ngo(cid,rid){if(cid&&CASES.find(x=>x.id===cid)){vtab("case");const tr=document.querySelector(`#clist tr[data-cid="${cid}"]`);if(tr){tr.click();setTimeout(()=>$("#cedit").scrollIntoView({block:"start"}),100)}return}
+function ngo(cid,rid){if(cid&&CASES.find(x=>x.id===cid)){vtab("case");const tr=document.querySelector(`#clist [data-cid="${cid}"]`);if(tr){tr.click();setTimeout(()=>$("#cedit").scrollIntoView({block:"start"}),100)}return}
   if(rid&&rows.find(x=>x.id===rid)){vtab("ref");openD(rid);setTimeout(()=>{const d=$("#detail");if(d&&!d.hidden)d.scrollIntoView({block:"start"})},100)}}
 function ndecor(){
-  document.querySelectorAll("#clist tr[data-cid]").forEach(tr=>{const c=CASES.find(x=>x.id===tr.dataset.cid);if(!c)return;const td=tr.children[1];const old=td.querySelector(".vchips");if(old)old.remove();const m=c.visit_mode||"추천자";
+  document.querySelectorAll("#clist [data-cid]").forEach(tr=>{const c=CASES.find(x=>x.id===tr.dataset.cid);if(!c)return;const td=tr.querySelector(".cc-nm")||tr.children[1];const old=td.querySelector(".vchips");if(old)old.remove();const m=c.visit_mode||"추천자";
     td.insertAdjacentHTML("beforeend",`<span class="vchips"><span class="vm m-${m}">${NMODE.find(x=>x[0]===m)[1]}</span>${c.visit_req?`<span class="vr">요청: ${esc(c.visit_req)}</span>`:""}${c.w_done_at?'<span class="vd">추천자 완료</span>':""}</span>`)});
   const nw=new Set(NOTIS.filter(x=>!x.read_at&&x.kind==="새 추천").map(x=>x.referral_id));
   document.querySelectorAll("#tb tr[data-id]").forEach(tr=>{if(nw.has(tr.dataset.id)&&!tr.querySelector(".nnew"))tr.children[2].insertAdjacentHTML("beforeend",' <span class="nnew">NEW</span>')})}
