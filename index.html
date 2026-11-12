@@ -151,7 +151,7 @@
   <div class="q"><div class="lb">소득 구분</div><small><b>기초생활수급자</b> · 생계·의료·주거·교육 중 하나라도 받으면<br><b>차상위</b> · 차상위 확인, 한부모, 장애수당 등<br><b>저소득</b> · 건강보험료가 기준 금액 이하 (최근 3개월 평균, ‘신청대상’ 메뉴 표 참고)<br><b>해당 없음</b> · 위 셋 다 아니면 · <b>모름</b> · 가정방문 때 확인합니다</small><div class="opts" data-name="income" data-opts="기초생활수급자,차상위,저소득,해당 없음,모름"></div></div>
   <div class="q" id="rkbox" hidden><div class="lb">수급 종류 (모두 선택)</div><div class="opts" data-name="recipient_kinds" data-multi="1" data-opts="생계,의료,주거,교육"></div></div>
   <div class="q"><div class="lb">에너지바우처</div><small>유형을 나누는 중요한 질문입니다 · ‘다 씀’은 2025년 잔액 1만원 이하</small><div class="opts" data-name="voucher" data-opts="안 받음,받았는데 다 씀,받는 중,모름"></div></div>
-  <div class="q"><label for="voucher_reason">바우처 미신청 사유</label><small>에너지바우처 대상이지만 쓰기 어려워 신청하지 않은 사정이 있다면 그 이유를 기록해 주십시오.</small><div class="vr-chips"><button type="button" data-vr="관리비에 난방비가 포함되어 있습니다.">관리비에 포함</button><button type="button" data-vr="전기장판 등 개별 난방기구만 사용합니다.">전기장판만 사용</button><button type="button" data-vr="고시원·쪽방·원룸 등에 거주합니다.">고시원·쪽방·원룸</button></div><textarea id="voucher_reason" maxlength="200" placeholder="예) 관리비에 난방비가 포함되어 바우처를 쓸 수 없다고 하십니다."></textarea></div>
+  <div class="q"><label for="voucher_reason">바우처 미신청 사유</label><small>에너지바우처 대상이지만 쓰기 어려워 신청하지 않은 사정이 있다면 그 이유를 기록해 주세요.</small><div class="vr-chips"><button type="button" data-vr="관리비에 난방비가 포함되어 있습니다.">관리비에 포함</button><button type="button" data-vr="전기장판 등 개별 난방기구만 사용합니다.">전기장판만 사용</button><button type="button" data-vr="고시원·쪽방·원룸 등에 거주합니다.">고시원·쪽방·원룸</button></div><textarea id="voucher_reason" maxlength="200" placeholder="예) 관리비에 난방비가 포함되어 바우처를 쓸 수 없다고 하십니다."></textarea></div>
 </section>
 
 <section class="card">
@@ -330,7 +330,7 @@
 <p class="foot">입력한 내용은 복지관 담당자와 추천한 본인만 볼 수 있습니다.</p>
 </div>
 <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-<script src="scan.js?v=6"></script><script src="cases.js?v=27"></script><script src="sign.js?v=6"></script><script src="wiz.js?v=16"></script><script src="faq.js?v=1"></script><script src="pred.js?v=1"></script><script src="docreq.js?v=1"></script>
+<script src="scan.js?v=6"></script><script src="cases.js?v=28"></script><script src="sign.js?v=6"></script><script src="wiz.js?v=17"></script><script src="faq.js?v=1"></script><script src="pred.js?v=2"></script><script src="docreq.js?v=2"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const DEMO=new URLSearchParams(location.search).has("demo");
