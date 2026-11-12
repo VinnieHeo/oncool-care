@@ -50,4 +50,22 @@ async function send(go){const err=document.getElementById("pd_err"),bs=[...docum
 .pd-next{border:1.5px solid var(--pri)}.pd-next h3{color:var(--pri)}.pd-next p{margin:0;font-size:14px;line-height:1.65}
 .vr-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}.vr-chips button{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer}`;document.head.appendChild(st)}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-vr]");if(!b)return;const t=document.getElementById("voucher_reason");if(!t)return;const s=b.dataset.vr;if(!t.value.includes(s))t.value=(t.value.trim()?t.value.trim()+" ":"")+s;t.focus()});
+/* 가정방문 화면 맨 위: 예상 유형 + 필요한 서류 (11/12) · 방문 중 바우처·난방을 고치면 바로 다시 계산 */
+let VR=null,VC=null,FOLD=false;try{FOLD=localStorage.getItem("oc_tyfold")==="1"}catch(e){}
+function vval(id,d){const e=document.getElementById(id);return e&&e.value?e.value:d}
+function tyHTML(){const r=VR||{},c=VC||{};const q=Object.assign({},r,{voucher:vval("c_v_voucher",c.v_voucher||r.voucher),heating:vval("c_v_heating",c.v_heating||r.heating),income:vval("c_v_income",c.v_income||r.income)});
+  const x=predict(q),tf=vval("c_type_final",c.type_final||""),br=s=>esc(s).replace(/\n/g,"<br>");
+  const head=tf?`<div class="ty-k">복지관 판정 유형</div><div class="ty-t">${esc(tf)} (${esc(TN[tf[0]]||"")})</div>`:`<div class="ty-k">추천 내용으로 본 예상 유형</div><div class="ty-t">${x.t?`${x.t}유형 (${esc(x.name)})`:"아직 정해지지 않았어요"}</div>`;
+  return `${head}<p>${br(x.why)}${tf?"":"<br>최종 유형은 복지관 사례판정위원회에서 정합니다."}</p>${x.warn.map(w=>`<p class="ty-w">${br(w)}</p>`).join("")}
+   <details${FOLD?"":" open"}><summary>이 유형에 필요한 서류</summary><ul>${x.docs.map(([a,b])=>`<li>${esc(a)}${b?` <small>· ${esc(b)}</small>`:""}</li>`).join("")}</ul></details>`}
+function tyPaint(){const b=document.getElementById("ty_box");if(b)b.innerHTML=tyHTML()}
+if(window.CSE){const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,arguments);try{
+  const nav=document.querySelector("#cedit .wz");if(!nav||document.getElementById("ty_box"))return x;VR=r||{};VC=c||{};
+  nav.insertAdjacentHTML("beforebegin",`<div class="ty-box" id="ty_box"></div>`);tyPaint();
+  const b=document.getElementById("ty_box");b.addEventListener("toggle",e=>{FOLD=!e.target.open;try{localStorage.setItem("oc_tyfold",FOLD?"1":"0")}catch(_){}},true);
+  document.getElementById("cedit").addEventListener("change",e=>{if(e.target.matches&&e.target.matches("#c_v_voucher,#c_v_heating,#c_v_income"))tyPaint()});
+ }catch(e){console.error(e)}return x}}
+{const st=document.createElement("style");st.textContent=`.ty-box{margin:0 0 12px;padding:14px;border-radius:14px;border:1.5px solid var(--pri);background:color-mix(in srgb,var(--pri) 6%,transparent)}
+.ty-box .ty-k{font-size:12.5px;color:var(--mute);font-weight:700}.ty-box .ty-t{font-size:18px;font-weight:800;margin:2px 0 6px}.ty-box p{margin:0;font-size:13px;color:var(--mute);line-height:1.55}.ty-box p.ty-w{margin-top:6px;color:#b8620e}
+.ty-box ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;line-height:1.7}.ty-box ul small{color:var(--mute)}.ty-box summary{cursor:pointer;font-weight:700;font-size:13.5px;margin-top:8px;color:var(--pri)}`;document.head.appendChild(st)}
 return {predict,show}})();
