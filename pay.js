@@ -12,7 +12,7 @@ const won=n=>n||n===0?Number(n).toLocaleString("ko-KR")+"원":"";
 let R=null,T=()=>"",GC=()=>[],GR=()=>[],ME=()=>"",PAYS=[],tab=0,all=false,sel=null,msg="";
 const typeNo=c=>CS.typeOf(c)||"";
 function rows(){const M={};GR().forEach(x=>M[x.id]=x);
-  return GC().filter(c=>all?["선정","위원회상정","서류완비"].includes(c.stage):c.stage==="선정").map(c=>[c,M[c.referral_id]||{}])
+  return GC().filter(c=>!(M[c.referral_id]||{}).is_test).filter(c=>all?["선정","위원회상정","서류완비"].includes(c.stage):c.stage==="선정").map(c=>[c,M[c.referral_id]||{}])
     .sort((a,b)=>(a[0].household_code||"~").localeCompare(b[0].household_code||"~")||(a[1].receipt_no-b[1].receipt_no))}
 function due(c){const a=CS.amounts(c);if(!a)return null;const x=a.list.find(([m])=>m===TABS[tab][2]);return x?x[1]:0}
 const rec=c=>PAYS.find(p=>p.case_id===c.id&&p.month===TABS[tab][0]&&p.season==="난방");
