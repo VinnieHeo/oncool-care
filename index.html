@@ -151,6 +151,7 @@
   <div class="q"><div class="lb">소득 구분</div><small><b>기초생활수급자</b> · 생계·의료·주거·교육 중 하나라도 받으면<br><b>차상위</b> · 차상위 확인, 한부모, 장애수당 등<br><b>저소득</b> · 건강보험료가 기준 금액 이하 (최근 3개월 평균, ‘신청대상’ 메뉴 표 참고)<br><b>해당 없음</b> · 위 셋 다 아니면 · <b>모름</b> · 가정방문 때 확인합니다</small><div class="opts" data-name="income" data-opts="기초생활수급자,차상위,저소득,해당 없음,모름"></div></div>
   <div class="q" id="rkbox" hidden><div class="lb">수급 종류 (모두 선택)</div><div class="opts" data-name="recipient_kinds" data-multi="1" data-opts="생계,의료,주거,교육"></div></div>
   <div class="q"><div class="lb">에너지바우처</div><small>유형을 나누는 중요한 질문입니다 · ‘다 씀’은 2025년 잔액 1만원 이하</small><div class="opts" data-name="voucher" data-opts="안 받음,받았는데 다 씀,받는 중,모름"></div></div>
+  <div class="q"><label for="voucher_reason">바우처 미신청 사유</label><small>에너지바우처 대상이지만 쓰기 어려워 신청하지 않은 사정이 있다면 그 이유를 기록해 주십시오.</small><div class="vr-chips"><button type="button" data-vr="관리비에 난방비가 포함되어 있습니다.">관리비에 포함</button><button type="button" data-vr="전기장판 등 개별 난방기구만 사용합니다.">전기장판만 사용</button><button type="button" data-vr="고시원·쪽방·원룸 등에 거주합니다.">고시원·쪽방·원룸</button></div><textarea id="voucher_reason" maxlength="200" placeholder="예) 관리비에 난방비가 포함되어 바우처를 쓸 수 없다고 하십니다."></textarea></div>
 </section>
 
 <section class="card">
@@ -177,7 +178,7 @@
 </section>
 
 <p class="err" id="ferr" hidden></p>
-<button class="btn" id="sbtn" type="submit">추천 보내기</button>
+<button class="btn" id="sbtn" type="submit">유형 예상하기</button>
 </form>
 
 <section class="card done" id="done" hidden>
@@ -185,6 +186,7 @@
   <p id="dmsg">추천이 접수되었습니다.<br>고맙습니다.</p>
   <div class="big"><button class="btn" id="again" type="button">다른 가구 추천하기</button><button class="btn sec" data-go="home" type="button">처음으로</button></div>
 </section>
+<section id="pred" hidden></section>
 </div>
 
 <div id="v-who" hidden>
@@ -328,7 +330,7 @@
 <p class="foot">입력한 내용은 복지관 담당자와 추천한 본인만 볼 수 있습니다.</p>
 </div>
 <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-<script src="scan.js?v=6"></script><script src="cases.js?v=26"></script><script src="sign.js?v=5"></script><script src="wiz.js?v=15"></script><script src="faq.js?v=1"></script>
+<script src="scan.js?v=6"></script><script src="cases.js?v=27"></script><script src="sign.js?v=5"></script><script src="wiz.js?v=16"></script><script src="faq.js?v=1"></script><script src="pred.js?v=1"></script><script src="docreq.js?v=1"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const DEMO=new URLSearchParams(location.search).has("demo");
@@ -380,7 +382,7 @@ document.addEventListener("change",e=>{
 function showErr(el,m){el.style.whiteSpace="pre-line";el.textContent=String(m||"").replace(/([다요]\.) /g,"$1\n");el.hidden=!m}
 
 /* 화면 전환 */
-function view(v){["login","home","list","f","done"].forEach(x=>$("#"+x).hidden=x!==v);$("#v-go > .back").hidden=!(v==="login"||v==="home");window.scrollTo(0,0)}
+function view(v){["login","home","list","f","done","pred"].forEach(x=>$("#"+x).hidden=x!==v);$("#v-go > .back").hidden=!(v==="login"||v==="home");window.scrollTo(0,0)}
 document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g){if(g.dataset.go==="home")goHome();}});
 async function goHome(){$("#hname").textContent=ME;view("home");try{MINE=await rpc("oncool_w_list",{p_token:TOKEN});$("#mycnt").textContent=MINE.length?`(${MINE.length}건)`:""}catch(e){if(/session/.test(e.message))logout()}}
 function logout(){if(TOKEN&&!DEMO)rpc("oncool_w_logout",{p_token:TOKEN}).catch(()=>{});TOKEN="";ME="";ls("oc_tok",null);ls("oc_me",null);STEP="id";resetLogin();view("login")}
@@ -460,13 +462,13 @@ $("#addrbtn").onclick=()=>{
     closeAddr();$("#addr2").focus()}}).embed($("#addrwrap"));
 };
 /* 추천서 */
-const TXT=["elder_name","birth","phone","head_name","head_birth","live_with","reason","risk_note","other_support"];
+const TXT=["elder_name","birth","phone","head_name","head_birth","live_with","reason","risk_note","other_support","voucher_reason"];
 const RAD=["gender","is_head","household_size","income","voucher","heating","account","bill_photo","housing_tenure","heater_broken","urgency"];
 const MUL=["recipient_kinds","housing_risk","arrears"];
 function openForm(r){EDIT=r?r.id:null;$("#f").reset();
   $("#addr1").value="";$("#addr2").value="";
   if(r){TXT.forEach(k=>$("#"+k).value=r[k]??"");const ad=(r.address||"").split(" | ");$("#addr1").value=ad[0]||"";$("#addr2").value=ad[1]||"";RAD.forEach(k=>setv(k,r[k]));MUL.forEach(k=>setv(k,r[k]||[]));$("#dong").value=r.dong||"";$("#consent").checked=true}
-  $("#ftitle").textContent=r?`${r.elder_name} 님 내용 수정`:"새로 추천하기";$("#sbtn").textContent=r?"수정 내용 저장":"추천 보내기";
+  $("#ftitle").textContent=r?`${r.elder_name} 님 내용 수정`:"새로 추천하기";$("#sbtn").textContent=r?"수정 내용 저장":"유형 예상하기";
   sync();showErr($("#ferr"),"");view("f")}
 $("#gonew").onclick=()=>openForm(null);
 $("#again").onclick=()=>openForm(null);
@@ -477,6 +479,7 @@ $("#f").addEventListener("submit",async e=>{
   if(g("birth")&&!/^[0-9]{6}$/.test(g("birth"))){showErr(err,"생년월일은 숫자 6자리로 적어 주세요.");$("#birth").focus();return}
   const p={consent:true,dong:$("#dong").value,address:[g("addr1"),g("addr2")].filter(Boolean).join(" | ")};TXT.forEach(k=>p[k]=g(k));RAD.forEach(k=>p[k]=val(k));MUL.forEach(k=>p[k]=vals(k));
   if(p.is_head!=="아니오"){p.head_name="";p.head_birth=""}if(p.income!=="기초생활수급자")p.recipient_kinds=[];
+  if(!EDIT&&window.PRED){PRED.show(p);return}
   $("#sbtn").disabled=true;const lbl=$("#sbtn").textContent;$("#sbtn").textContent="보내는 중…";
   try{const r=EDIT?await rpc("oncool_w_update",{p_token:TOKEN,p_id:EDIT,p}):await rpc("oncool_w_submit",{p_token:TOKEN,p});
     if(EDIT){if(r===true){$("#rno").textContent="";$("#dmsg").textContent="수정한 내용이 저장되었습니다.";view("done")}else showErr(err,"이미 사례판정이 끝나서 수정할 수 없습니다. 담당자에게 연락해 주세요.")}
@@ -486,6 +489,7 @@ $("#f").addEventListener("submit",async e=>{
   finally{$("#sbtn").disabled=false;$("#sbtn").textContent=lbl}
 });
 mview("menu");
+if(window.DOCREQ)DOCREQ.worker();
 
 /* 추천자 할 일 표시 · 방문 요청 · 다 했습니다 (2026-11-11) */
 (function(){
@@ -501,6 +505,7 @@ function st(r){const c=CASES.find(x=>x.referral_id===r.id);
   if(!c)return{k:"wait",lb:"복지관 확인 중",c};
   const ds=wds(c),mode=c.visit_mode||"추천자";
   if(!["조사중","서류완비"].includes(c.stage))return{k:"rev",lb:"선정 심사 중",c,ds,mode};
+  if(c.doc_req&&!c.w_done_at)return{k:"todo",lb:"추가 서류 요청",c,ds,mode};
   if(c.w_done_at)return{k:"rev",lb:"제출 완료 · 복지관 확인 중",c,ds,mode};
   if(mode==="복지관")return{k:"info",lb:"복지관 방문 예정",c,ds,mode};
   return{k:"todo",lb:mode==="동행"?"동행 방문·서류 필요":"가정방문·서류 필요",c,ds,mode}}
