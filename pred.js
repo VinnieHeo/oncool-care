@@ -4,12 +4,12 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const FOUR=["기름(등유) 보일러","LPG","연탄"];
 const TN={"1":"저소득 에너지 취약","2":"바우처 한도 소진","3":"바우처 사각지대","4":"에너지 인프라 취약"};
 function predict(p){const v=p.voucher||"",inc=p.income||"",h=p.heating||"",rs=(p.voucher_reason||"").trim();let t="",why="";const warn=[];
-  if(FOUR.includes(h)){t="4";why="도시가스가 아닌 연료(등유·LPG·연탄)로 난방하는 가구입니다.";warn.push("4유형은 ‘농산어촌 등 에너지 인프라 취약지역’ 기준이어서 도심 가구는 복지관이 협회에 확인합니다.")}
+  if(FOUR.includes(h)){t="4";why="도시가스가 아닌 연료(등유·LPG·연탄)로 난방하는 가구입니다.";}
   else if(v==="받았는데 다 씀"){t="2";why="2025년에 받아 다 쓰고, 2026년에도 받는 가구예요.\n2026년에 처음 받았다면 2유형이 아니에요."}
-  else if(rs){t="3";why="에너지바우처 대상이지만 쓰기 어려운 사정이 있는 가구입니다."}
-  else if(v==="받는 중"){why="바우처를 받고 있어 1유형은 아니에요.\n작년에도 받아 다 썼다면 → 2유형\n올해 처음 받았다면 → 쓰기 어려운 사정이 있을 때만 3유형"}
-  else if(v==="안 받음"){t="1";why="에너지바우처를 받지 않는 저소득 가구입니다.";if(inc==="기초생활수급자")warn.push("수급자 가구에 노인·장애인·영유아 등이 있으면 바우처 대상입니다.\n바우처 대상이면 1유형이 아닐 수 있습니다.")}
-  else why="에너지바우처를 받는지 가정방문 때 확인하면 유형이 정해집니다.";
+  else if(rs){t="3";why="바우처를 제대로 쓸 수 없는 사유가 있는 가구예요."}
+  else if(v==="받는 중"){why="바우처를 받고 있어 1유형은 아니에요.\n작년에도 받아 다 썼다면 → 2유형\n쓸 수 없는 사유가 있다면 → 3유형\n둘 다 아니면 → 이번 사업 대상 아님"}
+  else if(v==="안 받음"){t="1";why="에너지바우처를 받지 않는 저소득 가구입니다.";if(inc==="기초생활수급자")warn.push("수급자 가구에 노인·장애인·영유아 등이 있으면 바우처 대상이에요.\n대상인데 신청 안 했다면 → 쓸 수 없어서 안 한 이유가 있어야 3유형")}
+  else why="바우처를 받는지 가정방문 때 확인해 주세요.\n받고 있다면 쓸 수 없는 사유가 있어야 3유형이에요.";
   if(inc==="해당 없음")warn.push("소득 기준(기준 중위소득 150% 이하)을 충족해야 합니다.\n가정방문 때 건강보험료 납부확인서로 확인합니다.");
   const D=[["주민등록등본","가구원 전원"]],INC=["소득 증빙","수급자증명서 또는 건보료 납부확인서 · 일단 같이 받아 주세요"];
   if(t==="1")D.push(inc==="기초생활수급자"?["수급자증명서",""]:["건강보험료 납부확인서","최근 3개월"]);
@@ -53,7 +53,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-vr]");if(!
 /* 가정방문 화면 맨 위: 예상 유형 + 필요한 서류 (11/12) · 방문 중 바우처·난방을 고치면 바로 다시 계산 */
 let VR=null,VC=null,FOLD=false;try{FOLD=localStorage.getItem("oc_tyfold")==="1"}catch(e){}
 function vval(id,d){const e=document.getElementById(id);return e&&e.value?e.value:d}
-function tyHTML(){const r=VR||{},c=VC||{};const q=Object.assign({},r,{voucher:vval("c_v_voucher",c.v_voucher||r.voucher),heating:vval("c_v_heating",c.v_heating||r.heating),income:vval("c_v_income",c.v_income||r.income)});
+function tyHTML(){const r=VR||{},c=VC||{};const q=Object.assign({},r,{voucher:vval("c_v_voucher",c.v_voucher||r.voucher),heating:vval("c_v_heating",c.v_heating||r.heating),income:vval("c_v_income",c.v_income||r.income)});{const ev=vval("c_v_env",c.v_env||"");if(ev&&ev!=="해당 없음")q.voucher_reason=ev}
   const x=predict(q),tf=vval("c_type_final",c.type_final||""),br=s=>esc(s).replace(/\n/g,"<br>");
   const head=tf?`<div class="ty-k">복지관 판정 유형</div><div class="ty-t">${esc(tf)} (${esc(TN[tf[0]]||"")})</div>`:`<div class="ty-k">추천 내용으로 본 예상 유형</div><div class="ty-t">${x.t?`${x.t}유형 (${esc(x.name)})`:"아직 정해지지 않았어요"}</div>`;
   return `${head}<p>${br(x.why)}${tf?"":"<br>최종 유형은 복지관 사례판정위원회에서 정합니다."}</p>${x.warn.map(w=>`<p class="ty-w">${br(w)}</p>`).join("")}
@@ -63,7 +63,7 @@ if(window.CSE){const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,ar
   const nav=document.querySelector("#cedit .wz");if(!nav||document.getElementById("ty_box"))return x;VR=r||{};VC=c||{};
   nav.insertAdjacentHTML("beforebegin",`<div class="ty-box" id="ty_box"></div>`);tyPaint();
   const b=document.getElementById("ty_box");b.addEventListener("toggle",e=>{FOLD=!e.target.open;try{localStorage.setItem("oc_tyfold",FOLD?"1":"0")}catch(_){}},true);
-  document.getElementById("cedit").addEventListener("change",e=>{if(e.target.matches&&e.target.matches("#c_v_voucher,#c_v_heating,#c_v_income"))tyPaint()});
+  document.getElementById("cedit").addEventListener("change",e=>{if(e.target.matches&&e.target.matches("#c_v_voucher,#c_v_heating,#c_v_income,#c_v_env"))tyPaint()});
  }catch(e){console.error(e)}return x}}
 {const st=document.createElement("style");st.textContent=`.ty-box{margin:0 0 12px;padding:14px;border-radius:14px;border:1.5px solid var(--pri);background:color-mix(in srgb,var(--pri) 6%,transparent)}
 .ty-box .ty-k{font-size:12.5px;color:var(--mute);font-weight:700}.ty-box .ty-t{font-size:18px;font-weight:800;margin:2px 0 6px}.ty-box p{margin:0;font-size:13px;color:var(--mute);line-height:1.55}.ty-box p.ty-w{margin-top:6px;color:#b8620e}
