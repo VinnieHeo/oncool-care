@@ -12,7 +12,7 @@ const HELP={
  resident:[["세대 구성원 확인용 서류"],["발급한 지 3개월 이내","w"]],
  income:[["아래 순서대로 해당하는 서류 1종 제출","h"],["① 기초생활 수급자증명서 · 수급자","d"],["② 에너지바우처 결정통지서 · 바우처 수급 가구","d"],["③ 건강보험료 납부확인서 (최근 3개월) · 수급자가 아닌 경우","d"],["바우처가 없는 수급자는 ①과 ③ 함께 제출","w"],["외국인은 소득금액증명원 또는 근로소득 원천징수 영수증"],["발급한 지 3개월 이내","w"]],
  hifam:[["가족이 건강보험료를 대신 납부하는 경우에만 제출","h"],["건강보험 자격확인서","d"],["가족관계증명서","d"]],
- voucher:[["바우처를 받는 가구만 제출","h"],["2026년 에너지이용권 결정통지서","d"],["통지서가 없으면 주소지 행정복지센터에서 다시 발급받아 주십시오"],["소득 증빙에 결정통지서를 올린 경우 생략 가능"],["작년(2025년) 바우처를 다 쓴 가구는 따로 올릴 서류가 없습니다","w"],["대상자가 ☎ 1600-3190에 전화하고 담당자가 함께 들으며 2025년 잔액 1만 원 이하를 확인합니다"],["확인한 뒤 아래 ‘함께 들으며 확인하였습니다’에 체크해 주십시오"],["확인 결과는 복지관이 확인서(별첨 2)에 직인을 찍어 증빙으로 제출합니다"],["3유형은 결정통지서 또는 바우처 대상 증빙 서류"],["바우처 사용이 어려운 가구는 현장 사진 또는 메모 첨부"]],
+ voucher:[["바우처를 받는 가구만 제출","h"],["2026년 에너지이용권 결정통지서","d"],["통지서가 없으면 주소지 행정복지센터에서 다시 발급받아 주세요"],["소득 증빙에 결정통지서를 올린 경우 생략 가능"],["작년(2025년) 바우처를 다 쓴 가구는 따로 올릴 서류가 없습니다","w"],["대상자가 ☎ 1600-3190에 전화하고 담당자가 함께 들으며 2025년 잔액 1만 원 이하를 확인합니다"],["확인한 뒤 아래 ‘함께 들으며 확인하였습니다’에 체크해 주세요"],["확인 결과는 복지관이 확인서(별첨 2)에 직인을 찍어 증빙으로 제출합니다"],["3유형은 결정통지서 또는 바우처 대상 증빙 서류"],["바우처 사용이 어려운 가구는 현장 사진 또는 메모 첨부"]],
  bank:[["대상자 본인 명의 통장","h"],["계좌번호가 보이는 첫 장 촬영"],["세대주가 아니어도 대상자 본인 명의 필수"],["냉·난방비 지급 계좌","w"]],
  etc:[["집 안 사진, 난방기구 사진"],["도시가스 미공급 가구는 근거 사진"],["개인 메신저로 보내지 말고 이 화면에서 업로드","w"]],
  consent_own:[["상담 기록·서류 보관을 위한 동의"],["복지관 양식"]],
@@ -59,7 +59,7 @@ function refresh(){document.querySelectorAll(".wz-pane .doc").forEach(paint);
 const bar=(a,b)=>`<div class="wz-cnt"><b>필수 ${a}/${b} 완료</b><i><u style="width:${b?a/b*100:0}%"></u></i></div>`;
 function review(){const r=$("#wz_rev");if(!r)return;
   const m=missing(),bt=$(".wz-tell"),ms=$("#wz_miss"),af=$(".wz-after"),mode=(CC&&CC.visit_mode)||"추천자",done=CC&&CC.w_done_at;
-  if(done){{const pv=$("#wz_prev"),cm=$("#c_msg");if(pv)pv.hidden=true;if(cm)cm.style.display="none"}bt.disabled=true;bt.textContent="제출 완료 · 복지관 확인 중";ms.innerHTML="";af.hidden=false;af.innerHTML=origBox()+'<p class="wz-fix">수정이 필요한 경우 복지관 담당자에게 문의해 주십시오.</p>'}
+  if(done){{const pv=$("#wz_prev"),cm=$("#c_msg");if(pv)pv.hidden=true;if(cm)cm.style.display="none"}bt.disabled=true;bt.textContent="제출 완료 · 복지관 확인 중";ms.innerHTML="";af.hidden=false;af.innerHTML=origBox()+'<p class="wz-fix">수정이 필요한 경우 복지관 담당자에게 문의해 주세요.</p>'}
   else if(mode==="복지관"&&!window.__asVisitor){bt.hidden=true;ms.innerHTML='<p class="wz-ok">복지관 방문 가구는 제출하지 않아도 됩니다.<br>확인된 내용만 입력해 주세요.</p>'}
   else{{const pv=$("#wz_prev");if(pv&&cur===5)pv.hidden=false}bt.hidden=false;bt.disabled=!!m.length;bt.textContent="제출하기";af.hidden=true;ms.innerHTML=m.length?`<div class="wz-miss"><b>누락된 필수 항목 ${m.length}개</b>${m.map(([k,l,st])=>`<button type="button" data-go="${st}">${l}<span>${st===2?"3단계":"4단계"} ›</span></button>`).join("")}</div>`:'<p class="wz-ok">✓ 필수 서류와 서명이 모두 확인되었습니다.<br>제출할 수 있습니다.</p>'}
   {const nx=$("#wz_next");if(nx&&cur===5){nx.disabled=!!(bt.disabled||bt.hidden);nx.textContent=bt.hidden?"제출 대상 아님":bt.textContent}}
