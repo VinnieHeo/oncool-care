@@ -77,4 +77,4 @@ function hook(rpcS,tok,getCases,getRows){RPC=rpcS;TOK=tok;
       const R={};getRows().forEach(x=>R[x.id]=x);const list=getCases().filter(c=>f?c.stage===f:["서류완비","위원회상정"].includes(c.stage)).sort((a,b)=>(a.household_code||"~").localeCompare(b.household_code||"~")||((R[a.referral_id]||{}).receipt_no-(R[b.referral_id]||{}).receipt_no)).map(c=>[c,R[c.referral_id]||{}]);
       if(!list.length){alert(f?`‘${f}’ 단계 가구가 없어요.`:"‘서류완비’·‘위원회상정’ 단계 가구가 없어요. 위에서 단계를 골라 주세요.");return}
       const w=window.open("","_blank");if(!w){alert("팝업이 막혀 있어요. 팝업을 허용해 주세요.");return}build(list,w)}}}
-return {hook,summary}})();
+return {hook,summary,CSS,SIGNED}})();
