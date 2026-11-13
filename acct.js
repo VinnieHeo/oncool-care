@@ -4,7 +4,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const $=id=>document.getElementById(id);
 const BANKS=["NH농협은행","지역농축협","KB국민은행","신한은행","우리은행","하나은행","IBK기업은행","SC제일은행","한국씨티은행","KDB산업은행","수협은행","새마을금고","신협","우체국","카카오뱅크","토스뱅크","케이뱅크","부산은행","경남은행","대구은행(iM뱅크)","광주은행","전북은행","제주은행","산림조합","저축은행"];
 const KEY=[[/농축협|지역농협|단위농협/,"지역농축협"],[/농협|NH/i,"NH농협은행"],[/국민|KB/i,"KB국민은행"],[/신한/,"신한은행"],[/우리/,"우리은행"],[/하나|KEB/i,"하나은행"],[/기업|IBK/i,"IBK기업은행"],[/제일|SC/,"SC제일은행"],[/씨티|citi/i,"한국씨티은행"],[/산업|KDB/i,"KDB산업은행"],[/수협/,"수협은행"],[/새마을|MG/,"새마을금고"],[/신협/,"신협"],[/우체국|우정/,"우체국"],[/카카오/,"카카오뱅크"],[/토스/,"토스뱅크"],[/케이뱅크|K\s?bank/i,"케이뱅크"],[/부산/,"부산은행"],[/경남/,"경남은행"],[/대구|iM/i,"대구은행(iM뱅크)"],[/광주/,"광주은행"],[/전북/,"전북은행"],[/제주/,"제주은행"],[/산림/,"산림조합"],[/저축/,"저축은행"]];
-let B=null,W=false,CUR=null,REF=null,LIB=null,ST="",BASE=null,RPC=null,TOK=null;
+let B=null,W=false,CUR=null,REF=null,LIB=null,ST="",BASE=null,RPC=null,TOK=null,KIND="본인";
 {const _i=CSE.init;CSE.init=function(b){B=b;W=!!(b&&b.worker);return _i.apply(this,arguments)}}
 function parse(t){const L=String(t||"").split(/\n/).map(s=>s.trim()).filter(Boolean);let bank="";
   for(const l of L){for(const [re,n] of KEY){if(re.test(l)){bank=n;break}}if(bank)break}
@@ -25,25 +25,37 @@ async function readPhoto(cid){const fs=await B.list(cid,"bank");const f=(fs||[])
 function boxHTML(a,name){a=a||{};
   return `<div class="ac-box" id="c_acct"><b>🔍 통장 계좌 정보</b><p>통장 사진을 올리면 자동으로 읽습니다.<br>통장과 같은지 확인하고, 틀리면 고쳐 주세요.</p>
    <p class="ac-st" id="ac_st"></p>
+   <div class="ac-kind" id="ac_kind">${[["본인","대상자 본인 통장"],["세대원","같이 사는 가족 통장"],["현금","현금 지급"]].map(([k,l])=>`<button type="button" data-ak="${k}">${l}</button>`).join("")}</div>
+   <label id="ac_relw" hidden>통장 주인과 대상자의 관계<input id="ac_rel" maxlength="10" autocomplete="off" placeholder="예) 아들, 배우자" value="${esc(a.rel||"")}"></label>
+   <p class="ac-note" id="ac_note" hidden></p>
+   <div class="ac-f" id="ac_f">
    <label>은행<select id="ac_bank"><option value="">선택</option>${BANKS.map(b=>`<option${b===a.bank?" selected":""}>${b}</option>`).join("")}${a.bank&&!BANKS.includes(a.bank)?`<option selected>${esc(a.bank)}</option>`:""}</select></label>
    <label>계좌번호<input id="ac_no" inputmode="numeric" maxlength="25" autocomplete="off" placeholder="숫자와 - 만 입력" value="${esc(a.no||"")}"></label>
    <label>예금주<input id="ac_holder" maxlength="20" autocomplete="off" value="${esc(a.holder||"")}"></label>
-   <p class="ac-warn" id="ac_warn" hidden></p>
+   <p class="ac-warn" id="ac_warn" hidden></p></div>
    <div class="ac-btns"><button type="button" class="sbtn pri" id="ac_ok">맞습니다</button><button type="button" class="sbtn" id="ac_read">사진에서 읽기</button></div><p class="ac-msg" id="ac_msg"></p></div>`}
 const cur=()=>({bank:$("ac_bank").value,no:$("ac_no").value.replace(/[^0-9-]/g,""),holder:$("ac_holder").value.trim()});
 const same=(a,b)=>a&&b&&a.bank===b.bank&&a.no===b.no&&a.holder===b.holder;
 function paintSt(){const e=$("ac_st");if(!e)return;e.textContent=ST?`상태: ${ST}${ST==="읽기만 됨"?" · 확인이 필요합니다":""}`:"";e.className="ac-st"+(ST==="읽기만 됨"?" need":ST?" ok":"")}
+/* 11/13 협회 질의응답: 압류방지 통장이면 같이 사는 직계가족(세대원) 통장 · 그것도 안 되면 현금 + 매번 현금지급 사유서 */
+const NOTE={세대원:"압류방지 통장이라 대상자 통장으로 못 받을 때만 골라 주세요.<br>같이 사는 직계가족(세대원) 명의여야 해요.<br>등본에 같이 올라 있는지 확인해 주세요.",
+  현금:"가족 통장으로도 안 될 때만 골라 주세요.<br>복지관이 현금으로 드리고, 드릴 때마다 현금지급 사유서를 받아요.<br>압류방지가 풀리면 계좌이체로 바꿔 주세요.<br>통장 사본은 올리지 않아도 돼요."};
+function paintKind(){const k=KIND||"본인";document.querySelectorAll("#ac_kind [data-ak]").forEach(b=>b.classList.toggle("on",b.dataset.ak===k));
+  $("ac_relw").hidden=k!=="세대원";$("ac_f").hidden=k==="현금";$("ac_ok").hidden=k==="현금";$("ac_read").hidden=k==="현금";const n=$("ac_note");n.hidden=k==="본인";n.innerHTML=NOTE[k]||""}
 function warn(){const w=$("ac_warn"),h=$("ac_holder").value.replace(/\s/g,""),n=String(REF.elder_name||"").replace(/\s/g,"");
+  if(KIND!=="본인"){w.hidden=true;return}
   w.hidden=!(h&&n&&h!==n);w.textContent=`예금주가 대상자(${REF.elder_name||""})와 다릅니다. 대상자 본인 명의 통장인지 확인해 주세요.`}
 /* 저장할 값: 칸이 비어 있으면 아무것도 보내지 않음(기존 값 유지) */
-function val(){if(!$("ac_bank"))return null;const v=cur();if(!v.bank&&!v.no&&!v.holder)return null;return Object.assign(v,{st:ST||"읽기만 됨"})}
+function val(){if(!$("ac_bank"))return null;if(KIND==="현금")return {kind:"현금",st:ST&&ST!=="읽기만 됨"?ST:(W?"현장 확인":"직원 확인")};const v=cur();if(!v.bank&&!v.no&&!v.holder&&KIND==="본인")return null;return Object.assign(v,{st:ST||"읽기만 됨",kind:KIND,rel:KIND==="세대원"?$("ac_rel").value.trim():""})}
 function setVals(a){if(a.bank){if(![...$("ac_bank").options].some(o=>o.value===a.bank))$("ac_bank").insertAdjacentHTML("beforeend",`<option>${esc(a.bank)}</option>`);$("ac_bank").value=a.bank}if(a.no)$("ac_no").value=a.no;if(a.holder)$("ac_holder").value=a.holder}
 function mount(c,r){CUR=c;REF=r||{};const d=document.querySelector('#cedit [data-doc="bank"]');if(!d||$("c_acct"))return;
   d.insertAdjacentHTML("beforeend",boxHTML(c.acct,REF.elder_name));
-  ST=(c.acct&&c.acct.st)||"";BASE=c.acct&&c.acct.no?cur():null;paintSt();warn();
+  ST=(c.acct&&c.acct.st)||"";KIND=(c.acct&&c.acct.kind)||"본인";BASE=c.acct&&c.acct.no?cur():null;paintKind();paintSt();warn();
+  $("ac_kind").onclick=e=>{const b=e.target.closest("[data-ak]");if(!b)return;KIND=b.dataset.ak;ST=W?"현장 확인":"직원 수정";paintKind();paintSt();warn();
+    if(KIND==="현금"){const g=document.querySelector('[data-got="bank"]');if(g&&!g.checked){g.checked=true;g.dispatchEvent(new Event("change",{bubbles:true}))}}const s=$("c_msg");if(s)s.textContent="저장되지 않음"};
   const box=$("c_acct"),msg=$("ac_msg"),cid=c.id;
   /* 직원 화면: 계좌는 목록에서 빠져 있으므로 따로 불러옴 */
-  if(!W&&RPC&&!c.acct)RPC("oncool_ed_accts",{p_token:TOK()}).then(m=>{const a=m&&m[cid];if(!a||!CUR||CUR.id!==cid||!$("ac_bank"))return;CUR.acct=a;if(!val()){setVals(a);ST=a.st||"";BASE=cur();paintSt();warn()}}).catch(()=>{});
+  if(!W&&RPC&&!c.acct)RPC("oncool_ed_accts",{p_token:TOK()}).then(m=>{const a=m&&m[cid];if(!a||!CUR||CUR.id!==cid||!$("ac_bank"))return;CUR.acct=a;if(!val()||KIND==="본인"){setVals(a);ST=a.st||"";KIND=a.kind||"본인";if(a.rel)$("ac_rel").value=a.rel;BASE=cur();paintKind();paintSt();warn()}}).catch(()=>{});
   box.addEventListener("input",()=>{ST=W?"현장 확인":"직원 수정";paintSt();warn()});
   const read=async()=>{const b=$("ac_read");b.disabled=true;msg.textContent=window.Tesseract?"계좌번호 읽는 중… 조금 걸릴 수 있어요. 다음 서류를 계속 올려 주세요.":"처음 한 번만 준비 중이에요. 와이파이에서 더 빨라요. 다음 서류를 계속 올려 주세요.";
     try{const a=await readPhoto(cid);if(!CUR||CUR.id!==cid)return;setVals(a);ST="읽기만 됨";BASE=cur();paintSt();warn();
@@ -59,7 +71,7 @@ function mount(c,r){CUR=c;REF=r||{};const d=document.querySelector('#cedit [data
 const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,arguments);try{mount(c,r)}catch(e){console.error(e)}return x};
 {const st=document.createElement("style");st.textContent=`.ac-box{margin-top:10px;padding:12px;border:1.5px solid var(--pri);border-radius:12px;background:color-mix(in srgb,var(--pri) 6%,transparent);display:flex;flex-direction:column;gap:8px}
 .ac-box>b{font-size:14px}.ac-box p{margin:0;font-size:12.5px;color:var(--mute);line-height:1.55}.ac-box label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;font-weight:700;color:var(--mute)}.ac-box input,.ac-box select{font:inherit;font-size:15px;color:var(--ink)}
-.ac-box .ac-warn{color:#c0392b;font-weight:700}.ac-box .ac-st:empty{display:none}.ac-box .ac-st.ok{color:#127a4c;font-weight:700}.ac-box .ac-st.need{color:#b8620e;font-weight:700}.ac-btns{display:flex;gap:6px}.ac-btns .sbtn{flex:1}.ac-box .ac-msg{color:var(--pri);font-weight:600}.ac-box .ac-msg:empty{display:none}`;document.head.appendChild(st)}
+.ac-box .ac-warn{color:#c0392b;font-weight:700}.ac-box .ac-st:empty{display:none}.ac-box .ac-st.ok{color:#127a4c;font-weight:700}.ac-box .ac-st.need{color:#b8620e;font-weight:700}.ac-btns{display:flex;gap:6px}.ac-btns .sbtn{flex:1}.ac-box .ac-msg{color:var(--pri);font-weight:600}.ac-box .ac-msg:empty{display:none}.ac-f{display:flex;flex-direction:column;gap:8px}.ac-kind{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.ac-kind button{font:inherit;font-size:13px;font-weight:700;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 4px;cursor:pointer}.ac-kind button.on{background:var(--pri);border-color:var(--pri);color:#fff}.ac-box .ac-note{background:color-mix(in srgb,#c25a12 10%,transparent);color:#7a3608;border-radius:9px;padding:8px 10px;font-size:12.5px}`;document.head.appendChild(st)}
 const mask=n=>{n=String(n||"");const d=n.replace(/\D/g,"");if(d.length<5)return n;let k=0;const keep=d.length-4;return n.replace(/\d/g,ch=>k++<keep?"*":ch)};
 function hook(rpc,tok){RPC=rpc;TOK=tok}
 return {val,parse,mask,hook}})();
