@@ -130,9 +130,9 @@ const EFF=["단열·창호 (뽁뽁이·문풍지)","고효율 LED 조명 교체"
 const effHint=r=>{const L=[];if(r&&r.heater_broken==="예")L.push("난방기구 고장");((r&&r.housing_risk)||[]).forEach(x=>L.push(x));return L.length?`<p class="eff-hint" style="margin:0 0 8px;font-size:13px;color:var(--mute);line-height:1.55">추천서에 적힌 내용: ${CS.esc(L.join(", "))}<br>현장에서 확인하고 필요한 항목을 골라 주세요.</p>`:""};
 const effHas=(L,x)=>(L||[]).includes(x)||(x===EFF[0]&&(L||[]).includes("방풍·단열 물품"));
 /* 2유형: 2025년 바우처 소진은 서류가 없어 1600-3190 공동 청취로 확인 → 복지관이 별첨 2 작성 (협회 확인 11/12) */
-const VC_ON=v=>["받았는데 다 씀","모름"].includes(v);
+const VC_ON=v=>!!v&&v!=="안 받음";
 function vcallHTML(c,r){const v=c.vcall||{},e=CS.esc,show=v.ok||VC_ON(c.v_voucher||(r||{}).voucher);
-  return `<div class="vcall" id="c_vcall"${show?"":" hidden"}><b>2025년 바우처 소진 확인 (2유형)</b><p>2025년 사용 내역은 따로 발급되는 서류가 없습니다.<br>대상자가 에너지바우처 콜센터(1600-3190)에 전화하고 담당자가 함께 들어 주세요.</p>
+  return `<div class="vcall" id="c_vcall"${show?"":" hidden"}><b>2025년 바우처 소진 확인 (2유형)</b><p>2025년 사용 내역은 따로 발급되는 서류가 없습니다.<br>대상자가 에너지바우처 콜센터(1600-3190)에 전화하고 담당자가 함께 들어 주세요.<br>잔액이 1만 원을 넘으면 체크하지 말고 결과에 ‘1만 원 초과’를 골라 주세요.</p>
    <label class="vc-ck"><input type="checkbox" id="c_vc_ok"${v.ok?" checked":""}> 함께 들으며 2025년 잔액이 1만 원 이하임을 확인하였습니다.</label>
    <div class="cs-row2"><label>확인일<input type="date" id="c_vc_date" value="${e(v.date||"")}"></label><label>2025년 잔액 (들은 금액)<input type="text" id="c_vc_bal" maxlength="20" placeholder="예) 3,200원" value="${e(v.bal||"")}"></label></div>
    <div class="cs-row2"><label>함께 들은 사람<input type="text" id="c_vc_who" maxlength="30" placeholder="이름" value="${e(v.who||"")}"></label><label>결과<select id="c_vc_res">${opt(["","소진 확인","1만 원 초과","조회 안 됨"],v.res||"")}</select></label></div></div>`}
@@ -169,7 +169,7 @@ function openCase(c,r){curCase=c;r=r||{};curRef=r;const e=CS.esc,d=c.docs||{};
    <div class="cs-card"${B.worker?" hidden":""}><h3>확인한 세대·소득 <small style="font-weight:400;color:var(--mute)">(추천 내용에서 가져옴, 확인 후 고치기)</small></h3>
      <div class="cs-row2"><label>세대주 본인<select id="c_v_is_head">${opt(["","예","아니오"],c.v_is_head)}</select></label><label>가구원 수 (등본)<input type="number" min="1" max="20" id="c_v_household_size" value="${e(c.v_household_size||"")}"></label></div>
      <div class="cs-row2"><label>세대주 성함<input type="text" id="c_v_head_name" maxlength="30" value="${e(c.v_head_name||"")}"></label><label>세대주 생년월일<input type="text" id="c_v_head_birth" maxlength="6" value="${e(c.v_head_birth||"")}"></label></div>
-     <div class="cs-row2"><label>소득 구분<select id="c_v_income">${opt(["","기초생활수급자","차상위","저소득(건보료 기준)","기준 초과"],c.v_income)}</select></label><label>에너지바우처<select id="c_v_voucher">${opt2([["",""],["안 받음","안 받음"],["받았는데 다 씀","받았는데 다 씀 (2025 잔액 1만원 이하)"],["받는 중","받는 중"]],c.v_voucher||"")}</select></label></div>
+     <div class="cs-row2"><label>소득 구분<select id="c_v_income">${opt(["","기초생활수급자","차상위","저소득(건보료 기준)","기준 초과"],c.v_income)}</select></label><label>에너지바우처<select id="c_v_voucher">${opt2([["",""],["안 받음","안 받음"],["받았는데 다 씀","작년에 받아 다 씀 (올해도 받음)"],["받는 중","받는 중 (올해 처음·작년 남음)"]],c.v_voucher||"")}</select></label></div>
      <label>바우처 대상 세대원 <small style="font-weight:400;color:var(--mute)">노인·영유아·장애인·임산부·중증/희귀/중증난치질환자·한부모·소년소녀가정·다자녀 (수급자면 바우처 대상)</small><select id="c_v_voucher_target">${opt(["","있음","없음"],c.v_voucher_target)}</select></label>
      ${r.voucher_reason?`<p class="dv-sub" style="margin:0">추천 시 적은 바우처 미신청 사유: <b>${e(r.voucher_reason)}</b></p>`:""}<label>바우처를 쓸 수 없는 사유 <small style="font-weight:400;color:var(--mute)">3유형은 이 사유가 꼭 있어야 해요 · 근거 사진·메모를 남겨 주세요</small><select id="c_v_env">${opt(["",...CS.ENV],c.v_env)}</select></label>
      <div class="cs-row2"><label>난방 방식<select id="c_v_heating">${opt(["","도시가스","기름(등유) 보일러","LPG","연탄","전기","기타"],c.v_heating)}</select></label><label>본인 명의 통장<select id="c_v_account">${opt(["","있음","없음","압류 우려"],c.v_account)}</select></label></div></div>
