@@ -2,17 +2,17 @@
 window.CS=(function(){
   const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const DOCS=[
-    {k:"resident",l:"주민등록등본",dated:1,req:1,h:"세대주·가구원 확인 · 발급 3개월 이내"},
-    {k:"income",l:"소득 증빙",dated:1,req:"t14",h:"1유형: 건강보험료 납부확인서(최근 3개월), 의료급여 수급자는 수급자증명서(협회 확인 11/12) · 4유형: 건보료 납부확인서 또는 수급자증명서 · 2·3유형은 에너지이용권 지급 결정 통지서가 대신합니다 · 발급 3개월 이내 · 외국인은 소득금액증명원/근로소득 원천징수 영수증 · 근거: 매뉴얼 1장"},
-    {k:"hifam",l:"건보 자격확인서 + 가족관계증명서",dated:1,req:0,h:"가족이 건강보험료를 내는 경우만 · 납부자의 자격확인(통보)서 인원으로 가구원 수 산정"},
-    {k:"voucher",l:"에너지바우처 확인",dated:0,req:"t23",h:"2유형: 2026년 에너지이용권 지급 결정 통지서(행정복지센터에서 이 이름으로 재발급) · 2025년 소진(잔액 1만 원 이하)은 따로 나오는 서류가 없어 대상자가 1600-3190에 전화하고 담당자가 함께 듣고 확인 → 확인서(별첨 2)에 직인을 찍어 증빙으로 제출(협회 확인 11/12) · 3유형: 에너지이용권 지급 결정 통지서, 또는 수급자증명서 + 바우처 대상 증빙, 그리고 바우처를 쓰기 어려운 환경 확인(사진·상담 메모) · 근거: 공고문 2쪽, 안내문 1쪽"},
-    {k:"confirm",l:"유형별 확인서 (협회 별첨 2·3·4)",dated:0,req:"t234",h:"복지관이 작성·직인 · 2유형 별첨 2(전년도 바우처 소진 조회) · 3유형 별첨 3(사각지대 거주) · 4유형 별첨 4(인프라 취약지역 거주) · 협회 시스템에 증빙으로 등록"},
-    {k:"bank",l:"대상자 본인 명의 통장 사본",dated:0,req:"t123",h:"세대주가 아니어도 대상자 본인 명의 · 4유형은 연료를 직접 구매·배송해서 필요 없습니다 · 근거: 매뉴얼 3장"},
-    {k:"consent_own",l:"개인정보 동의서 (복지관 자체 · 온앤쿨 시스템)",dated:1,req:1,h:"가정방문 때 서면으로 받기 · 이 시스템에 기록·증빙을 올리기 전에 필요 · 민감정보(건강·장애)는 별도 동의란 · 원본은 복지관 보관"},
-    {k:"consent",l:"개인정보 수집·이용·제공 동의서 (협회 양식)",dated:0,req:1,h:"협회 시스템에 입력하기 전에 꼭 받아야 합니다 · 원본은 복지관 보관"},
+    {k:"resident",l:"주민등록등본",dated:1,req:1,h:"세대주·가구원 확인\n발급 3개월 이내"},
+    {k:"income",l:"소득 증빙",dated:1,req:"t14",h:"1유형: 건강보험료 납부확인서(최근 3개월)\n의료급여 수급자는 수급자증명서\n4유형: 건보료 납부확인서 또는 수급자증명서\n2·3유형: 에너지이용권 지급 결정 통지서로 대신\n외국인: 소득금액증명원 또는 근로소득 원천징수 영수증\n발급 3개월 이내"},
+    {k:"hifam",l:"건보 자격확인서 + 가족관계증명서",dated:1,req:0,h:"가족이 건강보험료를 내는 경우만\n납부자의 자격확인(통보)서 인원으로 가구원 수 산정"},
+    {k:"voucher",l:"에너지바우처 확인",dated:0,req:"t23",h:"2유형: 2026년 에너지이용권 지급 결정 통지서\n행정복지센터에서 이 이름으로 재발급을 요청해 주세요.\n2025년 소진은 서류가 없어 1600-3190에 함께 전화해 확인해 주세요.\n확인 결과는 확인서(별첨 2)에 직인을 찍어 제출해요.\n3유형: 에너지이용권 지급 결정 통지서 또는 바우처 대상 증빙\n바우처를 쓰기 어려운 환경은 사진·상담 메모로 남겨 주세요."},
+    {k:"confirm",l:"유형별 확인서 (협회 별첨 2·3·4)",dated:0,req:"t234",h:"복지관이 작성하고 직인을 찍어요.\n2유형 별첨 2 · 3유형 별첨 3 · 4유형 별첨 4\n협회 시스템에 증빙으로 등록해요."},
+    {k:"bank",l:"대상자 본인 명의 통장 사본",dated:0,req:"t123",h:"세대주가 아니어도 대상자 본인 명의\n4유형은 연료를 직접 사서 드려서 필요 없어요."},
+    {k:"consent_own",l:"개인정보 동의서 (복지관 자체 · 온앤쿨 시스템)",dated:1,req:1,h:"가정방문 때 받아 주세요.\n기록·증빙을 올리기 전에 필요해요.\n원본은 복지관 보관"},
+    {k:"consent",l:"개인정보 수집·이용·제공 동의서 (협회 양식)",dated:0,req:1,h:"협회 시스템에 입력하기 전에 꼭 받아 주세요.\n원본은 복지관 보관"},
     {k:"pledge",l:"용도 약정서",dated:0,req:1,h:"냉·난방비를 용도대로 쓰겠다는 약정"},
-    {k:"lease",l:"임대인 사용 보장 협약서",dated:0,req:0,h:"임대인·타인 소유 냉·난방기구를 수리할 때만 필수 (공고문 3쪽)"},
-    {k:"etc",l:"기타 서류·현장 사진",dated:0,req:0,h:"집 사진, 4유형 근거(도시가스 미공급 등) · 기관 기기로 촬영, 개인 메신저 전송 금지"}];
+    {k:"lease",l:"임대인 사용 보장 협약서",dated:0,req:0,h:"임대인·타인 소유 냉·난방기구를 수리할 때만 필수"},
+    {k:"etc",l:"기타 서류·현장 사진",dated:0,req:0,h:"집 사진, 4유형 근거(도시가스 미공급 등)\n기관 기기로 찍고, 개인 메신저로 보내지 말아 주세요."}];
   const STAGES=["조사중","업로드완료","보완중","서류완비","위원회상정","선정","보류","탈락"];
   const W={"1":[330000,470000,620000,800000],"2":[165000,235000,310000,400000],"3":[330000,470000,620000,800000],"4":[412500,587500,775000,1000000]};
   const MONTHS={11:["11/23","12/10","1/10","2/10"],12:["12/10","1/10","2/10"],1:["1/10","2/10"],2:["2/10"]};
@@ -180,7 +180,7 @@ function openCase(c,r){curCase=c;r=r||{};curRef=r;const e=CS.esc,d=c.docs||{};
    ${B.worker?"":'<div class="cs-card kw-card"><h3>협회 사이트 입력용 요약 <small style="font-weight:400;color:var(--mute)">(onandcool.or.kr 대상자 등록 순서)</small></h3><div id="c_kaswc"></div></div>'}
    <div class="cs-card" style="grid-column:1/-1"><h3>증빙 서류 <small style="font-weight:400;color:var(--mute)">‘찍어서 올리기’는 종이를 반듯하게 펴고 하얗게 보정해서 올립니다 (담당자 계정만)</small></h3>${B.worker?"":'<div class="pdfrow"><button type="button" class="upl" id="c_pdf">서류 전체 PDF로 받기</button><span id="c_pdfmsg" class="dv-empty"></span></div>'}
      <div class="doc-mas">${CS.DOCS.filter(x=>!(B.worker&&x.k==="confirm")).map(x=>{const v=d[x.k]||{};return `<div class="doc" data-doc="${x.k}"><div class="doc-top"><b>${x.l}${x.req===1?' <span class="dreq" style="color:var(--warm);font-size:12px">필수</span>':typeof x.req==="string"?` <span class="dreq" data-req="${x.req}" style="color:var(--amber);font-size:12px">${x.req.slice(1).split("").join("·")}유형 필수</span>`:""}</b>
-       <label><input type="checkbox" data-got="${x.k}"${v.got?" checked":""}> 받음</label></div>${x.h?`<small>${x.h}</small>`:""}
+       <label><input type="checkbox" data-got="${x.k}"${v.got?" checked":""}> 받음</label></div>${x.h?`<small style="white-space:pre-line;line-height:1.55">${x.h}</small>`:""}
        <div class="files" id="files-${x.k}"><span class="dv-empty">불러오는 중…</span></div>${x.k==="voucher"?vcallHTML(c,r):""}</div>`}).join("")}</div></div>
    <div class="cs-card"><h3>에너지 효율 개선</h3>${effHint(r)}<div class="cs-checks">${EFF.concat(EFF2).map(x=>`<label><input type="checkbox" data-eff="${x}"${effHas(c.eff_needs,x)?" checked":""}> ${x}</label>`).join("")}</div>
      <label class="eff-etc"${effHas(c.eff_needs,"기타")?"":" hidden"}>기타 필요 내역<input type="text" id="c_eff_etc" maxlength="100" placeholder="필요한 물품이나 수리 내용을 입력해 주세요" value="${e(c.eff_etc||"")}"></label>
