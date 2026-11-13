@@ -22,9 +22,9 @@ function defaults(c){const t=typeNo(c);return {case_id:c.id,season:"난방",mont
 function listHTML(L){const S={n:0,sum:0,paid:0,norc:0,nokw:0};
   const tr=L.map(([c,r])=>{const p=rec(c),a=due(c),t=typeNo(c);if(a){S.n++;S.sum+=a}if(p&&p.paid_on)S.paid++;if(p&&p.receipt!=="수취")S.norc++;if(p&&!p.kaswc_at)S.nokw++;
     return `<tr class="${sel===c.id?"on":""}" data-pc="${c.id}"><td>${esc(c.household_code||"")}</td><td><b>${esc(r.elder_name)}</b></td><td>${t?t+"유형":"유형 미정"} · ${esc(c.v_household_size||"?")}인</td><td>${a===null?'<span class="pw">유형·인원 필요</span>':a===0?'<span class="pm">대상 월 아님</span>':won(p&&p.amount!=null?p.amount:a)}</td>
-    <td>${p&&p.paid_on?esc(p.paid_on.slice(5).replace("-","/")):""}</td><td>${p?esc(p.method||""):""}</td><td>${t==="4"?'<span class="pm">필요 없음</span>':acM(c)}</td><td>${p?(p.receipt==="수취"?'<span class="pk">수취</span>':'<span class="pn">미수취</span>'):""}</td><td>${p?esc(p.energy||""):""}</td><td>${p?esc(p.usage||""):""}</td><td>${p?(p.kaswc_at?'<span class="pk">입력 완료</span>':'<span class="pw">입력 전</span>'):""}</td></tr>`}).join("");
+    <td>${p&&p.paid_on?esc(p.paid_on.slice(5).replace("-","/")):""}</td><td>${p?esc(p.method||""):""}</td><td>${t==="4"?'<span class="pm">필요 없음</span>':acM(c)}</td><td>${p?(p.receipt==="수취"?'<span class="pk">수취</span>':'<span class="pn">미수취</span>'):""}</td><td>${p?esc(p.energy||""):""}</td><td>${p?esc(p.usage||""):""}</td><td>${p?(p.kaswc_at?'<span class="pk">입력 완료</span>':'<span class="pw">입력 전</span>'):""}</td><td>${window.CHK?esc(CHK.forPay(c.id,TABS[tab][0])||""):""}</td></tr>`}).join("");
   return `<div class="py-sum"><div>대상 가구<b>${L.length}</b></div><div>이번 달 지급 예정<b>${won(S.sum)}</b></div><div>지급 기록<b class="pk">${S.paid}</b></div><div>수령증 미수취<b class="pn">${S.norc}</b></div><div>협회 입력 전<b class="pw">${S.nokw}</b></div></div>
-  ${L.length?`<div class="py-tw"><table class="py-t"><tr><th>가구코드</th><th>대상자</th><th>유형·인원</th><th>이번 달 금액</th><th>지급일</th><th>지급 방식</th><th>계좌</th><th>수령증</th><th>주 사용처</th><th>사용량</th><th>협회 입력</th></tr>${tr}</table></div>`:`<p class="py-e">${all?"표시할 가구가 없습니다.":"아직 ‘선정’ 단계인 가구가 없습니다. 사례판정 후 단계를 ‘선정’으로 바꾸면 여기에 나타납니다."}</p>`}`}
+  ${L.length?`<div class="py-tw"><table class="py-t"><tr><th>가구코드</th><th>대상자</th><th>유형·인원</th><th>이번 달 금액</th><th>지급일</th><th>지급 방식</th><th>계좌</th><th>수령증</th><th>주 사용처</th><th>사용량</th><th>협회 입력</th><th>온쿨체크</th></tr>${tr}</table></div>`:`<p class="py-e">${all?"표시할 가구가 없습니다.":"아직 ‘선정’ 단계인 가구가 없습니다. 사례판정 후 단계를 ‘선정’으로 바꾸면 여기에 나타납니다."}</p>`}`}
 function formHTML(c,r){const p=Object.assign(defaults(c),rec(c)||{});const rad=(n,L,v)=>L.map(x=>`<label><input type="radio" name="py_${n}" value="${esc(x)}"${x===v?" checked":""}> ${esc(x)}</label>`).join("");
   return `<div class="card py-f"><div class="py-fh"><b>${esc(c.household_code||"")} ${esc(r.elder_name)} · ${TABS[tab][1]} 기록</b><button type="button" class="sbtn" data-pclose>닫기</button></div>
   <div class="py-g"><span>지원 구분</span><div>난방</div>
@@ -78,7 +78,7 @@ function printRc(L){L=L.filter(([c])=>due(c));if(!L.length){alert("이번 달 �
   w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>수령증 ${TABS[tab][1]}</title><style>${RCSS}</style></head><body><div class="bar"><span>${L.length}가구 · ${TABS[tab][1]} 난방비 수령증</span><button onclick="print()">인쇄</button></div>${L.map(([c,r])=>rcPage(c,r)).join("")}</body></html>`);w.document.close()}
 async function save(p){const n=await R("oncool_ed_payment_save",{p_token:T(),p});const i=PAYS.findIndex(x=>x.id===n.id);if(i<0)PAYS.push(n);else PAYS[i]=n;return n}
 function show(on){const v=$("#vw-pay"),b=$("#vt-pay");if(!v)return;v.hidden=!on;b.setAttribute("aria-selected",on);
-  if(on){["#vt-ref","#vt-case","#vt-q"].forEach(s=>{const x=$(s);if(x)x.setAttribute("aria-selected",false)});["#vw-ref","#vw-case","#vw-q"].forEach(s=>{const x=$(s);if(x)x.hidden=true});msg="";paint();load().then(paint)}}
+  if(on){["#vt-ref","#vt-case","#vt-q"].forEach(s=>{const x=$(s);if(x)x.setAttribute("aria-selected",false)});["#vw-ref","#vw-case","#vw-q"].forEach(s=>{const x=$(s);if(x)x.hidden=true});msg="";paint();Promise.all([load(),window.CHK?CHK.ensure().catch(()=>{}):0]).then(paint)}}
 function setup(){if($("#vt-pay"))return;const tabs=document.querySelector(".vtabs");if(!tabs)return;
   const b=document.createElement("button");b.type="button";b.setAttribute("role","tab");b.id="vt-pay";b.setAttribute("aria-selected","false");b.textContent="선정 이후 기록";tabs.appendChild(b);
   const v=document.createElement("div");v.id="vw-pay";v.hidden=true;$("#vw-ref").after(v);
@@ -95,7 +95,7 @@ function setup(){if($("#vt-pay"))return;const tabs=document.querySelector(".vtab
     if(e.target.closest("[data-pcopy]")&&cur){const t=kwText(cur[0],formVal(cur[0]));try{await navigator.clipboard.writeText(t);msg="복사했습니다."}catch(_){msg="복사하지 못했습니다."}const m=e.target.parentNode.querySelector(".msg");if(m)m.textContent=msg;return}
     if(e.target.closest("[data-pcsv]")){csv(L);return}
     if(e.target.closest("[data-prcall]")){printRc(L);return}
-    if(e.target.closest("[data-pbulk]")){const todo=L.filter(([c])=>due(c)&&!rec(c));if(!todo.length){msg="새로 만들 기록이 없습니다.";paint();return}
+    if(e.target.closest("[data-pbulk]")){const todo=L.filter(([c])=>due(c)&&!rec(c)&&!(window.CHK&&CHK.forPay(c.id,TABS[tab][0])==="보류·재심"));if(!todo.length){msg="새로 만들 기록이 없습니다.";paint();return}
       e.target.disabled=true;let ok=0;for(const [c] of todo){try{await save(defaults(c));ok++}catch(_){}}msg=`${ok}가구의 ${TABS[tab][1]} 지급 기록을 만들었습니다. 지급일·수령증을 확인해 주세요.`;paint()}});
   const st=document.createElement("style");st.textContent=`
 #vw-pay{display:flex;flex-direction:column;gap:10px}.py-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
