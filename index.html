@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="oc-ver" content="2026-11-12y"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><script>(function(){var ua=navigator.userAgent||"";if(!/KAKAOTALK/i.test(ua))return;try{location.href="kakaotalk://web/openExternal?url="+encodeURIComponent(location.href)}catch(e){}document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.style.cssText="background:#fff4d6;color:#7a5200;font-size:14px;line-height:1.5;padding:10px 14px;text-align:center;border-bottom:1px solid #e8c770";d.innerHTML="카카오톡 안에서는 글자 입력이 안 될 수 있습니다.<br>오른쪽 위 <b>⋮</b> 또는 아래 <b>⋯</b> → <b>다른 브라우저로 열기</b>를 눌러 주세요.";document.body.insertBefore(d,document.body.firstChild)})})();</script>
+<html lang="ko"><head><meta charset="utf-8"><meta name="oc-ver" content="2026-11-12z"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><script>(function(){var ua=navigator.userAgent||"";if(!/KAKAOTALK/i.test(ua))return;try{location.href="kakaotalk://web/openExternal?url="+encodeURIComponent(location.href)}catch(e){}document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.style.cssText="background:#fff4d6;color:#7a5200;font-size:14px;line-height:1.5;padding:10px 14px;text-align:center;border-bottom:1px solid #e8c770";d.innerHTML="카카오톡 안에서는 글자 입력이 안 될 수 있습니다.<br>오른쪽 위 <b>⋮</b> 또는 아래 <b>⋯</b> → <b>다른 브라우저로 열기</b>를 눌러 주세요.";document.body.insertBefore(d,document.body.firstChild)})})();</script>
 <meta name="robots" content="noindex,nofollow">
 <title>온앤쿨케어 대상가구 추천</title>
 <meta property="og:type" content="website">
@@ -47,6 +47,15 @@
 #mine{display:flex;flex-direction:column;gap:8px}
 .wtodo{margin:12px 0 4px;border-radius:16px;padding:14px;background:var(--warm-soft);border:1px solid color-mix(in srgb,var(--warm) 35%,transparent)}
 .wtodo.m-복지관{background:var(--cool-soft);border-color:color-mix(in srgb,var(--pri) 30%,transparent)}
+.wprep{margin:10px 0 4px;background:var(--surface);border:1.5px solid var(--pri);border-radius:16px;padding:13px 14px}
+.wprep h4{margin:0 0 2px;font-size:15px}.wprep .ps{color:var(--mute);font-size:12px;margin:0 0 6px;line-height:1.55}
+.wprep .pp{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:1px 8px;background:var(--cool-soft);color:var(--pri);margin-left:4px;vertical-align:2px}.wprep .pp.n{background:color-mix(in srgb,var(--mute) 14%,transparent);color:var(--mute)}
+.wprep .pg{font-size:12px;font-weight:800;color:var(--pri);margin:10px 0 2px}
+.wprep ul{margin:0;padding:0;list-style:none}.wprep li{padding:6px 0;border-bottom:1px dashed color-mix(in srgb,var(--mute) 25%,transparent);line-height:1.5}.wprep li:last-child{border:0}
+.wprep li b{display:block;font-size:14px}.wprep li small{color:var(--mute);display:block;font-size:12px}
+.wprep li.mb b:after{content:" · 해당하면";font-weight:600;font-size:11px;color:#b07a00}
+.wprep .psg{background:var(--cool-soft);border-radius:10px;padding:8px 10px;margin-top:8px;font-size:12.5px;line-height:1.6}
+.wprep .pn{font-size:12px;color:var(--mute);margin:8px 0 0}
 .wt>b{display:block;font-size:17px;margin:6px 0 2px}.wt p{margin:0;font-size:13.5px;color:var(--ink)}
 .wtag{display:inline-block;font-size:11.5px;font-weight:800;color:#fff;background:var(--warm);border-radius:999px;padding:2px 9px}
 .m-복지관 .wtag{background:var(--pri)}.m-동행 .wtag{background:var(--violet)}
@@ -540,13 +549,31 @@ $("#golist").onclick=showList;
 document.addEventListener("click",async e=>{const b=e.target.closest("[data-hr]");if(!b)return;const id=b.dataset.hr;
   if($("#list").hidden)await showList();const r=MINE.find(x=>x.id===id);if(!r)return;const s=st(r);if(!s.c)return;
   CSE.open(s.c,Object.assign({worker_name:ME},r));todo(s.c);$("#cedit").scrollIntoView({block:"start"})});
-function todo(c){const old=$("#cedit .wtodo");if(old)old.remove();if(!["조사중","서류완비"].includes(c.stage))return;
+/* 방문 전에 떼어 갈 서류 (추천서 답으로 예상) */
+function prep(c){const r=MINE.find(x=>x.id===c.referral_id)||{};let p={t:""};try{if(window.PRED)p=PRED.predict(r)}catch(e){}
+  const t=p.t,inc=r.income||"",li=(n,d,m)=>`<li${m?' class="mb"':""}><b>${n}</b>${d?`<small>${d}</small>`:""}</li>`,g=(n,a)=>a.length?`<div class="pg">${n}</div><ul>${a.join("")}</ul>`:"";
+  const RES=li("주민등록등본","가구원 전원 · 3개월 이내 발급"),BANK="계좌번호가 나오는 첫 장",
+    SIGN=`<div class="psg">✍️ <b>동의서 2종 · 용도 약정서</b>는 종이로 챙기지 않아도 돼요.<br>방문 때 선생님 휴대폰에서 어르신이 전자서명하시면 됩니다.</div>`;
+  if(!t)return `<div class="wprep"><h4>방문 전에 떼어 갈 서류<span class="pp n">유형 확인 전</span></h4><p class="ps">아직 유형을 알 수 없어서 넉넉하게 적었어요.<br>해당하는 것만 떼어 가셔도 돼요.</p>
+${g("모든 가구",[RES])}${g("상황에 따라 하나",[li("기초생활 수급자증명서","수급자라면",1),li("건강보험료 납부확인서 (최근 3개월)","수급자가 아니라면",1),li("에너지이용권 지급 결정 통지서","바우처를 받는다면 · 2026년 것만 필요해요.",1)])}
+${g("집에서 찍기",[li("대상자 본인 명의 통장",BANK+"<br>등유·LPG·연탄 난방이면 필요 없어요.")])}${SIGN}</div>`;
+  const sup=inc==="기초생활수급자",A=[RES];
+  if(t==="1")A.push(sup?li("기초생활 수급자증명서",""):li("건강보험료 납부확인서","최근 3개월"));
+  else A.push(li(sup?"기초생활 수급자증명서":"건강보험료 납부확인서 (최근 3개월)",sup?"":"수급자라면 수급자증명서로 대신해요."));
+  if(t==="2"||t==="3")A.push(li("에너지이용권 지급 결정 통지서",t==="2"?"2026년 것만 필요해요.<br>2025년 것은 떼지 않아도 돼요.<br>행정복지센터에 이 이름으로 요청해 주세요.":"2026년 것만 필요해요.<br>행정복지센터에 이 이름으로 요청해 주세요."));
+  if(!sup)A.push(li("건강보험 자격확인서 + 가족관계증명서","가족 밑에 건강보험이 올라가 있는 경우",1));
+  const H=[];if(t!=="4")H.push(li("대상자 본인 명의 통장",BANK));else H.push(li("난방 연료 사진","보일러·기름통·LPG통처럼 연료가 보이게 찍어 주세요."));
+  const V=[];if(t==="2")V.push(li("2025년 바우처 다 썼는지 확인","서류는 없어요.<br>어르신이 1600-3190에 전화할 때 옆에서 같이 들어 주세요."));
+  if(t==="3")V.push(li("바우처를 쓰기 어려운 사정","현장 사진을 찍거나 상담 내용에 적어 주세요."));
+  return `<div class="wprep"><h4>방문 전에 떼어 갈 서류<span class="pp">예상 ${t}유형</span></h4><p class="ps">추천서 답을 보고 고른 목록이에요.<br>유형은 사례판정위원회에서 바뀔 수 있어요.</p>
+${g("행정복지센터에서 떼어 가기",A)}${g("집에서 찍기",H)}${g("방문해서 함께 하기",V)}${SIGN}<p class="pn">확인서(별첨)는 복지관이 만들어요.</p></div>`}
+function todo(c){const old=$("#cedit .wtodo");if(old)old.remove();const op=$("#cedit .wprep");if(op)op.remove();if(!["조사중","서류완비"].includes(c.stage))return;
   const ds=wds(c),mode=c.visit_mode||"추천자",[t,d]=MODE[mode],e=CS.esc,due=dueOf(c);
   const steps=[["방문 날짜 정하기",!!c.visit_date,md(c.visit_date)],["방문해서 상담 내용 적기",!!(c.visit_note||"").trim(),""],["서류 사진 올리기",ds.full,`${ds.ok}/${ds.need}`],["다 했다고 알리기",!!c.w_done_at,""]];
   const req=c.visit_req?`<p class="wreq">‘${e(c.visit_req)}’ 요청을 보냈습니다.<br>복지관이 확인하면 위 안내가 바뀝니다.</p>`:mode==="추천자"?`<details class="wask"><summary>방문이 어려우십니까?</summary><div class="wopts"><button type="button" class="sbtn" data-req="같이 가 주세요">같이 가 주세요</button><button type="button" class="sbtn" data-req="복지관이 대신 가 주세요">복지관이 대신 가 주세요</button></div></details>`:"";
   const el=document.createElement("div");el.className=`wtodo m-${mode}`;
   el.innerHTML=`<div class="wt"><span class="wtag">${mode==="복지관"?"복지관 방문":mode==="동행"?"동행 방문":"추천자 방문"}</span><b>${t}</b><p>${d}${mode!=="복지관"&&due?`<br>서류 마감은 <b>${due}</b>입니다.`:""}</p></div>${mode==="복지관"?"":`<ol class="wsteps">${steps.map(([n,ok,x],i)=>`<li class="${ok?"ok":""}"><i>${ok?"✓":i+1}</i><span>${n}</span>${x?`<small>${x}</small>`:""}</li>`).join("")}</ol><button type="button" class="btn wdone" ${c.w_done_at?"disabled":""}>${c.w_done_at?"제출 완료 · 복지관 확인 중":"방문·서류 완료"}</button><p class="wnote" hidden></p>`}${req}`;
-  const sub=$("#cedit .dv-sub");if(!sub)return;sub.after(el);const h=$("#cedit > .hint");if(h)h.remove();
+  const sub=$("#cedit .dv-sub");if(!sub)return;sub.after(el);if(!ds.full)el.insertAdjacentHTML("afterend",prep(c));const h=$("#cedit > .hint");if(h)h.remove();
   el.addEventListener("click",async x=>{const q=x.target.closest("[data-req]");
     if(q){q.disabled=true;try{const r=await rpc("oncool_w_visit_req",{p_token:TOKEN,p_case:c.id,p_req:q.dataset.req});Object.assign(c,r);todo(c)}catch(err){q.disabled=false;alert(/session/.test(err.message)?"다시 로그인해 주세요.":"요청을 보내지 못했습니다. 잠시 후 다시 시도해 주세요.")}return}
     const w=x.target.closest(".wdone");if(w&&!c.w_done_at){
