@@ -3,11 +3,11 @@ window.CS=(function(){
   const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const DOCS=[
     {k:"resident",l:"주민등록등본",dated:1,req:1,h:"세대주·가구원 확인\n발급 3개월 이내"},
-    {k:"income",l:"소득 증빙",dated:1,req:"t1234",h:"1유형: 건강보험료 납부확인서(최근 3개월)\n의료급여 수급자는 수급자증명서\n2·3·4유형: 건보료 납부확인서 또는 수급자증명서\n외국인: 소득금액증명원 또는 근로소득 원천징수 영수증\n발급 3개월 이내"},
-    {k:"hifam",l:"건보 자격확인서 + 가족관계증명서",dated:1,req:0,h:"가족이 건강보험료를 내는 경우만\n납부자의 자격확인(통보)서 인원으로 가구원 수 산정"},
-    {k:"voucher",l:"에너지바우처 확인",dated:0,req:"t23",h:"2유형: 2026년 에너지이용권 지급 결정 통지서\n행정복지센터에서 이 이름으로 재발급을 요청해 주세요.\n2025년 소진은 서류가 없어 1600-3190에 함께 전화해 확인해 주세요.\n확인 결과는 확인서(별첨 2)에 직인을 찍어 제출해요.\n3유형: 에너지이용권 지급 결정 통지서 또는 바우처 대상 증빙\n바우처를 쓰기 어려운 환경은 사진·상담 메모로 남겨 주세요."},
+    {k:"income",l:"소득 증빙",dated:1,req:"t1234",h:"1유형: 건강보험료 납부확인서(최근 3개월)\n의료급여 수급자는 수급자증명서\n2·3·4유형: 건보료 납부확인서 또는 수급자증명서\n건보료는 낸 돈이 아니라 ‘고지금액’으로 봐요.\n기초연금 받는 단독·부부 가구는 소득 기준을 채운 것으로 봐요.\n국가유공자(건보료 없음): 소득금액증명원 + 보훈급여금 지급 확인서\n외국인: 소득금액증명원 또는 근로소득 원천징수 영수증\n발급 3개월 이내"},
+    {k:"hifam",l:"건보 자격확인서 + 가족관계증명서",dated:1,req:0,h:"가족이 건강보험료를 내는 경우만\n소득은 납부자의 자격확인(통보)서 인원으로 판단해요.\n지원금은 실제로 같이 사는 인원으로 줘요."},
+    {k:"voucher",l:"에너지바우처 확인",dated:0,req:"t23",h:"2유형: 2026년 에너지이용권 지급 결정 통지서\n행정복지센터에서 이 이름으로 재발급을 요청해 주세요.\n2025년 소진은 서류가 없어 1600-3190에 함께 전화해 확인해 주세요.\n확인 결과는 확인서(별첨 2)에 직인을 찍어 제출해요.\n3유형: 에너지이용권 지급 결정 통지서 또는 바우처 대상 증빙\n바우처를 쓰기 어려운 환경은 사진·상담 메모로 남겨 주세요.\n통지서를 못 떼면 아래 화면 캡처도 돼요.\n에너지바우처 챗봇 대화, 누리집 잔액 조회, 행정복지센터 명단"},
     {k:"confirm",l:"유형별 확인서 (협회 별첨 2·3·4)",dated:0,req:"t234",h:"복지관이 작성하고 직인을 찍어요.\n2유형 별첨 2 · 3유형 별첨 3 · 4유형 별첨 4\n협회 시스템에 증빙으로 등록해요."},
-    {k:"bank",l:"대상자 본인 명의 통장 사본",dated:0,req:"t123",h:"세대주가 아니어도 대상자 본인 명의\n4유형은 연료를 직접 사서 드려서 필요 없어요."},
+    {k:"bank",l:"대상자 본인 명의 통장 사본",dated:0,req:"t123",h:"세대주가 아니어도 대상자 본인 명의\n압류방지 통장이면 같이 사는 직계가족 통장도 돼요.\n4유형은 연료를 직접 사서 드려서 필요 없어요."},
     {k:"consent_own",l:"개인정보 동의서 (복지관 자체 · 온앤쿨 시스템)",dated:1,req:1,h:"가정방문 때 받아 주세요.\n기록·증빙을 올리기 전에 필요해요.\n원본은 복지관 보관"},
     {k:"consent",l:"개인정보 수집·이용·제공 동의서 (협회 양식)",dated:0,req:1,h:"협회 시스템에 입력하기 전에 꼭 받아 주세요.\n원본은 복지관 보관"},
     {k:"pledge",l:"용도 약정서",dated:0,req:1,h:"냉·난방비를 용도대로 쓰겠다는 약정"},
@@ -26,11 +26,13 @@ window.CS=(function(){
   const ENV=["해당 없음","관리비에 포함해 냄","개별 난방기구만 씀(전기장판 등)","고시원·쪽방·원룸 등 일반 주거 아님","작년에 못 받았거나 못 씀","쓸 수 없어서 신청 안 함","기타 (메모에 적기)"];
   const isTarget=(v,inc,tg)=>v==="받는 중"||v==="받았는데 다 씀"||(inc==="기초생활수급자"&&tg==="있음");
   const hardEnv=env=>!!env&&env!=="해당 없음";
-  const typeFrom=(v,h,inc,tg,env)=>{if(FOUR.includes(h))return "4";if(v==="받았는데 다 씀")return "2";
+  /* 11/13 협회 질의응답: 바우처로 등유 등 연료를 사서 쓰면 3유형 · 사거나 옮기기 어려울 때만 4유형 */
+  const typeFrom=(v,h,inc,tg,env)=>{if(FOUR.includes(h)&&v!=="받는 중"&&v!=="받았는데 다 씀")return "4";if(v==="받았는데 다 씀")return "2";if(FOUR.includes(h))return "3";
     if(isTarget(v,inc,tg))return hardEnv(env)?"3":"";return v==="안 받음"?"1":""};
   const proposed=c=>{const v=c.v_voucher,inc=c.v_income,tg=c.v_voucher_target,env=c.v_env;
     const t=typeFrom(v,c.v_heating,inc,tg,env);
     if(t==="4")return "4유형 에너지 인프라 취약 (난방: "+c.v_heating+")";
+    if(FOUR.includes(c.v_heating))return t+"유형 "+TYPES[t]+" · 바우처로 "+c.v_heating.replace(" 보일러","")+"를 사서 쓰는 집이에요. 직접 사거나 옮기기 어려우면 위원회에서 4유형으로 정해 주세요";
     if(t)return t+"유형 "+TYPES[t]+(t==="1"&&inc==="기초생활수급자"&&!tg?" · 수급자라 바우처 대상 세대원이 있으면 1유형이 아닙니다":"");
     if(isTarget(v,inc,tg))return env==="해당 없음"?"바우처 대상인데 2·3유형 조건이 안 보입니다 (2025 소진 아님 · 사용 어려운 환경 아님) → 위원회 판단 필요":"바우처 대상입니다 → ‘바우처를 쓸 수 없는 사유’가 있으면 3유형, 없으면 이번 사업 대상이 아닙니다";
     return ""};
@@ -176,7 +178,8 @@ function openCase(c,r){curCase=c;r=r||{};curRef=r;const e=CS.esc,d=c.docs||{};
      <div class="cs-row2"><label>지원 기간 구분<select id="c_period">${opt(["동절기","하절기","동·하절기 전체"],c.period||"동절기")}</select></label><label>사업 참여 이력<select id="c_participation">${opt2([["신규 대상자","신규 (복지관 사례관리 대상 아님)"],["기존 대상자","기존 대상자 (연계)"]],c.participation||"신규 대상자")}</select></label></div>
      <div class="cs-row2"><label>에너지 돌봄단 발굴<select id="c_care_found">${opt2([["","선택"],["예","예 (돌봄단 발굴)"],["아니오","아니오 (기관 자체 발굴)"]],c.care_found||"")}</select></label><span></span></div></div>
    <div class="cs-card"${B.worker?" hidden":""}><h3>확인한 세대·소득 <small style="font-weight:400;color:var(--mute)">(추천 내용에서 가져옴, 확인 후 고치기)</small></h3>
-     <div class="cs-row2"><label>세대주 본인<select id="c_v_is_head">${opt(["","예","아니오"],c.v_is_head)}</select></label><label>가구원 수 (등본)<input type="number" min="1" max="20" id="c_v_household_size" value="${e(c.v_household_size||"")}"></label></div>
+     <div class="cs-row2"><label>세대주 본인<select id="c_v_is_head">${opt(["","예","아니오"],c.v_is_head)}</select></label><label>가구원 수 (실제로 같이 사는 사람 · 지원금 기준)<input type="number" min="1" max="20" id="c_v_household_size" value="${e(c.v_household_size||"")}"></label></div>
+     <div class="cs-row2"><label>소득 판단 인원 (가족 건보 피부양자일 때만)<input type="number" min="1" max="20" id="c_v_income_size" placeholder="납부자 자격확인서 인원" value="${e(c.v_income_size||"")}"></label><span></span></div>
      <div class="cs-row2"><label>세대주 성함<input type="text" id="c_v_head_name" maxlength="30" value="${e(c.v_head_name||"")}"></label><label>세대주 생년월일<input type="text" id="c_v_head_birth" maxlength="6" value="${e(c.v_head_birth||"")}"></label></div>
      <div class="cs-row2"><label>소득 구분<select id="c_v_income">${opt(["","기초생활수급자","차상위","저소득(건보료 기준)","기준 초과"],c.v_income)}</select></label><label>에너지바우처<select id="c_v_voucher">${opt2([["",""],["안 받음","안 받음"],["받았는데 다 씀","작년에 받아 다 씀 (올해도 받음)"],["받는 중","받는 중 (올해 처음·작년 남음)"]],c.v_voucher||"")}</select></label></div>
      <label>바우처 대상 세대원 <small style="font-weight:400;color:var(--mute)">노인·영유아·장애인·임산부·중증/희귀/중증난치질환자·한부모·소년소녀가정·다자녀 (수급자면 바우처 대상)</small><select id="c_v_voucher_target">${opt(["","있음","없음"],c.v_voucher_target)}</select></label>
@@ -225,7 +228,7 @@ function paintDocs(t){const ty=CS.typeOf(t);document.querySelectorAll("#cedit .d
 function formCase(){const c=curCase,g=id=>$("#c_"+id),docs={};
   CS.DOCS.forEach(x=>{const gb=document.querySelector(`[data-got="${x.k}"]`);if(!gb){docs[x.k]=(c.docs||{})[x.k]||{got:false,date:null};return}const got=gb.checked,dt=document.querySelector(`[data-date="${x.k}"]`);docs[x.k]={got,date:dt?(dt.value||null):(((c.docs||{})[x.k]||{}).date||null)}});
   return {visit_date:g("visit_date").value||null,visitor:g("visitor").value.trim()||null,visit_note:g("visit_note").value.trim()||null,
-    v_is_head:g("v_is_head").value||null,v_head_name:g("v_head_name").value.trim()||null,v_head_birth:g("v_head_birth").value.trim()||null,v_household_size:+g("v_household_size").value||null,
+    v_is_head:g("v_is_head").value||null,v_head_name:g("v_head_name").value.trim()||null,v_head_birth:g("v_head_birth").value.trim()||null,v_household_size:+g("v_household_size").value||null,v_income_size:+(g("v_income_size")||{}).value||null,
     v_income:g("v_income").value||null,v_voucher_target:g("v_voucher_target").value||null,v_env:g("v_env").value||null,v_gender:g("v_gender").value||null,v_birth:g("v_birth").value||null,period:g("period").value,participation:g("participation").value,care_found:g("care_found").value||null,v_voucher:g("v_voucher").value||null,v_heating:g("v_heating").value||null,v_account:g("v_account").value||null,
     type_final:g("type_final").value||null,start_month:+g("start_month").value,docs,vcall:vcallForm(),...(window.ACCT&&ACCT.val()?{acct:ACCT.val()}:{}),
     eff_needs:[...document.querySelectorAll("[data-eff]:checked")].map(x=>x.dataset.eff),eff_note:g("eff_note").value.trim()||null,eff_etc:(g("eff_etc")&&document.querySelector('[data-eff="기타"]:checked')?g("eff_etc").value.trim():"")||null,
