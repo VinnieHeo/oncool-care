@@ -16,9 +16,11 @@ function rows(){const M={};GR().forEach(x=>M[x.id]=x);
     .sort((a,b)=>(a[0].household_code||"~").localeCompare(b[0].household_code||"~")||(a[1].receipt_no-b[1].receipt_no))}
 function due(c){const a=CS.amounts(c);if(!a)return null;const x=a.list.find(([m])=>m===TABS[tab][2]);return x?x[1]:0}
 const rec=c=>PAYS.find(p=>p.case_id===c.id&&p.month===TABS[tab][0]&&p.season==="난방");
-let ACS={};const ac=c=>ACS[c.id]||null,acM=c=>{const a=ac(c);return a&&a.no?`${esc(a.bank||"")} ${esc(window.ACCT?ACCT.mask(a.no):"")}${a.st==="읽기만 됨"?' <span class="pw">확인 필요</span>':""}`:'<span class="pn">없음</span>'};
+let ACS={};const ac=c=>ACS[c.id]||null,acM=c=>{const a=ac(c);if(a&&a.kind==="현금")return '<span class="pw">현금 지급 · 사유서</span>';return a&&a.no?`${a.kind==="세대원"?"가족("+esc(a.rel||"세대원")+") ":""}${esc(a.bank||"")} ${esc(window.ACCT?ACCT.mask(a.no):"")}${a.st==="읽기만 됨"?' <span class="pw">확인 필요</span>':""}`:'<span class="pn">없음</span>'};
 async function load(){try{PAYS=await R("oncool_ed_payments",{p_token:T()})||[];ACS=await R("oncool_ed_accts",{p_token:T()})||{}}catch(x){msg="불러오지 못했습니다: "+x.message}}
-function defaults(c){const t=typeNo(c);return {case_id:c.id,season:"난방",month:TABS[tab][0],amount:due(c),paid_on:TABS[tab][3],method:t==="4"?"기타":"대상자 명의 계좌이체",receipt:"미수취",energy:engOf(c.v_heating)||"",usage:"",note:`${TABS[tab][1]}분 난방비 지급`,kaswc:false}}
+function defaults(c){const t=typeNo(c);/* 11/13 협회 질의응답: 11월 안에 선정되면 11월분을 12월에 소급 · 달이 지난 뒤 기록하면 다음 지급일·소급으로 채움 */
+  const a=ac(c)||{},end=new Date(+TABS[tab][0].slice(0,4),+TABS[tab][0].slice(5,7),0,23,59),late=new Date()>end&&TABS[tab+1],how=a.kind==="현금"?"현금 지급 (현금지급 사유서 첨부)":a.kind==="세대원"?`세대원(${a.rel||"가족"}) 명의 계좌이체`:"";
+  return {case_id:c.id,season:"난방",month:TABS[tab][0],amount:due(c),paid_on:late?TABS[tab+1][3]:TABS[tab][3],method:t==="4"||a.kind==="현금"||a.kind==="세대원"?"기타":"대상자 명의 계좌이체",receipt:"미수취",energy:engOf(c.v_heating)||"",usage:"",note:`${TABS[tab][1]}분 난방비 ${late?"소급 ":""}지급${how?" · "+how:""}`,kaswc:false}}
 function listHTML(L){const S={n:0,sum:0,paid:0,norc:0,nokw:0};
   const tr=L.map(([c,r])=>{const p=rec(c),a=due(c),t=typeNo(c);if(a){S.n++;S.sum+=a}if(p&&p.paid_on)S.paid++;if(p&&p.receipt!=="수취")S.norc++;if(p&&!p.kaswc_at)S.nokw++;
     return `<tr class="${sel===c.id?"on":""}" data-pc="${c.id}"><td>${esc(c.household_code||"")}</td><td><b>${esc(r.elder_name)}</b></td><td>${t?t+"유형":"유형 미정"} · ${esc(c.v_household_size||"?")}인</td><td>${a===null?'<span class="pw">유형·인원 필요</span>':a===0?'<span class="pm">대상 월 아님</span>':won(p&&p.amount!=null?p.amount:a)}</td>
