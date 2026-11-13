@@ -44,7 +44,7 @@ function formHTML(){const seg=(n,L,v)=>`<div class="ck-seg" data-seg="${n}">${L.
    <div class="ck-l">어디에 낸 돈인가요</div>${seg("use",USES,"")}
    <div class="ck-l">낸 금액</div><div class="ck-c" data-cc="amount"></div><input class="ck-in" data-ck="amount" inputmode="numeric" placeholder="예) 84300">
    <div class="ck-l">낸 날짜</div><div class="ck-c" data-cc="date"></div><input class="ck-in" type="date" data-ck="date">
-   <div class="ck-l">사용량 <small>있으면</small></div><div class="ck-c" data-cc="usage"></div><input class="ck-in" data-ck="usage" maxlength="40" placeholder="예) 310 kWh, 48 ㎥, 등유 1드럼">
+   <div class="ck-l">사용량 <small>있으면</small></div><div class="ck-c" data-cc="usage"></div><input class="ck-in" data-ck="usage" maxlength="40" placeholder="예) 310 kWh, 48 ㎥ · 등유는 대략 (20L 중 1/3)">
    <div class="ck-act"><button type="button" class="sbtn pri" data-cksave>저장</button><button type="button" class="sbtn" data-ckx>닫기</button><span class="ck-msg" aria-live="polite"></span></div></div>`}
 function mountForm(box,cid,month,onSaved){box.innerHTML=formHTML();const f=box.querySelector(".ck-form");let file=null,run=0;const msg=t=>f.querySelector(".ck-msg").textContent=t||"";
   const chips=(k,L,fmt)=>{const c=f.querySelector(`[data-cc="${k}"]`);c.innerHTML=L.length?L.map(v=>`<button type="button" data-cv="${esc(v)}">${esc(fmt?fmt(v):v)}</button>`).join(""):""};
