@@ -61,7 +61,7 @@ function review(){const r=$("#wz_rev");if(!r)return;
   const m=missing(),bt=$(".wz-tell"),ms=$("#wz_miss"),af=$(".wz-after"),mode=(CC&&CC.visit_mode)||"추천자",done=CC&&CC.w_done_at;
   if(done){{const pv=$("#wz_prev"),cm=$("#c_msg");if(pv)pv.hidden=true;if(cm)cm.style.display="none"}bt.disabled=true;bt.textContent="제출 완료 · 복지관 확인 중";ms.innerHTML="";af.hidden=false;af.innerHTML=origBox()+'<p class="wz-fix">수정이 필요한 경우 복지관 담당자에게 문의해 주세요.</p>'}
   else if(mode==="복지관"&&!window.__asVisitor){bt.hidden=true;ms.innerHTML='<p class="wz-ok">복지관 방문 가구는 제출하지 않아도 됩니다.<br>확인된 내용만 입력해 주세요.</p>'}
-  else{{const pv=$("#wz_prev");if(pv&&cur===5)pv.hidden=false}bt.hidden=false;bt.disabled=!!m.length;bt.textContent="제출하기";af.hidden=true;ms.innerHTML=m.length?`<div class="wz-miss"><b>누락된 필수 항목 ${m.length}개</b>${m.map(([k,l,st])=>`<button type="button" data-go="${st}">${l}<span>${st===2?"3단계":"4단계"} ›</span></button>`).join("")}</div>`:'<p class="wz-ok">✓ 필수 서류와 서명이 모두 확인되었습니다.<br>제출할 수 있습니다.</p>'}
+  else{{const pv=$("#wz_prev");if(pv&&cur===5)pv.hidden=false}bt.hidden=false;bt.disabled=false;bt.classList.toggle("wz-lack",!!m.length);bt.textContent="제출하기";af.hidden=true;ms.innerHTML=m.length?`<div class="wz-miss"><b>누락된 필수 항목 ${m.length}개</b>${m.map(([k,l,st])=>`<button type="button" data-go="${st}">${l}<span>${st===2?"3단계":"4단계"} ›</span></button>`).join("")}</div>`:'<p class="wz-ok">✓ 필수 서류와 서명이 모두 확인되었습니다.<br>제출할 수 있습니다.</p>'}
   {const nx=$("#wz_next");if(nx&&cur===5){nx.disabled=!!(bt.disabled||bt.hidden);nx.textContent=bt.hidden?"제출 대상 아님":bt.textContent}}
   r.innerHTML=STEPS.slice(0,5).map(([t],i)=>{const ok=stepDone(i),opt=i===4;return `<button type="button" class="wz-ri${ok?" ok":opt?" skip":""}" data-go="${i}"><i>${ok?"✓":i+1}</i><span><b>${t}</b><small>${ok?(i===2?"업로드 완료":i===3?"서명 완료":"입력 완료"):opt?"해당 없으면 생략 가능":i===2?`필수 서류 ${cnt(QUAL).join("/")}`:i===3?`서명 ${cnt(SIGNABLE).join("/")}`:"미입력"}</small></span><em>${ok?"":"입력 ›"}</em></button>`}).join("")}
 
@@ -169,7 +169,7 @@ document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g
   const t=e.target.closest(".wz-tell");if(t&&!t.disabled)submit(t)});
 function toast(msg){let el=$(".wz-toast");if(!el){el=document.createElement("div");el.className="wz-toast";document.body.appendChild(el)}el.textContent=msg;el.classList.add("on");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("on"),3200)}
 function mir(bt){const nx=$("#wz_next");if(nx&&cur===5){nx.disabled=bt.disabled;nx.textContent=bt.textContent}}
-async function submit(bt){if(missing().length){review();return}bt.disabled=true;bt.textContent="저장 중…";mir(bt);
+async function submit(bt){{const m=missing();if(m.length){review();const d=m.filter(x=>x[2]===2),g=m.filter(x=>x[2]===3);alert("아직 제출할 수 없어요.\n아래 필수 항목을 넣어 주세요.\n"+(d.length?"\n[서류 올리기 · 3단계]\n"+d.map(x=>"· "+x[1]).join("\n")+"\n":"")+(g.length?"\n[전자서명 · 4단계]\n"+g.map(x=>"· "+x[1]).join("\n")+"\n":"")+"\n다 넣은 뒤 다시 제출해 주세요.");return}}bt.disabled=true;bt.textContent="저장 중…";mir(bt);
   const m=$("#c_msg");if(m)m.textContent="";$("#c_save").click();
   for(let i=0;i<40;i++){await new Promise(r=>setTimeout(r,150));const t=m?m.textContent:"";if(t==="저장되었습니다")break;if(/못|끝났/.test(t)){bt.disabled=false;bt.textContent="제출하기";mir(bt);return}}
   bt.textContent="제출 중…";mir(bt);
