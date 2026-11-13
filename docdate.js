@@ -43,13 +43,13 @@ const fmt=d=>d?d.replace(/-/g,"."):"";
 function rowHTML(c,k,msg){const v=((c.docs||{})[k]||{}).date;
   if(msg)return `<span class="dd-m">${msg}</span>`;
   const ack=(lb)=>`<span class="dd-ack"><span class="dd-m">${lb}</span><input type="date" class="dd-in" data-ddin="${k}" value=""><button type="button" class="dd-b dd-pri" data-ddok="${k}">인정</button></span>`;
-  if(!v)return B&&B.worker?"":`<span class="dd-m">발급일 없음</span><button type="button" class="dd-b" data-ddread="${k}">사진에서 읽기</button>${ack("사진을 보고 발급일을 넣어 주세요")}`;
-  const ok=within(c,v),W=B&&B.worker;return `<span class="dd-d">발급 ${fmt(v)}</span><b class="${ok?"dd-ok":"dd-no"}">${ok?"3개월 이내 발급 확인":W?"3개월 지남 · 복지관에서 확인할게요":"3개월 지남 · 새로 발급 필요"}</b>${W?"":`<button type="button" class="dd-b" data-ddedit="${k}">고치기</button>`}<button type="button" class="dd-b" data-ddread="${k}">다시 읽기</button>${!ok&&!W?ack("잘못 읽었으면 실제 발급일을 넣고 인정을 눌러 주세요"):""}`}
+  if(!v)return `<span class="dd-m">발급일 없음</span><button type="button" class="dd-b" data-ddread="${k}">사진에서 읽기</button>${ack("사진을 보고 발급일을 넣어 주세요")}`;
+  const ok=within(c,v),W=B&&B.worker;return `<span class="dd-d">발급 ${fmt(v)}</span><b class="${ok?"dd-ok":"dd-no"}">${ok?"3개월 이내 발급 확인":W?"3개월 지남":"3개월 지남 · 새로 발급 필요"}</b>${W?"":`<button type="button" class="dd-b" data-ddedit="${k}">고치기</button>`}<button type="button" class="dd-b" data-ddread="${k}">다시 읽기</button>${!ok?ack(W?"날짜가 틀렸으면 실제 발급일을 넣고 인정을 눌러 주세요. 정말 3개월이 지났으면 새로 발급받아 주세요.":"잘못 읽었으면 실제 발급일을 넣고 인정을 눌러 주세요"):""}`}
 function paint(c,k,msg){const r=document.getElementById("dd_"+k);if(r)r.innerHTML=rowHTML(c,k,msg);const d=document.querySelector(`#cedit .doc[data-doc="${k}"]`),v=((c.docs||{})[k]||{}).date;if(d)d.classList.toggle("stale",!!v&&!within(c,v))}
 function setDate(c,k,v){c.docs=c.docs||{};c.docs[k]=Object.assign({got:false},c.docs[k]||{},{date:v||null});paint(c,k);const s=$("#c_save");if(s)s.click()}
 function run(c,k){BUSY=BUSY.then(async()=>{const cur=CSE.current();if(!cur||cur.id!==c.id)return;paint(c,k,"발급일 확인 중… 조금 걸릴 수 있어요. 다음 서류를 계속 올려 주세요.");
   try{const r=await readDate(c.id,k,()=>paint(c,k,"처음 한 번만 준비 중이에요. 와이파이에서 더 빨라요. 다음 서류를 계속 올려 주세요."));if(!CSE.current()||CSE.current().id!==c.id)return;if(r.none){paint(c,k);return}
-    if(r.date)setDate(c,k,r.date);else paint(c,k,B&&B.worker?"발급일을 찾지 못했어요. 복지관에서 확인할게요.":"발급일을 찾지 못했어요. 사진을 보고 발급일을 넣어 주세요.")}
+    if(r.date)setDate(c,k,r.date);else paint(c,k,"발급일을 찾지 못했어요. 사진을 보고 발급일을 넣어 주세요.")}
   catch(e){paint(c,k,e.message||"읽지 못했어요")}
   setTimeout(()=>{const cc=CSE.current();if(cc&&cc.id===c.id&&!((cc.docs||{})[k]||{}).date&&!document.querySelector(`#dd_${k} [data-ddedit]`))paint(cc,k)},4000)})}
 function mount(c){if(!B)return;KS.forEach(k=>{const d=document.querySelector(`#cedit .doc[data-doc="${k}"]`);if(!d||document.getElementById("dd_"+k))return;
