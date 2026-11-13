@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="oc-ver" content="2026-11-12r"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<html lang="ko"><head><meta charset="utf-8"><meta name="oc-ver" content="2026-11-12s"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <script>(function(){var ua=navigator.userAgent||"";if(!/KAKAOTALK/i.test(ua))return;try{location.href="kakaotalk://web/openExternal?url="+encodeURIComponent(location.href)}catch(e){}document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.style.cssText="background:#fff4d6;color:#7a5200;font-size:14px;line-height:1.5;padding:10px 14px;text-align:center;border-bottom:1px solid #e8c770";d.innerHTML="카카오톡 안에서는 홈 화면 추가와 알림 켜기가 안 돼요.<br>오른쪽 위 <b>⋮</b> 또는 아래 <b>⋯</b> → <b>다른 브라우저로 열기</b>를 눌러 주세요.";document.body.insertBefore(d,document.body.firstChild)})})();</script>
 <meta name="robots" content="noindex,nofollow">
 <title>온앤쿨케어 추천·선정 관리</title>
@@ -202,8 +202,17 @@ function openD(id){selId=id;render();const r=rows.find(x=>x.id===id);if(!r)retur
   $("#detail").innerHTML=DV.html(r,{staff:true})+`<div class="acts">${ETOK?`<button class="sbtn pri" id="e_case" type="button">${CASES.find(c=>c.referral_id===r.id)?"선정 심사 카드 열기":"가정방문 기록 시작"}</button>`:""}<button class="sbtn" id="e_close" type="button">닫기</button></div>`;
   if($("#e_case"))$("#e_case").onclick=async()=>{try{const c=await rpcS("oncool_ed_case_start",{p_token:ETOK,p_referral:r.id});const i=CASES.findIndex(x=>x.id===c.id);if(i<0)CASES.push(c);else CASES[i]=c;if(r.status==="접수")r.status="검토중";render();ccnt();vtab("case");renderCases();$("#cview").hidden=true;CSE.open(c,r)}catch(x){alert2(x)}};
   $("#e_close").onclick=()=>{selId=null;$("#detail").hidden=true;render()};
-  $("#detail").scrollIntoView({behavior:"smooth",block:"start"});
+  placeD();{const t=document.querySelector(`#tb tr[data-id="${id}"]`);(t||$("#detail")).scrollIntoView({behavior:"smooth",block:"start"})}
 }
+/* 상세는 누른 줄 바로 밑에 열기 (11/13) */
+const DHOME=document.createElement("span");DHOME.hidden=true;$("#detail").before(DHOME);
+function parkD(){const d=$("#detail");if(!d||!d.closest("#tb"))return;DHOME.after(d);d.style.width="";d.style.position="";d.style.left="";const o=$("#tb .dtr");if(o)o.remove()}
+function placeD(){const d=$("#detail");if(!d)return;const tr=selId&&!d.hidden&&document.querySelector(`#tb tr[data-id="${selId}"]`);if(!tr){parkD();return}
+  let row=$("#tb .dtr");if(!row){row=document.createElement("tr");row.className="dtr";row.innerHTML="<td></td>"}const td=row.firstChild;td.colSpan=tr.children.length;tr.after(row);
+  const w=d.closest(".tw")||$("#tb").closest(".tw");td.appendChild(d);const tw=$("#tb").closest(".tw");if(tw){d.style.width=(tw.clientWidth-24)+"px";d.style.position="sticky";d.style.left="12px"}}
+{const _r=render;render=function(){parkD();const x=_r.apply(this,arguments);placeD();return x}}
+["fs","ft","fo"].forEach(i=>$("#"+i).onchange=()=>render());$("#fq").oninput=()=>render();
+{const st=document.createElement("style");st.textContent="#tb tr.dtr,#tb tr.dtr:hover{background:transparent;cursor:default}#tb tr.dtr>td{white-space:normal;padding:4px 0 14px;border-bottom:2px solid var(--pri)}#tb tr.dtr #detail{margin:0;box-sizing:border-box;border-left:4px solid var(--pri)}";document.head.appendChild(st)}
 $("#csv").onclick=()=>{const cols=[...F.map(f=>f[0]),"예상 유형","4유형 후보","상태","가구코드","메모"];
   const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
   const lines=[cols.map(q).join(",")].concat(filtered().map(r=>[...F.map(([l,k,fn])=>fn?fn(r[k]):r[k]),typeOf(r)==="?"?"미확인":typeOf(r)+"유형",is4(r)?"예":"",r.status,r.household_code,r.staff_memo].map(q).join(",")));
