@@ -18,7 +18,7 @@ h2{font-size:10.2pt;margin:10px 0 4px;padding-left:6px;border-left:3px solid #11
 .jp table{border-collapse:collapse;width:100%}.jp th,.jp td{border:1px solid #888;padding:4px 6px;vertical-align:top}.jp th{background:#eee;font-weight:700;text-align:left;width:17%;white-space:nowrap}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.txt{border:1px solid #888;padding:5px 7px;min-height:28px;white-space:pre-wrap}.pre{white-space:pre-wrap}
 .ck{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #888}.ck div{padding:4px 6px;border-right:1px solid #ccc;border-bottom:1px solid #ccc}.ck b{display:inline-block;width:14px}.ok{color:#127a4c}.no{color:#c0392b}.ck small{color:#555}
-.amt td,.amt th{text-align:center!important;width:auto!important}.dec th{width:14%!important}
+.amt td,.amt th{text-align:center!important;width:auto!important}.amt th.sl{text-align:left!important;white-space:nowrap}.amt th.sl small{display:block;font-weight:400;font-size:7.5pt;color:#555}.dec th{width:14%!important}
 .foot{margin-top:8px;font-size:8pt;color:#555;border-top:1px dashed #999;padding-top:4px;display:flex;justify-content:space-between}
 .tag{display:inline-block;font-size:8pt;border:1px solid #999;border-radius:3px;padding:0 4px;margin-left:4px;font-weight:400}
 .att{max-width:184mm;margin:0 auto;text-align:center}.att p{margin:0 0 4mm;font-size:9pt;text-align:left;border-bottom:1px solid #999;padding-bottom:2px}.att img{max-width:100%;max-height:255mm;object-fit:contain}
@@ -27,6 +27,14 @@ h2{font-size:10.2pt;margin:10px 0 4px;padding-left:6px;border-left:3px solid #11
 @media print{.bar{display:none}}`;
 function scopeSign(css){return css.replace(/@page\{[^}]*\}/,"").replace(/(^|\})\s*([^{}]+)\{/g,(m,a,sel)=>a+sel.split(",").map(s=>{s=s.trim();return s==="body"?".sgp":".sgp "+s}).join(",")+"{")}
 
+/* 지원 금액표 (11/13): 동절기·하절기를 제목과 함께 모두 표시 · 하절기 금액은 협회 안내문 지원금액표 (지급 시기는 협회 확인 중이라 회차로 표시) */
+const SW={"1":[70000,130000,180000,200000],"2":[35000,65000,90000,100000],"3":[70000,130000,180000,200000],"4":[87500,162500,225000,250000]};
+function amtHTML(c,t,a){const n=Math.min(4,Math.max(1,+c.v_household_size||1)),st=SW[t][n-1],per=Math.ceil(st/3/1000)*1000,sl=[per,per,st-per*2],k=a.list.length,w=Math.max(k,3);
+  const row=(lb,cells,tot)=>`<tr><th class="sl">${lb}</th>${cells.map(x=>`<td>${x}</td>`).join("")}${"<td></td>".repeat(w-cells.length)}<td><b>${CS.fmt(tot)}</b></td></tr>`;
+  return `<table class="amt"><tr><th class="sl">지원 금액</th>${Array.from({length:w},(_,i)=>`<th>${i+1}회</th>`).join("")}<th>합계</th></tr>
+   <tr><th class="sl">동절기 난방비<small>${esc(a.list.map(([m])=>m).join(" · "))}</small></th>${a.list.map(([,x])=>`<td>${CS.fmt(x)}</td>`).join("")}${"<td></td>".repeat(w-k)}<td><b>${CS.fmt(a.tot)}</b></td></tr>
+   ${row(`하절기 냉방비<small>2027년 여름 3회</small>`,sl.map(x=>CS.fmt(x)),st)}
+   <tr><th class="sl">1년 합계</th><td colspan="${w}" style="text-align:left!important;font-size:8.5pt">${t}유형 · ${esc(c.v_household_size)}인${c.v_household_size>4?" (4인 이상 금액)":""} · ${esc(c.start_month||11)}월 시작 (단위: 원)</td><td><b>${CS.fmt(a.tot+st)}</b></td></tr></table>`}
 function summary(c,r){const t=CS.typeOf(c),a=CS.amounts(c),d=c.docs||{},sg=c.signs||{},bir=b8(r.birth);
   const p=CS.proposed(c)||"",inc=c.v_income||r.income||"",vou=c.v_voucher||r.voucher||"";
   const ck=ROWS.map(([k,l])=>{const x=d[k]||{},s=sg[k];return `<div><b class="${x.got?"ok":"no"}">${x.got?"✓":"–"}</b>${esc(l)} <small>${s?"전자서명 "+md((s.signed_at||"").slice(0,10)):x.date?md(x.date):""}</small></div>`}).join("");
@@ -46,7 +54,7 @@ function summary(c,r){const t=CS.typeOf(c),a=CS.amounts(c),d=c.docs||{},sg=c.sig
   <h2>4. 선정 기준 확인</h2><div class="g2"><table><tr><th>소득</th><td>${esc(inc)}${v(r.recipient_kinds)?" ("+esc(v(r.recipient_kinds))+")":""}${c.hi_premium?"<br><small>건보료 "+esc(c.hi_premium)+"</small>":""}</td></tr>
   <tr><th>바우처</th><td>${esc(vou)}${r.voucher_reason?"<br><small>미신청 사유: "+esc(r.voucher_reason)+"</small>":""}${c.v_voucher_target?" · 대상 세대원 "+esc(c.v_voucher_target):""}${c.v_env&&c.v_env!=="해당 없음"?"<br><small>"+esc(c.v_env)+"</small>":""}</td></tr>
   <tr><th>제안 유형</th><td><b>${t?t+"유형":"판단 필요"}</b>${p?"<br><small>"+esc(p)+"</small>":""}</td></tr></table>
-  ${a?`<table class="amt"><tr>${a.list.map(([m])=>`<th>${esc(m)}</th>`).join("")}<th>합계</th></tr><tr>${a.list.map(([,x])=>`<td>${CS.fmt(x)}</td>`).join("")}<td><b>${CS.fmt(a.tot)}</b></td></tr><tr><td colspan="${a.list.length+1}" style="text-align:left!important;font-size:8.5pt">${t}유형 · ${esc(c.v_household_size)}인 · ${esc(c.start_month||11)}월 시작 (단위: 원)</td></tr></table>`:`<div class="txt">유형과 가구원 수가 정해지면 지원 금액이 나와요</div>`}</div>
+  ${a?amtHTML(c,t,a):""}${a?``:`<div class="txt">유형과 가구원 수가 정해지면 지원 금액이 나와요</div>`}</div>
   <table style="margin-top:4px"><tr><th>효율 개선 필요</th><td>${esc(v(c.eff_needs))}${c.eff_note?" · "+esc(c.eff_note):""}</td></tr></table>
   <h2>5. 서류 · 서명</h2><div class="ck">${ck}</div>
   <h2>6. 판정</h2><table class="dec"><tr><th>결과</th><td>□ 선정 &nbsp; □ 보류 &nbsp; □ 탈락</td><th>유형</th><td>□1 □2 □3 □4 유형</td></tr><tr><th>의견</th><td colspan="3" style="height:34px"></td></tr></table>
