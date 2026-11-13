@@ -53,12 +53,14 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-vr]");if(!
 /* 가정방문 화면 맨 위: 예상 유형 + 필요한 서류 (11/12) · 방문 중 바우처·난방을 고치면 바로 다시 계산 */
 let VR=null,VC=null,FOLD=false;try{FOLD=localStorage.getItem("oc_tyfold")==="1"}catch(e){}
 function vval(id,d){const e=document.getElementById(id);return e&&e.value?e.value:d}
-function tyHTML(){const r=VR||{},c=VC||{};const q=Object.assign({},r,{voucher:vval("c_v_voucher",c.v_voucher||r.voucher),heating:vval("c_v_heating",c.v_heating||r.heating),income:vval("c_v_income",c.v_income||r.income)});{const ev=vval("c_v_env",c.v_env||"");if(ev&&ev!=="해당 없음")q.voucher_reason=ev}
-  const x=predict(q),tf=vval("c_type_final",c.type_final||""),br=s=>esc(s).replace(/\n/g,"<br>");
+function cur(){const r=VR||{},c=VC||{};const q=Object.assign({},r,{voucher:vval("c_v_voucher",c.v_voucher||r.voucher),heating:vval("c_v_heating",c.v_heating||r.heating),income:vval("c_v_income",c.v_income||r.income)});{const ev=vval("c_v_env",c.v_env||"");if(ev&&ev!=="해당 없음")q.voucher_reason=ev}
+  return {q,tf:vval("c_type_final",c.type_final||"")}}
+function tyHTML(){const {q,tf}=cur();
+  const x=predict(q),br=s=>esc(s).replace(/\n/g,"<br>");
   const head=tf?`<div class="ty-k">복지관 판정 유형</div><div class="ty-t">${esc(tf)} (${esc(TN[tf[0]]||"")})</div>`:`<div class="ty-k">추천 내용으로 본 예상 유형</div><div class="ty-t">${x.t?`${x.t}유형 (${esc(x.name)})`:"아직 정해지지 않았어요"}</div>`;
   return `${head}<p>${br(x.why)}${tf?"":"<br>최종 유형은 복지관 사례판정위원회에서 정합니다."}</p>${x.warn.map(w=>`<p class="ty-w">${br(w)}</p>`).join("")}
-   <details${FOLD?"":" open"}><summary>이 유형에 필요한 서류</summary><ul>${x.docs.map(([a,b])=>`<li>${esc(a)}${b?` <small>· ${esc(b)}</small>`:""}</li>`).join("")}</ul></details>`}
-function tyPaint(){const b=document.getElementById("ty_box");if(b)b.innerHTML=tyHTML()}
+   ${document.querySelector("#cedit .wprep")?`<p class="ty-d">필요한 서류는 위 ‘방문 전에 떼어 갈 서류’를 봐 주세요.<br>방문 중 답을 바꾸면 그 목록도 같이 바뀌어요.</p>`:`<details${FOLD?"":" open"}><summary>이 유형에 필요한 서류</summary><ul>${x.docs.map(([a,b])=>`<li>${esc(a)}${b?` <small>· ${esc(b)}</small>`:""}</li>`).join("")}</ul></details>`}`}
+function tyPaint(){try{document.dispatchEvent(new Event("oc-ty"))}catch(e){}const b=document.getElementById("ty_box");if(b)b.innerHTML=tyHTML()}
 if(window.CSE){const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,arguments);try{
   const nav=document.querySelector("#cedit .wz");if(!nav||document.getElementById("ty_box"))return x;VR=r||{};VC=c||{};
   nav.insertAdjacentHTML("beforebegin",`<div class="ty-box" id="ty_box"></div>`);tyPaint();
@@ -66,6 +68,6 @@ if(window.CSE){const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,ar
   document.getElementById("cedit").addEventListener("change",e=>{if(e.target.matches&&e.target.matches("#c_v_voucher,#c_v_heating,#c_v_income,#c_v_env"))tyPaint()});
  }catch(e){console.error(e)}return x}}
 {const st=document.createElement("style");st.textContent=`.ty-box{margin:0 0 12px;padding:14px;border-radius:14px;border:1.5px solid var(--pri);background:color-mix(in srgb,var(--pri) 6%,transparent)}
-.ty-box .ty-k{font-size:12.5px;color:var(--mute);font-weight:700}.ty-box .ty-t{font-size:18px;font-weight:800;margin:2px 0 6px}.ty-box p{margin:0;font-size:13px;color:var(--mute);line-height:1.55}.ty-box p.ty-w{margin-top:6px;color:#b8620e}
+.ty-box .ty-k{font-size:12.5px;color:var(--mute);font-weight:700}.ty-box .ty-t{font-size:18px;font-weight:800;margin:2px 0 6px}.ty-box p{margin:0;font-size:13px;color:var(--mute);line-height:1.55}.ty-box p.ty-w{margin-top:6px;color:#b8620e}.ty-box p.ty-d{margin-top:8px;color:var(--pri);font-weight:700}
 .ty-box ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;line-height:1.7}.ty-box ul small{color:var(--mute)}.ty-box summary{cursor:pointer;font-weight:700;font-size:13.5px;margin-top:8px;color:var(--pri)}`;document.head.appendChild(st)}
-return {predict,show}})();
+return {predict,show,cur:()=>VR?cur():null,paint:tyPaint}})();
