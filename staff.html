@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="oc-ver" content="2026-11-12s"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<html lang="ko"><head><meta charset="utf-8"><meta name="oc-ver" content="2026-11-12t"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <script>(function(){var ua=navigator.userAgent||"";if(!/KAKAOTALK/i.test(ua))return;try{location.href="kakaotalk://web/openExternal?url="+encodeURIComponent(location.href)}catch(e){}document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.style.cssText="background:#fff4d6;color:#7a5200;font-size:14px;line-height:1.5;padding:10px 14px;text-align:center;border-bottom:1px solid #e8c770";d.innerHTML="카카오톡 안에서는 홈 화면 추가와 알림 켜기가 안 돼요.<br>오른쪽 위 <b>⋮</b> 또는 아래 <b>⋯</b> → <b>다른 브라우저로 열기</b>를 눌러 주세요.";document.body.insertBefore(d,document.body.firstChild)})})();</script>
 <meta name="robots" content="noindex,nofollow">
 <title>온앤쿨케어 추천·선정 관리</title>
@@ -308,6 +308,21 @@ function nblock(c){const r=rows.find(x=>x.id===c.referral_id)||{};const el=docum
   el.addEventListener("change",ev=>{if(ev.target.id==="smsT"){el.dataset.tk=ev.target.value;draw()}});
   el.addEventListener("input",ev=>{if(ev.target.id!=="smsB")return;const v=ev.target.value,n=nbytes(v),L=el.querySelector("#smsLen");L.textContent=n<=90?"단문 · "+n+"/90바이트":"장문 문자로 나가요";L.classList.toggle("long",n>90);const g=el.querySelector("#smsGo");if(g)g.href=smsHref(r.worker_phone,v)});
   return el}
+/* 선정 심사: 카드를 열면 왼쪽은 카드 한 줄, 오른쪽은 내용 (11/13) */
+{let CUR=null;const vw=$("#vw-case"),cl=$("#clist");
+  const mark=()=>{cl.querySelectorAll(".cc.on").forEach(x=>x.classList.remove("on"));if(!CUR||!vw.classList.contains("split"))return;const k=cl.querySelector(`[data-cid="${CUR}"]`);if(k){k.classList.add("on");const a=k.getBoundingClientRect(),b=cl.getBoundingClientRect();if(a.top<b.top||a.bottom>b.bottom)cl.scrollTop+=a.top-b.top-8}};
+  const sync=()=>{const on=!$("#cedit").hidden||!$("#cview").hidden;const was=vw.classList.contains("split");vw.classList.toggle("split",on);if(!on)CUR=null;mark();if(on&&!was){const y=cl.getBoundingClientRect().top+window.scrollY-8;window.scrollTo({top:y})}requestAnimationFrame(mark)};
+  new MutationObserver(sync).observe($("#cedit"),{attributes:true,attributeFilter:["hidden"]});new MutationObserver(sync).observe($("#cview"),{attributes:true,attributeFilter:["hidden"]});
+  new MutationObserver(mark).observe(cl,{childList:true});
+  cl.addEventListener("click",e=>{const t=e.target.closest("[data-cid]");if(t){CUR=t.dataset.cid;setTimeout(()=>{sync();if(vw.classList.contains("split")){const y=cl.getBoundingClientRect().top+window.scrollY-8;if(Math.abs(cl.getBoundingClientRect().top-8)>4)window.scrollTo({top:y})}},0)}},true);
+  const st=document.createElement("style");st.textContent=`#vw-case.split{display:grid;grid-template-columns:300px minmax(0,1fr);gap:14px;align-items:start}
+#vw-case.split>#cgoal,#vw-case.split>.bar{grid-column:1/-1}
+#vw-case.split>#clist{grid-column:1;position:sticky;top:8px;max-height:calc(100vh - 16px);overflow-y:auto;padding:2px 6px 2px 2px}
+#vw-case.split>#cedit,#vw-case.split>#cview{grid-column:2;grid-row:3;margin-top:0;min-width:0}
+#vw-case.split .cgrid{grid-template-columns:1fr}#vw-case.split .cc-h{margin:8px 4px 6px}
+#vw-case.split .cc.on{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri)}
+#vw-case.split .cc-wk{display:none}#vw-case.split .cc{padding:10px 12px;gap:6px}
+@media(max-width:900px){#vw-case.split{display:block}#vw-case.split>#clist{position:static;max-height:none;overflow:visible}}`;document.head.appendChild(st)}
 {const _o=CSE.open;CSE.open=function(c,r){_o.apply(this,arguments);if(!ETOK)return;const s=$("#cedit .dv-sub");if(s&&!$("#cedit .vmode"))s.after(nblock(CASES.find(x=>x.id===c.id)||c))}}
 {const _ld=loadEd;loadEd=async function(){await _ld();ntop();ndecor();try{const g=JSON.parse(sessionStorage.getItem("oc_goto")||"null");if(g){sessionStorage.removeItem("oc_goto");ngo(g.c,g.r)}}catch(e){}}}
 {const _out=$("#out").onclick;$("#out").onclick=function(){const d=$("#ntop");if(d)d.remove();return _out.apply(this,arguments)}}
