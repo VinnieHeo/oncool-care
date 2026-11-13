@@ -3,7 +3,7 @@ window.CS=(function(){
   const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const DOCS=[
     {k:"resident",l:"주민등록등본",dated:1,req:1,h:"세대주·가구원 확인\n발급 3개월 이내"},
-    {k:"income",l:"소득 증빙",dated:1,req:"t14",h:"1유형: 건강보험료 납부확인서(최근 3개월)\n의료급여 수급자는 수급자증명서\n4유형: 건보료 납부확인서 또는 수급자증명서\n2·3유형: 에너지이용권 지급 결정 통지서로 대신\n외국인: 소득금액증명원 또는 근로소득 원천징수 영수증\n발급 3개월 이내"},
+    {k:"income",l:"소득 증빙",dated:1,req:"t1234",h:"1유형: 건강보험료 납부확인서(최근 3개월)\n의료급여 수급자는 수급자증명서\n2·3·4유형: 건보료 납부확인서 또는 수급자증명서\n외국인: 소득금액증명원 또는 근로소득 원천징수 영수증\n발급 3개월 이내"},
     {k:"hifam",l:"건보 자격확인서 + 가족관계증명서",dated:1,req:0,h:"가족이 건강보험료를 내는 경우만\n납부자의 자격확인(통보)서 인원으로 가구원 수 산정"},
     {k:"voucher",l:"에너지바우처 확인",dated:0,req:"t23",h:"2유형: 2026년 에너지이용권 지급 결정 통지서\n행정복지센터에서 이 이름으로 재발급을 요청해 주세요.\n2025년 소진은 서류가 없어 1600-3190에 함께 전화해 확인해 주세요.\n확인 결과는 확인서(별첨 2)에 직인을 찍어 제출해요.\n3유형: 에너지이용권 지급 결정 통지서 또는 바우처 대상 증빙\n바우처를 쓰기 어려운 환경은 사진·상담 메모로 남겨 주세요."},
     {k:"confirm",l:"유형별 확인서 (협회 별첨 2·3·4)",dated:0,req:"t234",h:"복지관이 작성하고 직인을 찍어요.\n2유형 별첨 2 · 3유형 별첨 3 · 4유형 별첨 4\n협회 시스템에 증빙으로 등록해요."},
@@ -211,7 +211,6 @@ function paintDocs(t){const ty=CS.typeOf(t);document.querySelectorAll("#cedit .d
     if(B.worker)return;const sp=d.querySelector(".dreq[data-req]");if(!sp)return;const rq=sp.dataset.req;
     if(!ty){sp.textContent=rq.slice(1).split("").join("·")+"유형 필수";sp.style.color="var(--amber)";d.classList.remove("na")}
     else if(rq.includes(ty)){sp.textContent="필수";sp.style.color="var(--warm)";d.classList.remove("na")}
-    else if(d.dataset.doc==="income"&&["2","3"].includes(ty)){sp.textContent="받아 두기";sp.style.color="var(--amber)";d.classList.remove("na")}
     else{sp.textContent="";sp.style.color="var(--mute)";d.classList.add("na")}})}
 {const st=document.createElement("style");st.textContent=".staff-ui #cedit .doc.got{background:var(--green-soft);border-color:var(--green)}.staff-ui #cedit .doc.got .doc-top>label:first-of-type{color:var(--green);font-weight:800}.staff-ui #cedit .doc.na{opacity:.6}.staff-ui #cedit .doc-mas{grid-column:1/-1;column-count:2;column-gap:10px}.staff-ui #cedit .doc-mas>.doc{break-inside:avoid;display:inline-block;width:100%;box-sizing:border-box}@media (max-width:760px){.staff-ui #cedit .doc-mas{column-count:1}}";document.head.appendChild(st)}
 function formCase(){const c=curCase,g=id=>$("#c_"+id),docs={};
