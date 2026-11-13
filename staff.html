@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="oc-ver" content="2026-11-12u"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<html lang="ko"><head><meta charset="utf-8"><meta name="oc-ver" content="2026-11-12v"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <script>(function(){var ua=navigator.userAgent||"";if(!/KAKAOTALK/i.test(ua))return;try{location.href="kakaotalk://web/openExternal?url="+encodeURIComponent(location.href)}catch(e){}document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.style.cssText="background:#fff4d6;color:#7a5200;font-size:14px;line-height:1.5;padding:10px 14px;text-align:center;border-bottom:1px solid #e8c770";d.innerHTML="카카오톡 안에서는 홈 화면 추가와 알림 켜기가 안 돼요.<br>오른쪽 위 <b>⋮</b> 또는 아래 <b>⋯</b> → <b>다른 브라우저로 열기</b>를 눌러 주세요.";document.body.insertBefore(d,document.body.firstChild)})})();</script>
 <meta name="robots" content="noindex,nofollow">
 <title>온앤쿨케어 추천·선정 관리</title>
@@ -137,7 +137,7 @@ a.sbtn{text-decoration:none;display:inline-block}
 <p class="foot">들어오면 가정방문 기록과 증빙 서류를 고칠 수 있고, 고친 사람 이름이 남아요. 내용은 외부에 공유하지 말아 주세요.</p>
 </div>
 <script src="detail.js?v=12"></script>
-<script src="upd.js?v=1"></script><script src="scan.js?v=7"></script><script src="cases.js?v=39"></script><script src="acct.js?v=2"></script><script src="docdate.js?v=6"></script><script src="sign.js?v=6"></script><script src="judge.js?v=3"></script><script src="annex.js?v=2"></script><script src="bundle.js?v=1"></script><script src="chk.js?v=1"></script><script src="docreq.js?v=3"></script><script src="pay.js?v=4"></script><script src="faqs.js?v=1"></script>
+<script src="upd.js?v=1"></script><script src="scan.js?v=7"></script><script src="cases.js?v=39"></script><script src="acct.js?v=2"></script><script src="docdate.js?v=7"></script><script src="sign.js?v=6"></script><script src="judge.js?v=3"></script><script src="annex.js?v=2"></script><script src="bundle.js?v=1"></script><script src="chk.js?v=1"></script><script src="docreq.js?v=3"></script><script src="pay.js?v=4"></script><script src="faqs.js?v=1"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const $=s=>document.querySelector(s);
@@ -308,6 +308,14 @@ function nblock(c){const r=rows.find(x=>x.id===c.referral_id)||{};const el=docum
   el.addEventListener("change",ev=>{if(ev.target.id==="smsT"){el.dataset.tk=ev.target.value;draw()}});
   el.addEventListener("input",ev=>{if(ev.target.id!=="smsB")return;const v=ev.target.value,n=nbytes(v),L=el.querySelector("#smsLen");L.textContent=n<=90?"단문 · "+n+"/90바이트":"장문 문자로 나가요";L.classList.toggle("long",n>90);const g=el.querySelector("#smsGo");if(g)g.href=smsHref(r.worker_phone,v)});
   return el}
+/* 서류완비 처리 버튼 (11/13): 빠진 필수 서류·3개월 지난 서류가 있으면 한 번 묻고 단계를 서류완비로 저장 */
+{const _o2=CSE.open;CSE.open=function(c,r){const x=_o2.apply(this,arguments);try{const acts=document.querySelector("#cedit .acts");
+  if(ETOK&&acts&&!document.getElementById("dc_btn")&&["조사중","업로드완료","보완중"].includes(c.stage)){const b=document.createElement("button");b.type="button";b.className="sbtn pri";b.id="dc_btn";b.textContent="서류완비 처리";acts.insertBefore(b,document.getElementById("c_msg"));
+    b.onclick=()=>{const cur=Object.assign({},CSE.current()||c),d={};CS.DOCS.forEach(k=>{const g=document.querySelector(`#cedit [data-got="${k.k}"]`);d[k.k]=Object.assign({},(cur.docs||{})[k.k]||{},g?{got:g.checked}:{})});cur.docs=d;
+      const t=CS.typeOf(cur),miss=CS.DOCS.filter(k=>{const q=typeof k.req==="string"?(!t||k.req.includes(t)):!!k.req;return q&&!(d[k.k]||{}).got}).map(k=>k.l),st=CS.docState(cur).stale;
+      const w=[miss.length?"빠진 필수 서류: "+miss.join(", "):"",st.length?"발급 3개월 지남: "+st.join(", "):""].filter(Boolean);
+      if(w.length&&!confirm(w.join("\n")+"\n\n그래도 서류완비로 할까요?"))return;
+      const s=document.getElementById("c_stage");if(!s)return;s.value="서류완비";s.dispatchEvent(new Event("change",{bubbles:true}));document.getElementById("c_save").click();b.remove()}}}catch(e){console.error(e)}return x}}
 /* 선정 심사: 카드를 열면 왼쪽은 카드 한 줄, 오른쪽은 내용 (11/13) */
 {let CUR=null;const vw=$("#vw-case"),cl=$("#clist");
   const mark=()=>{cl.querySelectorAll(".cc.on").forEach(x=>x.classList.remove("on"));if(!CUR||!vw.classList.contains("split"))return;const k=cl.querySelector(`[data-cid="${CUR}"]`);if(k){k.classList.add("on");const a=k.getBoundingClientRect(),b=cl.getBoundingClientRect();if(a.top<b.top||a.bottom>b.bottom)cl.scrollTop+=a.top-b.top-8}};
