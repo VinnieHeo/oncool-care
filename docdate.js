@@ -42,28 +42,31 @@ function within(c,d){const lim=base(c);lim.setMonth(lim.getMonth()-3);return new
 const fmt=d=>d?d.replace(/-/g,"."):"";
 function rowHTML(c,k,msg){const v=((c.docs||{})[k]||{}).date;
   if(msg)return `<span class="dd-m">${msg}</span>`;
-  if(!v)return B&&B.worker?"":`<span class="dd-m">발급일 없음</span><button type="button" class="dd-b" data-ddread="${k}">사진에서 읽기</button><button type="button" class="dd-b" data-ddedit="${k}">직접 입력</button>`;
-  const ok=within(c,v),W=B&&B.worker;return `<span class="dd-d">발급 ${fmt(v)}</span><b class="${ok?"dd-ok":"dd-no"}">${ok?"3개월 이내 발급 확인":W?"3개월 지남 · 복지관에서 확인할게요":"3개월 지남 · 새로 발급 필요"}</b>${W?"":`<button type="button" class="dd-b" data-ddedit="${k}">고치기</button>`}<button type="button" class="dd-b" data-ddread="${k}">다시 읽기</button>`}
+  const ack=(lb)=>`<span class="dd-ack"><span class="dd-m">${lb}</span><input type="date" class="dd-in" data-ddin="${k}" value=""><button type="button" class="dd-b dd-pri" data-ddok="${k}">인정</button></span>`;
+  if(!v)return B&&B.worker?"":`<span class="dd-m">발급일 없음</span><button type="button" class="dd-b" data-ddread="${k}">사진에서 읽기</button>${ack("사진을 보고 발급일을 넣어 주세요")}`;
+  const ok=within(c,v),W=B&&B.worker;return `<span class="dd-d">발급 ${fmt(v)}</span><b class="${ok?"dd-ok":"dd-no"}">${ok?"3개월 이내 발급 확인":W?"3개월 지남 · 복지관에서 확인할게요":"3개월 지남 · 새로 발급 필요"}</b>${W?"":`<button type="button" class="dd-b" data-ddedit="${k}">고치기</button>`}<button type="button" class="dd-b" data-ddread="${k}">다시 읽기</button>${!ok&&!W?ack("잘못 읽었으면 실제 발급일을 넣고 인정을 눌러 주세요"):""}`}
 function paint(c,k,msg){const r=document.getElementById("dd_"+k);if(r)r.innerHTML=rowHTML(c,k,msg);const d=document.querySelector(`#cedit .doc[data-doc="${k}"]`),v=((c.docs||{})[k]||{}).date;if(d)d.classList.toggle("stale",!!v&&!within(c,v))}
 function setDate(c,k,v){c.docs=c.docs||{};c.docs[k]=Object.assign({got:false},c.docs[k]||{},{date:v||null});paint(c,k);const s=$("#c_save");if(s)s.click()}
 function run(c,k){BUSY=BUSY.then(async()=>{const cur=CSE.current();if(!cur||cur.id!==c.id)return;paint(c,k,"발급일 확인 중… 조금 걸릴 수 있어요. 다음 서류를 계속 올려 주세요.");
   try{const r=await readDate(c.id,k,()=>paint(c,k,"처음 한 번만 준비 중이에요. 와이파이에서 더 빨라요. 다음 서류를 계속 올려 주세요."));if(!CSE.current()||CSE.current().id!==c.id)return;if(r.none){paint(c,k);return}
-    if(r.date)setDate(c,k,r.date);else paint(c,k,B&&B.worker?"발급일을 찾지 못했어요. 복지관에서 확인할게요.":"발급일을 찾지 못했어요. ‘직접 입력’을 눌러 주세요.")}
+    if(r.date)setDate(c,k,r.date);else paint(c,k,B&&B.worker?"발급일을 찾지 못했어요. 복지관에서 확인할게요.":"발급일을 찾지 못했어요. 사진을 보고 발급일을 넣어 주세요.")}
   catch(e){paint(c,k,e.message||"읽지 못했어요")}
   setTimeout(()=>{const cc=CSE.current();if(cc&&cc.id===c.id&&!((cc.docs||{})[k]||{}).date&&!document.querySelector(`#dd_${k} [data-ddedit]`))paint(cc,k)},4000)})}
 function mount(c){if(!B)return;KS.forEach(k=>{const d=document.querySelector(`#cedit .doc[data-doc="${k}"]`);if(!d||document.getElementById("dd_"+k))return;
     const fl=d.querySelector(".files");(fl||d).insertAdjacentHTML("afterend",`<div class="dd-row" id="dd_${k}"></div>`);paint(c,k);
     if(fl){let n0=null;const cnt=()=>fl.querySelectorAll(".fpill").length;new MutationObserver(()=>{if(/불러오는 중/.test(fl.textContent))return;const n=cnt();
       if(n0===null){n0=n;if(n&&!B.worker&&!((c.docs||{})[k]||{}).date)run(c,k);return}if(n>n0)run(c,k);n0=n}).observe(fl,{childList:true,subtree:true})}})}
-document.addEventListener("click",e=>{const r=e.target.closest("[data-ddread]"),w=e.target.closest("[data-ddedit]");const c=CSE.current();if(!c||(!r&&!w))return;
+document.addEventListener("click",e=>{const r=e.target.closest("[data-ddread]"),w=e.target.closest("[data-ddedit]"),a=e.target.closest("[data-ddok]");const c=CSE.current();if(!c||(!r&&!w&&!a))return;
+  if(a){const k=a.dataset.ddok,inp=document.querySelector(`#dd_${k} .dd-in`),nv=inp&&inp.value;if(!nv){if(inp){inp.focus();inp.classList.add("dd-need")}return}setDate(c,k,nv);return}
   if(r){run(c,r.dataset.ddread);return}
   const k=w.dataset.ddedit,row=document.getElementById("dd_"+k);const v=((c.docs||{})[k]||{}).date||"";
-  row.innerHTML=`<input type="date" class="dd-in" value="${v}"><button type="button" class="dd-b" data-ddok="${k}">저장</button><button type="button" class="dd-b" data-ddx="${k}">취소</button>`;
-  row.querySelector("[data-ddok]").onclick=()=>{const nv=row.querySelector(".dd-in").value;setDate(c,k,nv)};row.querySelector("[data-ddx]").onclick=()=>paint(c,k)});
+  row.innerHTML=`<input type="date" class="dd-in" value="${v}"><button type="button" class="dd-b dd-pri" data-ddok="${k}">저장</button><button type="button" class="dd-b" data-ddx="${k}">취소</button>`;
+  row.querySelector("[data-ddx]").onclick=()=>paint(c,k)});
 const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,arguments);try{mount(c)}catch(e){console.error(e)}return x};
 {const st=document.createElement("style");st.textContent=`.dd-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:6px 0 4px;font-size:12.5px}
 .dd-row .dd-d{font-weight:700}.dd-row .dd-ok{color:var(--green)}.dd-row .dd-no{color:var(--warm)}.dd-row .dd-m{color:var(--mute)}
 .dd-row .dd-b{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--surface,#fff);border-radius:7px;padding:2px 8px;cursor:pointer;color:var(--ink)}
 .staff-ui #cedit .doc.got.stale{background:var(--warm-soft);border-color:var(--warm)}
-.dd-row .dd-in{height:28px!important;min-height:28px!important;font-size:12.5px!important;width:auto!important}`;document.head.appendChild(st)}
+.dd-row .dd-in{height:28px!important;min-height:28px!important;font-size:12.5px!important;width:auto!important}
+.dd-row .dd-ack{display:flex;flex-wrap:wrap;align-items:center;gap:6px;flex-basis:100%}.dd-row .dd-pri{background:var(--pri);border-color:var(--pri);color:#fff;font-weight:700}.dd-row .dd-need{outline:2px solid var(--warm)}`;document.head.appendChild(st)}
 return {parse}})();
