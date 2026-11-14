@@ -41,8 +41,8 @@ async function build(c,r,say){const P=[],note=[],cnt={sheet:0,judge:0,sign:0,ann
   for(const k of SIGNED){if(!sg[k])continue;const f=(SIGN.FORMS||{})[k];P.push({l:f?f.t:k,t:"sign",run:async()=>{const rec=await RPC("oncool_ed_sign",{p_token:TOK(),p_case:c.id,p_form:k});
     const s=split(SIGN.printHTML(k,rec,{name:r.elder_name,birth:c.v_birth||b8(r.birth),addr:(r.address||"").replace(" | ",", "),phone:r.phone||"",size:c.v_household_size||""}),".pr-page");const out=[];for(const p of s.pages)out.push(await shot(s.css,p));return out}})}
   const files={};for(const x of CS.DOCS){let fs=[];try{fs=await B.list(c.id,x.k)||[]}catch(_){}files[x.k]=fs}
-  const vc=c.vcall||{};if(window.ANNEX&&ANNEX.page&&vc.ok&&vc.res==="소진 확인"&&vc.date&&!(files.confirm||[]).length)
-    P.push({l:"바우처 소진 확인서 (별첨 2)",t:"annex",run:async()=>{let g={};try{g=await RPC("oncool_ed_annex_cfg",{p_token:TOK()})||{}}catch(_){}return [await shot(ANNEX.CSS,ANNEX.page(c,r,g))]}});
+  {const k=window.ANNEX&&ANNEX.kindOf?ANNEX.kindOf(c):0;if(k&&ANNEX.readyK(c,k)&&!(files.confirm||[]).length)
+    P.push({l:`${ANNEX.K[k].t} (별첨 ${k})`,t:"annex",run:async()=>{let g={};try{g=await RPC("oncool_ed_annex_cfg",{p_token:TOK()})||{}}catch(_){}return [await shot(ANNEX.CSS,ANNEX.page(c,r,g,k))]}})}
   for(const x of CS.DOCS){if(SIGNED.includes(x.k)&&sg[x.k])continue;for(const f of files[x.k])P.push({l:x.l,t:"up",f,k:x.k})}
   /* 2. 차례로 만들기 */
   await lib();const {PDFDocument}=PDFLib,out=await PDFDocument.create(),PW=595.28,PH=841.89;
@@ -66,4 +66,4 @@ document.addEventListener("click",async e=>{const b=e.target.closest("#c_pdf");i
     const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([x.bytes],{type:"application/pdf"}));a.download=`온앤쿨_${name}_서류전체_${new Date().toISOString().slice(0,10)}.pdf`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
     const C=x.cnt;say(`<b style="color:var(--green)">${x.pages}쪽을 PDF 한 파일로 받았어요.</b><br>상담지 ${C.sheet} · 판정자료 ${C.judge} · 서명본 ${C.sign} · 확인서 ${C.annex} · 올린 서류 ${C.up}`+(x.note.length?`<br><span style="color:var(--warm)">못 넣은 것: ${CS.esc(x.note.join(", "))} · 따로 열어 확인해 주세요.</span>`:""))}
   catch(err){say("PDF를 만들지 못했어요: "+CS.esc(err.message||String(err)))}finally{b.disabled=false;delete b.dataset.busy}},true);
-return {build,shot}})();
+return {build,shot,lib,photo,B:()=>B,RPC:()=>RPC,TOK:()=>TOK()}})();
