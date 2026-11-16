@@ -33,11 +33,17 @@ function hook(){if(!window.CS||CS.__stg)return;CS.__stg=1;const orig=CS.listHTML
 .stg-act p{margin:0 auto 0 0;font-size:13px;line-height:1.55}.stg-act.off{background:color-mix(in srgb,var(--warm,#c77a12) 10%,transparent)}`;document.head.appendChild(st)}
 const key=c=>(c.stage||"")+"|"+(c.kaswc_approved||"");
 function setStage(v){const s=document.getElementById("c_stage");if(!s)return;s.value=v;s.dispatchEvent(new Event("change",{bubbles:true}));document.getElementById("c_save").click()}
+/* 카드 순서: 증빙 서류 → 유형과 지원 금액 → 에너지 효율 개선 → 단계·판정 → 협회 사이트 입력용 요약(맨 끝) */
+function reorder(root){const f=root.querySelector(".cs-form");if(!f||f.dataset.ord)return;const cards=[...f.children].filter(x=>x.classList.contains("cs-card"));
+  const by=t=>cards.find(x=>{const h=x.querySelector("h3");return h&&h.textContent.trim().startsWith(t)});
+  const docs=by("증빙 서류"),seq=[by("유형과 지원 금액"),by("에너지 효율 개선"),by("단계 · 판정"),f.querySelector(".kw-card")].filter(Boolean);if(!docs)return;
+  let prev=docs;for(const x of seq){prev.after(x);prev=x}const kw=f.querySelector(".kw-card");if(kw)kw.style.gridColumn="1/-1";f.dataset.ord=1}
 function panel(){const box0=document.getElementById("cedit");const c=window.CSE&&CSE.current();if(!box0||box0.hidden||!c)return;
   const sel=document.getElementById("c_stage");
   if(sel){[...sel.options].forEach(o=>{if(!o.hasAttribute("value"))o.value=o.textContent;if(o.value==="위원회상정"&&c.stage!=="위원회상정")o.remove();else if(N[o.value])o.textContent=N[o.value]})}
   let box=document.getElementById("stg_box");if(!box){box=document.createElement("div");box.id="stg_box";const sub=box0.querySelector(".dv-sub");(sub||box0.firstElementChild).after(box)}
   box0.querySelectorAll("#c_chips .stg").forEach(x=>{x.dataset.stg=1;x.innerHTML=nameH(c)});
+  reorder(box0);
   box.dataset.st=key(c);const n=step(c),off=["보완중","보류","탈락"].includes(c.stage);
   const steps=[["조사중"],["추천자","제출 완료"],["담당자","서류 확인 완료"],["복지관","선정 완료"],["협회","선정 완료"]];
   const sh=steps.map((s,i)=>`<div class="stg-s${!off&&i<n?" done":""}${!off&&i===n?" cur":""}"><i>${!off&&i<n?"✓":i||"·"}</i>${s.join("<br>")}</div>`).join("");
