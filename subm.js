@@ -68,7 +68,7 @@ async function save(L){if(BUSY)return;BUSY=true;const m=$("#sb_msg"),rs=R(),bad=
     if(m)m.innerHTML=`<b class="ok">${L.length-fail}가구 PDF를 저장했습니다.</b>`+(bad.length?`<br><span class="no">확인이 필요합니다: ${esc(bad.join(" · "))}</span>`:"")}
   finally{BUSY=false}}
 function hook(gc,gr,tok){getC=gc;getR=gr;TOK=tok;
-  const st=document.createElement("style");st.textContent=`.subm{margin:0 0 12px}.subm .sb-h{display:flex;align-items:center;gap:10px;justify-content:space-between}.subm h2{margin:0;font-size:17px}
+  const st=document.createElement("style");st.textContent=`#vw-case.split>#cgoal{grid-row:1}#vw-case.split>#subm{grid-column:1/-1;grid-row:2}#vw-case.split>.bar{grid-row:3}#vw-case.split>#clist{grid-row:4}#vw-case.split>#cedit,#vw-case.split>#cview{grid-row:4}.subm{margin:0 0 12px}.subm .sb-h{display:flex;align-items:center;gap:10px;justify-content:space-between}.subm h2{margin:0;font-size:17px}
   .subm .sb-d{color:var(--mute);font-size:13px;line-height:1.6;margin:6px 0 10px}.sb-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.sb-msg{font-size:13px;line-height:1.5}
   .sb-t{width:100%;border-collapse:collapse;font-size:13.5px}.sb-t th{font-size:12px;color:var(--mute);text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}.sb-t td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
   .sb-docs{display:flex;flex-direction:column;gap:3px}.subm .ok{color:var(--green,#1f7a47)}.subm .no{color:#c0392b;font-weight:700}.subm .auto{color:#2453a6}
