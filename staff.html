@@ -316,7 +316,7 @@ function nblock(c){const r=rows.find(x=>x.id===c.referral_id)||{};const el=docum
     b.onclick=()=>{const cur=Object.assign({},CSE.current()||c),d={};CS.DOCS.forEach(k=>{const g=document.querySelector(`#cedit [data-got="${k.k}"]`);d[k.k]=Object.assign({},(cur.docs||{})[k.k]||{},g?{got:g.checked}:{})});cur.docs=d;
       const t=CS.typeOf(cur),miss=CS.DOCS.filter(k=>{const q=typeof k.req==="string"?(!t||k.req.includes(t)):!!k.req;return q&&!(d[k.k]||{}).got}).map(k=>k.l),st=CS.docState(cur).stale;
       const w=[miss.length?"빠진 필수 서류: "+miss.join(", "):"",st.length?"발급 3개월 지남: "+st.join(", "):""].filter(Boolean);
-      if(w.length&&!confirm(w.join("\n")+"\n\n그래도 서류완비로 할까요?"))return;
+      if(w.length&&!confirm(w.join("\n")+"\n\n그래도 서류 확인 완료로 할까요?"))return;
       const s=document.getElementById("c_stage");if(!s)return;s.value="서류완비";s.dispatchEvent(new Event("change",{bubbles:true}));document.getElementById("c_save").click();b.remove()}}}catch(e){console.error(e)}return x}}
 /* 선정 심사: 카드를 열면 왼쪽은 카드 한 줄, 오른쪽은 내용 (11/13) */
 {let CUR=null;const vw=$("#vw-case"),cl=$("#clist");
@@ -363,4 +363,5 @@ if(new URLSearchParams(location.search).has("embed")){document.body.classList.ad
   const post=()=>{try{parent.postMessage({oncoolH:document.documentElement.scrollHeight},"*")}catch(e){}};
   new ResizeObserver(post).observe(document.body);window.addEventListener("load",post);post()}
 </script>
+<script src="stage.js?v=1"></script>
 </body></html>
