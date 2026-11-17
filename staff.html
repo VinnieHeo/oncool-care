@@ -137,7 +137,7 @@ a.sbtn{text-decoration:none;display:inline-block}
 <p class="foot">들어오면 가정방문 기록과 증빙 서류를 고칠 수 있고, 고친 사람 이름이 남아요. 내용은 외부에 공유하지 말아 주세요.</p>
 </div>
 <script src="detail.js?v=12"></script>
-<script src="upd.js?v=1"></script><script src="scan.js?v=7"></script><script src="cases.js?v=45"></script><script src="acct.js?v=3"></script><script src="docdate.js?v=7"></script><script src="sign.js?v=8"></script><script src="judge.js?v=4"></script><script src="annex.js?v=3"></script><script src="bundle.js?v=2"></script><script src="subm.js?v=2"></script><script src="chk.js?v=2"></script><script src="docreq.js?v=3"></script><script src="pay.js?v=5"></script><script src="faqs.js?v=1"></script>
+<script src="upd.js?v=1"></script><script src="scan.js?v=7"></script><script src="cases.js?v=46"></script><script src="acct.js?v=3"></script><script src="docdate.js?v=7"></script><script src="sign.js?v=8"></script><script src="judge.js?v=4"></script><script src="annex.js?v=3"></script><script src="bundle.js?v=2"></script><script src="subm.js?v=2"></script><script src="chk.js?v=3"></script><script src="docreq.js?v=3"></script><script src="pay.js?v=6"></script><script src="faqs.js?v=1"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const $=s=>document.querySelector(s);
@@ -290,7 +290,7 @@ function ndecor(){
   document.querySelectorAll("#tb tr[data-id]").forEach(tr=>{if(nw.has(tr.dataset.id)&&!tr.querySelector(".nnew"))tr.children[2].insertAdjacentHTML("beforeend",' <span class="nnew">NEW</span>')})}
 {const _rc=renderCases;renderCases=function(){_rc();ndecor()};const _r=render;render=function(){_r();ndecor()}}
 const NTPL={"방문 요청":(r,c)=>`[온앤쿨케어] ${r.worker_name||""} 선생님, 추천하신 ${nmask(r.elder_name)} 님(접수 ${r.receipt_no}번) 가구가 선정 심사 대상이 됐어요. ${(c.visit_mode||"추천자")==="추천자"?"가정방문 후 서류를 ":(c.visit_mode==="동행"?"복지관 담당자와 함께 방문 부탁드려요. 서류는 ":"복지관이 방문해요. 서류는 ")}${DUE?nmd(DUE)+"까지 ":""}올려 주세요.\nhttps://vinnieheo.github.io/oncool-care/`,
- "선정 안내":(r)=>`[온앤쿨케어] ${r.worker_name||""} 선생님, 추천하신 ${nmask(r.elder_name)} 님(접수 ${r.receipt_no}번) 가구가 지원 대상으로 선정됐어요. 고맙습니다. 첫 지원금은 11/23에 들어가요.`,
+ "선정 안내":(r)=>`[온앤쿨케어] ${r.worker_name||""} 선생님, 추천하신 ${nmask(r.elder_name)} 님(접수 ${r.receipt_no}번) 가구가 지원 대상으로 선정됐어요. 고맙습니다. 첫 지원금은 11/27에 들어가요.`,
  "보류 안내":(r)=>`[온앤쿨케어] ${r.worker_name||""} 선생님, 추천하신 ${nmask(r.elder_name)} 님(접수 ${r.receipt_no}번) 가구는 이번 심사에서 보류됐어요. 자세한 내용은 담당자에게 문의해 주세요.`};
 const nbytes=t=>[...t].reduce((n,ch)=>n+(ch.charCodeAt(0)<128?1:2),0);
 const smsHref=(ph,body)=>`sms:${(ph||"").replace(/[^0-9]/g,"")}?&body=${encodeURIComponent(body)}`;
