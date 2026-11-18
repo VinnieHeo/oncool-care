@@ -353,7 +353,7 @@
 <p class="foot">입력한 내용은 복지관 담당자와 추천한 본인만 볼 수 있습니다.</p>
 </div>
 <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-<script src="upd.js?v=1"></script><script src="scan.js?v=7"></script><script src="cases.js?v=51"></script><script src="acct.js?v=3"></script><script src="docdate.js?v=7"></script><script src="chk.js?v=3"></script><script src="sign.js?v=8"></script><script src="wiz.js?v=21"></script><script src="faq.js?v=1"></script><script src="pred.js?v=10"></script><script src="docreq.js?v=4"></script>
+<script src="upd.js?v=1"></script><script src="scan.js?v=7"></script><script src="cases.js?v=51"></script><script src="acct.js?v=3"></script><script src="docdate.js?v=7"></script><script src="chk.js?v=3"></script><script src="sign.js?v=8"></script><script src="wiz.js?v=21"></script><script src="faq.js?v=1"></script><script src="pred.js?v=10"></script><script src="docreq.js?v=5"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const DEMO=new URLSearchParams(location.search).has("demo");
@@ -528,7 +528,7 @@ function st(r){const c=CASES.find(x=>x.referral_id===r.id);
   if(!c)return{k:"wait",lb:"복지관 확인 중",c};
   const ds=wds(c),mode=c.visit_mode||"추천자";
   if(!["조사중","업로드완료","보완중","서류완비"].includes(c.stage))return{k:"rev",lb:"선정 심사 중",c,ds,mode};
-  if(c.doc_req&&!c.w_done_at)return{k:"todo",lb:"추가 서류 요청",c,ds,mode};
+  if(c.doc_req&&c.stage==="보완중"&&!c.w_done_at)return{k:"todo",lb:"추가 서류 요청",c,ds,mode};
   if(c.w_done_at)return{k:"rev",lb:"제출 완료 · 복지관 확인 중",c,ds,mode};
   if(mode==="복지관")return{k:"info",lb:"복지관 방문 예정",c,ds,mode};
   return{k:"todo",lb:mode==="동행"?"동행 방문·서류 필요":"가정방문·서류 필요",c,ds,mode}}
