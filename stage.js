@@ -1,3 +1,4 @@
+/* 사례 단계 (2026-11-16 · 11/18 탭·색) */
 /* 사례 단계 (2026-11-16): ① 추천자 제출 완료 → ② 담당자 서류 확인 완료 → ③ 복지관 선정 완료 → ④ 협회 선정 완료
    저장 값은 그대로(업로드완료·서류완비·선정), 화면 이름만 바꿈. ④는 '선정' + 협회 승인일. 위원회상정은 ②로 봄. */
 window.STG=(function(){
@@ -8,17 +9,24 @@ const name=c=>step(c)===4?"4. 협회 선정 완료":(N[c.stage]||c.stage||"");
 const bd=n=>n?`<i class="stg-n">${n}</i>`:"";
 const nameH=c=>{const n=step(c);return bd(n)+esc(n===4?"협회 선정 완료":String(N[c.stage]||c.stage||"").replace(/^\d\. /,""))};
 const short=c=>step(c)===4?"협회 선정":(S[c.stage]||c.stage||"");
-const G=[["확인할 차례 · ",c=>c.stage==="업로드완료",1,1,"추천자 제출 완료"],["",c=>c.stage==="서류완비"||c.stage==="위원회상정",0,2,"담당자 서류 확인 완료"],["",c=>c.stage==="선정"&&!c.kaswc_approved,0,3,"복지관 선정 완료"],["",c=>c.stage==="선정"&&!!c.kaswc_approved,0,4,"협회 선정 완료"],
-  ["보완중 · 서류 다시 받는 중",c=>c.stage==="보완중"],["조사중 · 가나다순",c=>!c.stage||c.stage==="조사중"],["보류 · 탈락",c=>c.stage==="보류"||c.stage==="탈락"]];
+const G=[["",c=>c.stage==="서류완비"||c.stage==="위원회상정",0,2,"담당자 서류 확인 완료","sg2","확인 완료"],["확인할 차례 · ",c=>c.stage==="업로드완료",1,1,"추천자 제출 완료","sg1","제출 완료"],["",c=>c.stage==="선정"&&!c.kaswc_approved,0,3,"복지관 선정 완료","sg3","복지관 선정"],["",c=>c.stage==="선정"&&!!c.kaswc_approved,0,4,"협회 선정 완료","sg4","협회 선정"],
+  ["보완중 · 서류 다시 받는 중",c=>c.stage==="보완중",0,0,"","sgb","보완중"],["조사중 · 가나다순",c=>!c.stage||c.stage==="조사중",0,0,"","sgz","조사중"],["보류 · 탈락",c=>c.stage==="보류"||c.stage==="탈락",0,0,"","sgx","보류·탈락"]];
+/* 단계 탭 (11/18): 누르면 그 단계만 · 기본 '전체' */
+let TAB="";try{TAB=sessionStorage.getItem("oc_stab")||""}catch(_){}
+function split(cases){const used=new Set();return G.map(g=>{const L=cases.filter(c=>!used.has(c)&&g[1](c));L.forEach(c=>used.add(c));return L})}
+function tabs(cases){const cl=document.getElementById("clist");if(!cl)return;let t=document.getElementById("stg_tabs");if(!t){t=document.createElement("div");t.id="stg_tabs";t.className="stg-tabs";cl.before(t);
+    t.onclick=e=>{const b=e.target.closest("[data-tab]");if(!b)return;TAB=b.dataset.tab;try{sessionStorage.setItem("oc_stab",TAB)}catch(_){}const fs=document.getElementById("cfs");if(fs)fs.dispatchEvent(new Event("change"))}}
+  const S=split(cases);if(TAB&&!G.some((g,i)=>g[5]===TAB&&S[i].length))TAB="";
+  t.innerHTML=`<button type="button" data-tab="" class="${TAB?"":"on"}" style="--k:var(--ink)">전체 <b>${cases.length}</b></button>`+G.map((g,i)=>S[i].length?`<button type="button" data-tab="${g[5]}" class="${g[5]}${TAB===g[5]?" on":""}">${bd(g[3])}${esc(g[6])} <b>${S[i].length}</b></button>`:"").join("")}
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function hook(){if(!window.CS||CS.__stg)return;CS.__stg=1;const orig=CS.listHTML;
-  CS.listHTML=function(cases,refs){if(!cases.length)return orig(cases,refs);const used=new Set();let out="";
-    for(const [t,f,top,gn,gt] of G){const L=cases.filter(c=>!used.has(c)&&f(c));L.forEach(c=>used.add(c));if(!L.length)continue;
-      let h=orig(L,refs).replace(/<h3 class="cc-h">[\s\S]*?<\/h3>/g,"").replace(/<\/div><div class="cgrid">/g,"");
+  CS.listHTML=function(cases,refs){tabs(cases);if(!cases.length)return orig(cases,refs);const S=split(cases);let out="";
+    G.forEach(([t,f,top,gn,gt,cls],i)=>{const L=S[i];if(!L.length||(TAB&&TAB!==cls))return;
+      let h=orig(L,refs).replace(/<h3 class="cc-h">[\s\S]*?<\/h3>/g,"").replace(/<\/div><div class="cgrid">/g,"").replace(/<div class="cc" /g,`<div class="cc ${cls}" `);
       h=h.replace(/<span class="stg stg-([^"]*)">[^<]*<\/span>/g,(m,s)=>{const c=L.find(x=>x.stage===s)||{stage:s};return `<span class="stg stg-${s}${step(c)===4?" stg-k4":""}">${bd(step(c))}${esc(short(c))}</span>`});
-      out+=`<h3 class="cc-h${top?" cc-top1":""}">${esc(t)}${bd(gn)}${esc(gt||"")} <b>${L.length}</b></h3>`+h}
-    const rest=cases.filter(c=>!used.has(c));if(rest.length)out+=orig(rest,refs);return out};
-  const fs=document.getElementById("cfs");if(fs)[...fs.options].forEach(o=>{if(!o.hasAttribute("value"))o.value=o.textContent;if(o.value==="위원회상정")o.remove();else if(N[o.value]&&o.value)o.textContent=N[o.value]});
+      out+=`<h3 class="cc-h ${cls}${top?" cc-top1":""}">${esc(t)}${bd(gn)}${esc(gt||"")} <b>${L.length}</b></h3>`+h});
+    const used=new Set(S.flat()),rest=cases.filter(c=>!used.has(c));if(rest.length&&!TAB)out+=orig(rest,refs);return out||'<p class="cc-empty">이 단계에 해당하는 가구가 없어요.</p>'};
+  const fs=document.getElementById("cfs");if(fs){fs.value="";fs.style.display="none"}if(fs)[...fs.options].forEach(o=>{if(!o.hasAttribute("value"))o.value=o.textContent;if(o.value==="위원회상정")o.remove();else if(N[o.value]&&o.value)o.textContent=N[o.value]});
   if(window.CSE){const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,arguments);try{panel()}catch(e){console.error(e)}return x}}
   new MutationObserver(()=>{const c=CSE.current();if(!c)return;const p=document.getElementById("stg_box");if(p&&p.dataset.st!==key(c)){panel();return}document.querySelectorAll("#c_chips .stg").forEach(x=>{if(!x.dataset.stg){x.dataset.stg=1;x.innerHTML=nameH(c)}})}).observe(document.getElementById("cedit"),{subtree:true,childList:true,characterData:true});
   const st=document.createElement("style");st.textContent=`.cc-h.cc-top1{color:var(--pri)}.stg-선정{background:var(--green-soft,#e5f6ee);color:var(--green,#159a5c);font-weight:800}.stg.stg-k4{background:#e2f4f4;color:#0e8a8a}.stg-n{font-style:normal;display:inline-grid;place-items:center;min-width:16px;height:16px;border-radius:50%;background:currentColor;margin-right:4px;font-size:10.5px;font-weight:800;line-height:1;vertical-align:middle;position:relative;top:-1px}.stg:has(.stg-n){display:inline-flex;align-items:center}.stg:has(.stg-n) .stg-n{top:0}.stg-n{color:inherit}.stg .stg-n,.cc-h .stg-n{background:none;border:1.5px solid currentColor;margin:0 4px 0 0}.stg-서류완비,.stg-위원회상정{background:var(--pri-soft,#eceffd);color:var(--pri);font-weight:800}
@@ -30,7 +38,15 @@ function hook(){if(!window.CS||CS.__stg)return;CS.__stg=1;const orig=CS.listHTML
 .stg-s.done i{background:var(--green,#159a5c);border-color:var(--green,#159a5c);color:#fff}.stg-s.done::before,.stg-s.cur::before{background:var(--green,#159a5c)}
 .stg-s.cur i{border-color:var(--pri);color:var(--pri);box-shadow:0 0 0 4px color-mix(in srgb,var(--pri) 15%,transparent)}.stg-s.cur{color:var(--ink);font-weight:800}
 .stg-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:color-mix(in srgb,var(--pri) 8%,transparent);border-radius:12px;padding:12px}
-.stg-act p{margin:0 auto 0 0;font-size:13px;line-height:1.55}.stg-act.off{background:color-mix(in srgb,var(--warm,#c77a12) 10%,transparent)}`;document.head.appendChild(st)}
+.stg-act p{margin:0 auto 0 0;font-size:13px;line-height:1.55}.stg-act.off{background:color-mix(in srgb,var(--warm,#c77a12) 10%,transparent)}
+.stg-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:2px 2px 12px}
+.stg-tabs button{flex:none;font:inherit;font-size:13px;font-weight:700;border:1.5px solid color-mix(in srgb,var(--k) 45%,var(--line));background:var(--surface,#fff);color:var(--k);border-radius:999px;padding:6px 12px;height:auto;min-height:0;line-height:1.3;cursor:pointer;display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
+.stg-tabs .stg-n{background:none;border:1.5px solid currentColor;margin:0 4px 0 0}.stg-tabs button b{font-size:12px;margin-left:3px;opacity:.75}
+.stg-tabs button.on{background:var(--k);border-color:var(--k);color:#fff}.stg-tabs button[data-tab=""].on{color:var(--surface,#fff)}
+.sg1{--k:#7c4dde}.sg2{--k:#3b5bdb}.sg3{--k:#159a5c}.sg4{--k:#b07d0a}.sgb{--k:#d9730d}.sgz{--k:#7d8699}.sgx{--k:#d0505a}
+.cc.sg1,.cc.sg2,.cc.sg3,.cc.sg4,.cc.sgb,.cc.sgz,.cc.sgx{border-left:5px solid var(--k);background:color-mix(in srgb,var(--k) 5%,var(--surface,#fff))}
+.cc.sg1 .stg,.cc.sg2 .stg,.cc.sg3 .stg,.cc.sg4 .stg,.cc.sgb .stg,.cc.sgz .stg,.cc.sgx .stg{background:color-mix(in srgb,var(--k) 14%,transparent);color:var(--k);font-weight:800}
+.cc-h.sg1,.cc-h.sg2,.cc-h.sg3,.cc-h.sg4,.cc-h.sgb,.cc-h.sgx{color:var(--k)}`;document.head.appendChild(st)}
 const key=c=>(c.stage||"")+"|"+(c.kaswc_approved||"");
 function setStage(v){const s=document.getElementById("c_stage");if(!s)return;s.value=v;s.dispatchEvent(new Event("change",{bubbles:true}));document.getElementById("c_save").click()}
 /* 카드 순서: 증빙 서류 → 유형과 지원 금액 → 에너지 효율 개선 → 단계·판정 → 협회 사이트 입력용 요약(맨 끝) */
