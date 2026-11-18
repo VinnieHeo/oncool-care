@@ -9,11 +9,13 @@ const CSS=`.dr-box{border:1.5px solid var(--warm);background:color-mix(in srgb,v
 .dr-pan input[type=checkbox]{width:18px;height:18px;-webkit-appearance:auto;appearance:auto;accent-color:var(--pri)}.dr-pan textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;min-height:60px}.dr-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}`;
 function style(){if(document.getElementById("dr_css"))return;const s=document.createElement("style");s.id="dr_css";s.textContent=CSS;document.head.appendChild(s)}
 function boxHTML(q,staff){return `<div class="dr-box"><b>${staff?"보완을 요청한 가구입니다":"복지관에서 서류 보완을 요청했습니다"}</b>${(q.docs||[]).length?`<ul>${q.docs.map(k=>`<li>${esc(lbl(k))}</li>`).join("")}</ul>`:""}${q.note?`<p>${esc(q.note)}</p>`:""}<p style="color:var(--mute);font-size:12.5px">${md(q.at)} 요청${staff&&q.by?" · "+esc(q.by):""}${staff?"":" · 서류를 다시 올린 뒤 ‘방문·서류 완료’를 눌러 주세요."}</p></div>`}
+/* 보완중이 끝난 뒤: 직원 화면에만 회색 기록 (11/18) */
+function pastHTML(q){const ds=(q.docs||[]).map(lbl).map(s=>s.replace(/\s*\(.*\)\s*$/,""));return `<p class="dr-box dr-past" style="border:0;background:none;padding:0 2px;margin:0 0 10px;font-size:12.5px;color:var(--mute);display:block">지난 보완 요청 (${md(q.at)}${q.by?" · "+esc(q.by):""}): ${esc([ds.join(", "),q.note].filter(Boolean).join(" · ")||"내용 없음")} → 해결됨</p>`}
 /* 추천자 화면: 카드 맨 위에 요청 내용 */
-function worker(){style();const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,arguments);try{const f=document.querySelector("#cedit .cs-form");if(f&&c.doc_req&&!c.w_done_at&&!document.querySelector("#cedit .dr-box"))f.insertAdjacentHTML("beforebegin",boxHTML(c.doc_req,false))}catch(e){console.error(e)}return x}}
+function worker(){style();const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,arguments);try{const f=document.querySelector("#cedit .cs-form");if(f&&c.doc_req&&c.stage==="보완중"&&!c.w_done_at&&!document.querySelector("#cedit .dr-box"))f.insertAdjacentHTML("beforebegin",boxHTML(c.doc_req,false))}catch(e){console.error(e)}return x}}
 /* 직원 화면: ‘추가 서류 요청’ 버튼 */
 function staff(rpcS,tok,onDone){style();const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,arguments);try{if(!tok())return x;
-    const f=document.querySelector("#cedit .cs-form");if(f&&c.doc_req&&!c.w_done_at&&!document.querySelector("#cedit .dr-box"))f.insertAdjacentHTML("beforebegin",boxHTML(c.doc_req,true));
+    const f=document.querySelector("#cedit .cs-form");if(f&&c.doc_req&&!document.querySelector("#cedit .dr-box"))f.insertAdjacentHTML("beforebegin",c.stage==="보완중"&&!c.w_done_at?boxHTML(c.doc_req,true):pastHTML(c.doc_req));
     const acts=document.querySelector("#cedit .acts");if(!acts||document.getElementById("dr_btn"))return x;
     const b=document.createElement("button");b.type="button";b.className="sbtn";b.id="dr_btn";b.textContent="보완 요청";acts.insertBefore(b,document.getElementById("c_msg"));
     b.onclick=()=>{let p=document.getElementById("dr_pan");if(p){p.remove();return}p=document.createElement("div");p.id="dr_pan";p.className="dr-pan";
