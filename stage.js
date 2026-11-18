@@ -17,7 +17,27 @@ function split(cases){const used=new Set();return G.map(g=>{const L=cases.filter
 function tabs(cases){const cl=document.getElementById("clist");if(!cl)return;let t=document.getElementById("stg_tabs");if(!t){t=document.createElement("div");t.id="stg_tabs";t.className="stg-tabs";cl.before(t);
     t.onclick=e=>{const b=e.target.closest("[data-tab]");if(!b)return;TAB=b.dataset.tab;try{sessionStorage.setItem("oc_stab",TAB)}catch(_){}const fs=document.getElementById("cfs");if(fs)fs.dispatchEvent(new Event("change"))}}
   const S=split(cases);if(TAB&&!G.some((g,i)=>g[5]===TAB&&S[i].length))TAB="";
-  t.innerHTML=`<button type="button" data-tab="" class="${TAB?"":"on"}" style="--k:var(--ink)">전체 <b>${cases.length}</b></button>`+G.map((g,i)=>S[i].length?`<button type="button" data-tab="${g[5]}" class="${g[5]}${TAB===g[5]?" on":""}">${bd(g[3])}${esc(g[6])} <b>${S[i].length}</b></button>`:"").join("")}
+  t.innerHTML=`<button type="button" data-tab="" class="${TAB?"":"on"}" style="--k:var(--ink)">전체 <b>${cases.length}</b></button>`+G.map((g,i)=>S[i].length?`<button type="button" data-tab="${g[5]}" class="${g[5]}${TAB===g[5]?" on":""}">${bd(g[3])}${esc(g[6])} <b>${S[i].length}</b>${(()=>{const k=S[i].filter(c=>news(c)).length;return k?`<em class="tnw">NEW ${k}</em>`:""})()}</button>`:"").join("")}
+/* NEW 표시 (11/18): 담당자가 마지막으로 본 뒤 추천자가 올린 서류·기록 */
+let UPS=[];const CN={};
+if(typeof rpcS==="function"){const _r=rpcS;rpcS=async function(fn,b){const r=await _r(fn,b);if(fn==="oncool_ed_data"&&r)UPS=r.ups||[];return r}}
+const dlb=k=>(((window.CS&&CS.DOCS)||[]).find(x=>x.k===k)||{l:k}).l.replace(/\s*\(.*\)\s*$/,"");
+function news(c){if(!c||!c.staff_seen_at)return null;const s=new Date(c.staff_seen_at),out=[];let last=null,who="";const bump=(d,w)=>{if(!last||d>last){last=d;if(w)who=w}};
+  const up=UPS.filter(u=>u.c===c.id&&new Date(u.at)>s);if(up.length){const g={};up.forEach(u=>{g[u.k]=(g[u.k]||0)+1;bump(new Date(u.at))});out.push(Object.entries(g).map(([k,n])=>dlb(k)+" "+n+"장").join(", "))}
+  if(c.updated_at&&new Date(c.updated_at)>s&&/^추천인/.test(c.updated_by||"")){out.push("기록 수정");bump(new Date(c.updated_at),String(c.updated_by).replace(/^추천인\s*/,""))}
+  let ns=[];try{ns=(NOTIS||[]).filter(x=>x.case_id===c.id&&new Date(x.at)>s&&(x.kind==="다 했어요"||x.kind==="방문 요청"))}catch(_){}
+  [...new Set(ns.map(x=>x.kind==="다 했어요"?"다 했어요 알림":"방문 요청"))].forEach(t=>out.push(t));ns.forEach(x=>bump(new Date(x.at)));
+  return out.length?{t:out.join(" · "),last,who}:null}
+function newMark(h,L){const T=document.createElement("template");T.innerHTML=h;
+  T.content.querySelectorAll(".cc[data-cid]").forEach(el=>{const c=L.find(x=>String(x.id)===el.dataset.cid);if(!c)return;CN[c.id]=c;const n=news(c);if(!n)return;
+    const nm=el.querySelector(".cc-nm b");if(nm)nm.insertAdjacentHTML("beforeend",'<i class="nw">NEW</i>');
+    const d=n.last,ts=d?`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:"";
+    const x=document.createElement("div");x.className="cc-new";x.textContent="새로 올라옴: "+n.t+(ts?` (${ts}${n.who?" "+n.who:""})`:"");
+    const top=el.querySelector(".cc-top");(top||el.firstElementChild).after(x)});return T.innerHTML}
+function seen(c){if(!c||!c.id)return;let t="";try{t=sessionStorage.getItem("oc_etok")||""}catch(_){}if(!t)return;
+  rpcS("oncool_ed_case_seen",{p_token:t,p_case:c.id}).then(at=>{[c,CN[c.id]].forEach(o=>{if(o)o.staff_seen_at=at});
+    document.querySelectorAll(`#clist .cc[data-cid="${CSS.escape(c.id)}"]`).forEach(el=>el.querySelectorAll(".nw,.cc-new").forEach(x=>x.remove()))}).catch(()=>{})}
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("#c_close")){try{seen(window.CSE&&CSE.current())}catch(_){}}},true);
 /* 보완중 카드에 보완 요청 내용 (11/18) */
 function drNote(h,L){const T=document.createElement("template");T.innerHTML=h;const lb=k=>((window.CS&&CS.DOCS||[]).find(x=>x.k===k)||{}).l||k;
   T.content.querySelectorAll(".cc[data-cid]").forEach(el=>{const c=L.find(x=>String(x.id)===el.dataset.cid);if(!c)return;const q=c.doc_req||{};
@@ -40,11 +60,11 @@ function hook(){if(!window.CS||CS.__stg)return;CS.__stg=1;const orig=CS.listHTML
     G.forEach(([t,f,top,gn,gt,cls],i)=>{const L=S[i];if(!L.length||(TAB&&TAB!==cls))return;
       let h=orig(L,refs).replace(/<h3 class="cc-h">[\s\S]*?<\/h3>/g,"").replace(/<\/div><div class="cgrid">/g,"").replace(/<div class="cc" /g,`<div class="cc ${cls}" `);
       h=h.replace(/<span class="stg stg-([^"]*)">[^<]*<\/span>/g,(m,s)=>{const c=L.find(x=>x.stage===s)||{stage:s};return `<span class="stg stg-${s}${step(c)===4?" stg-k4":""}">${bd(step(c))}${esc(short(c))}</span>`});
-      if(cls==="sgb")h=drNote(h,L);
+      if(cls==="sgb")h=drNote(h,L);h=newMark(h,L);
       out+=`<h3 class="cc-h ${cls}${top?" cc-top1":""}">${esc(t)}${bd(gn)}${esc(gt||"")} <b>${L.length}</b></h3>`+h});
     const used=new Set(S.flat()),rest=cases.filter(c=>!used.has(c));if(rest.length&&!TAB)out+=orig(rest,refs);return out||'<p class="cc-empty">이 단계에 해당하는 가구가 없어요.</p>'};
   const fs=document.getElementById("cfs");if(fs){fs.value="";fs.style.display="none"}if(fs)[...fs.options].forEach(o=>{if(!o.hasAttribute("value"))o.value=o.textContent;if(o.value==="위원회상정")o.remove();else if(N[o.value]&&o.value)o.textContent=N[o.value]});
-  if(window.CSE){const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,arguments);try{panel()}catch(e){console.error(e)}return x}}
+  if(window.CSE){const _o=CSE.open;CSE.open=function(c,r){const x=_o.apply(this,arguments);try{panel()}catch(e){console.error(e)}try{seen(c)}catch(e){}return x}}
   new MutationObserver(()=>{const c=CSE.current();if(!c)return;const p=document.getElementById("stg_box");if(p&&p.dataset.st!==key(c)){panel();return}document.querySelectorAll("#c_chips .stg").forEach(x=>{if(!x.dataset.stg){x.dataset.stg=1;x.innerHTML=nameH(c)}})}).observe(document.getElementById("cedit"),{subtree:true,childList:true,characterData:true});
   const st=document.createElement("style");st.textContent=`.cc-h.cc-top1{color:var(--pri)}.stg-선정{background:var(--green-soft,#e5f6ee);color:var(--green,#159a5c);font-weight:800}.stg.stg-k4{background:#e2f4f4;color:#0e8a8a}.stg-n{font-style:normal;display:inline-grid;place-items:center;min-width:16px;height:16px;border-radius:50%;background:currentColor;margin-right:4px;font-size:10.5px;font-weight:800;line-height:1;vertical-align:middle;position:relative;top:-1px}.stg:has(.stg-n){display:inline-flex;align-items:center}.stg:has(.stg-n) .stg-n{top:0}.stg-n{color:inherit}.stg .stg-n,.cc-h .stg-n{background:none;border:1.5px solid currentColor;margin:0 4px 0 0}.stg-서류완비,.stg-위원회상정{background:var(--pri-soft,#eceffd);color:var(--pri);font-weight:800}
 #stg_box{display:flex;flex-direction:column;gap:12px;margin:10px 0 14px}
@@ -64,6 +84,7 @@ function hook(){if(!window.CS||CS.__stg)return;CS.__stg=1;const orig=CS.listHTML
 .cc.sg1,.cc.sg2,.cc.sg3,.cc.sg4,.cc.sgb,.cc.sgz,.cc.sgx{border-left:5px solid var(--k);background:color-mix(in srgb,var(--k) 5%,var(--surface,#fff))}
 .cc.sg1 .stg,.cc.sg2 .stg,.cc.sg3 .stg,.cc.sg4 .stg,.cc.sgb .stg,.cc.sgz .stg,.cc.sgx .stg{background:color-mix(in srgb,var(--k) 14%,transparent);color:var(--k);font-weight:800}
 .cc-dr{margin:6px 0 2px;padding:7px 9px;border-radius:8px;background:color-mix(in srgb,var(--k) 10%,var(--surface,#fff));font-size:12.5px;line-height:1.5;color:var(--ink)}.cc-dr b{color:var(--k);margin-right:4px}.cc-dr p{margin:2px 0 0;white-space:pre-line}.cc-dr small{display:block;color:var(--mute);font-size:11.5px;margin-top:2px}.cc-ct{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.cc-ct button{font:inherit;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.2px solid color-mix(in srgb,var(--k) 45%,var(--line));background:var(--surface,#fff);color:var(--ink);cursor:pointer;height:auto;min-height:0;line-height:1.4}.cc-ct button.on{background:var(--k);border-color:var(--k);color:#fff}.cc-ct button:disabled{opacity:.6}.stg-log{font-size:12.5px;color:var(--mute);line-height:1.6}
+.nw{font-style:normal;background:#e5383b;color:#fff;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:99px;margin-left:6px;vertical-align:middle;letter-spacing:.3px}.cc-new{margin:4px 0 2px;font-size:12px;color:#b3261e;font-weight:600;line-height:1.5}.tnw{font-style:normal;background:#e5383b;color:#fff;border-radius:99px;padding:0 6px;font-size:10.5px;font-weight:800;margin-left:5px}
 .cc-h.sg1,.cc-h.sg2,.cc-h.sg3,.cc-h.sg4,.cc-h.sgb,.cc-h.sgx{color:var(--k)}`;document.head.appendChild(st)}
 const key=c=>(c.stage||"")+"|"+(c.kaswc_approved||"");
 function setStage(v){const s=document.getElementById("c_stage");if(!s)return;s.value=v;s.dispatchEvent(new Event("change",{bubbles:true}));document.getElementById("c_save").click()}
