@@ -37,7 +37,7 @@ function split(html,sel){const doc=new DOMParser().parseFromString(html,"text/ht
 /* 서류 확인 표지 (11/18): 뒤에 붙는 서류와 같은 순서로 대조 */
 const COVER_CSS=`@page{margin:13mm 12mm}body{font-family:"Noto Sans KR","Malgun Gothic",sans-serif;color:#1d2333;font-size:12.5px}
 h1{font-size:20px;margin:0}.top{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2.5px solid #2f3bb0;padding-bottom:6px;margin-bottom:10px}.top small{color:#5b6350}
-.who{font-size:15px;font-weight:700;margin:0 0 4px}.ln{margin:2px 0;line-height:1.6}.ln b{color:#2f3bb0}.ln span{color:#5b6350;display:inline-block;min-width:74px}
+.who{font-size:15px;font-weight:700;margin:0 0 4px}.ln{margin:2px 0;line-height:1.6}.ln b{color:#2f3bb0}.ln{display:flex;gap:6px}.ln span{color:#5b6350;flex:none;width:68px}
 table{width:100%;border-collapse:collapse;margin-top:12px}th{background:#2f3bb0;color:#fff;padding:6px 7px;text-align:left;font-size:12px}td{padding:6px 7px;border-bottom:1px solid #d9deea;font-size:12.5px}
 .na td{color:#9aa1b4}.miss{color:#c0392b;font-weight:700}.box{display:inline-block;width:14px;height:14px;border:1.5px solid #8a93a6;border-radius:3px}
 .warn{margin-top:10px;background:#fdf1ee;border-radius:6px;padding:7px 10px;color:#8e2b1f;line-height:1.6}.memo{margin-top:16px;border-top:1px dashed #b7bdcc;padding-top:5px;color:#8a93a6;height:90px}`;
@@ -51,16 +51,28 @@ function coverHTML(c,r,files){const e=CS.esc,t=CS.typeOf(c),a=CS.amounts(c),ds=C
   CS.DOCS.filter(x=>SIGNED.includes(x.k)&&sg[x.k]).forEach(x=>row(x,"sign"));
   {const k=window.ANNEX&&ANNEX.kindOf?ANNEX.kindOf(c):0;const cf=CS.DOCS.find(x=>x.k==="confirm");if(k&&ANNEX.readyK(c,k)&&!(files.confirm||[]).length){row(Object.assign({},cf,{l:`${ANNEX.K[k].t} (별첨 ${k})`,req:1}),"annex");files=Object.assign({},files,{__anx:1})}}
   CS.DOCS.filter(x=>!(SIGNED.includes(x.k)&&sg[x.k])&&!(x.k==="confirm"&&files.__anx)).forEach(x=>row(x,"up"));
-  const why=[];
-  if(t==="2")why.push(`<span>2025 잔액</span>${v.res?e(v.res):"<b style='color:#c0392b'>확인 기록 없음</b>"}${v.bal?" · "+e(v.bal)+(/\d$/.test(v.bal)?"원":""):""}${v.date?" · "+md(v.date):""}${v.who?" · "+e(v.who)+" 공동 청취":""}`);
-  if((t==="3"||t==="4")&&(c.annex_reason||c.v_env))why.push(`<span>${t==="3"?"바우처 못 쓰는 사유":"인프라 취약 사유"}</span>${e(c.annex_reason||c.v_env)}`);
+  const HI={"직장":[138780,229357,290169,360410,410439,490306,535512,584741,634423,712921],"지역":[68641,164508,240352,322443,378691,473662,525833,579249,628429,697282]};
+  const nI=Math.min(10,Math.max(1,+(c.v_income_size||c.v_household_size)||1)),inc=c.v_income||"",num=x=>+String(x||"").replace(/[^\d]/g,"")||0;
+  let why="";
+  if(t==="1"){const src=inc==="기초생활수급자"?"수급자 (바우처 세대원 기준 해당 없음)":inc==="차상위"?"차상위 증빙":c.hi_premium?`건보료 ${CS.fmt(num(c.hi_premium))}원 · 기준 ${nI}인 직장 ${CS.fmt(HI["직장"][nI-1])} / 지역 ${CS.fmt(HI["지역"][nI-1])}원`:"건보료 납부확인서 (금액 미입력)";why=`${e(src)} → 바우처 미대상 → 1유형`}
+  else if(t==="2")why=`수급자 → 바우처 대상 → 2025 잔액 ${v.res?e(v.res)+(v.bal?" "+e(v.bal)+(/\d$/.test(v.bal)?"원":""):""):"<b style='color:#c0392b'>확인 기록 없음</b>"}${v.date?" ("+md(v.date)+(v.who?" "+e(v.who)+" 공동 청취":"")+")":""} + 2026 ${e(c.v_voucher||"-")} → 2유형`;
+  else if(t==="3")why=`수급자 → 바우처 대상 → 쓰기 어려운 사유: ${e(c.annex_reason||c.v_env||"(사유 없음)")} → 3유형`;
+  else if(t==="4")why=`인프라 취약: ${e(c.annex_reason||c.v_heating||"(사유 없음)")} → 4유형`;
+  const note=String(c.visit_note||"").replace(/\s+/g," ").trim(),noteH=note.length<2?"<b style='color:#c0392b'>현황 메모 없음</b>":e(note.length>130?note.slice(0,130)+"…":note);
+  const mem=String(c.members||r.live_with||"").split(/\s*\/\s*/).filter(Boolean).map(e).join(" / ")||"<b style='color:#c0392b'>가구원 명단 없음</b>";
+  const head=c.v_is_head==="예"?"본인":c.v_head_name?e(c.v_head_name)+(c.v_head_birth?" ("+e(c.v_head_birth)+")":""):"-";
   const kinds=c.v_income==="기초생활수급자"&&(c.v_recipient_kinds||[]).length?" ("+e(c.v_recipient_kinds.join("·"))+")":"";
   const td=new Date(),ts=`${td.getFullYear()}-${String(td.getMonth()+1).padStart(2,"0")}-${String(td.getDate()).padStart(2,"0")}`;
   return `<div class="top"><h1>서류 확인 표지</h1><small>${ts} 출력</small></div>
-  <p class="who">${e(r.elder_name)} · 접수 ${e(r.receipt_no)}번 · ${e(r.dong||"")} · ${e(c.v_gender||r.gender||"")} · ${e(c.v_birth||b8(r.birth)||"생년월일 없음")}</p>
-  <p class="ln"><span>판정</span><b>${t?t+"유형 "+e(CS.TYPES[t]):"유형 미정"}</b> · 가구원 ${e(c.v_household_size||"?")}명${c.v_income_size?" (소득 판단 "+e(c.v_income_size)+"명)":""} · 동절기 ${a?CS.fmt(a.tot)+"원":"-"} (${SM[c.start_month||11]||""})</p>
-  <p class="ln"><span>소득</span>${e(c.v_income||"-")}${kinds}${c.hi_premium?" · 건보료 "+e(c.hi_premium):""}</p>
-  <p class="ln"><span>바우처</span>${e(c.v_voucher||"-")}</p>${why.map(x=>`<p class="ln">${x}</p>`).join("")}
+  <p class="who">${e(r.elder_name)} · 접수 ${e(r.receipt_no)}번 · ${e(c.v_gender||r.gender||"")} · ${e(c.v_birth||b8(r.birth)||"생년월일 없음")}</p>
+  <p class="ln"><span>주소</span>${e((r.address||"").replace(" | ",", "))}${r.dong?" ("+e(r.dong)+")":""}</p>
+  <p class="ln"><span>세대주</span>${head} · 가구원 ${e(c.v_household_size||"?")}명${c.v_income_size?" (소득 판단 "+e(c.v_income_size)+"명)":""}: ${mem}</p>
+  <p class="ln"><span>난방·추천</span>${e(c.v_heating||"-")} · 추천 ${e(r.worker_org||"")} ${e(r.worker_name||"")} · 방문 ${md(c.visit_date)}${c.visit_mode?" ("+e(c.visit_mode)+")":""}</p>
+  <p class="ln"><span>현황</span>${noteH}</p>
+  <div style="border-top:1px solid #d9deea;margin:7px 0 4px"></div>
+  <p class="ln"><span>판정</span><b>${t?t+"유형 "+e(CS.TYPES[t]):"유형 미정"}</b> · 동절기 ${a?CS.fmt(a.tot)+"원":"-"} (${SM[c.start_month||11]||""})</p>
+  <p class="ln"><span>소득</span>${e(inc||"-")}${kinds}${c.hi_premium?" · 건보료 "+e(c.hi_premium):""}</p>
+  <p class="ln"><span>근거</span>${why||"-"}</p>
   <table><tr><th>서류</th><th>${t?t+"유형 기준":"기준"}</th><th>올린 것</th><th>발급일</th><th style="width:40px">확인</th></tr>${rows.join("")}</table>
   ${miss.length||ds.stale.length?`<div class="warn">${miss.length?"⚠ 빠진 필수 서류: "+e(miss.join(", ")):""}${miss.length&&ds.stale.length?"<br>":""}${ds.stale.length?"⚠ 발급 3개월 지남: "+e(ds.stale.join(", ")):""}</div>`:""}
   <div class="memo">메모</div>`}
