@@ -20,10 +20,20 @@ function tabs(cases){const cl=document.getElementById("clist");if(!cl)return;let
   t.innerHTML=`<button type="button" data-tab="" class="${TAB?"":"on"}" style="--k:var(--ink)">전체 <b>${cases.length}</b></button>`+G.map((g,i)=>S[i].length?`<button type="button" data-tab="${g[5]}" class="${g[5]}${TAB===g[5]?" on":""}">${bd(g[3])}${esc(g[6])} <b>${S[i].length}</b></button>`:"").join("")}
 /* 보완중 카드에 보완 요청 내용 (11/18) */
 function drNote(h,L){const T=document.createElement("template");T.innerHTML=h;const lb=k=>((window.CS&&CS.DOCS||[]).find(x=>x.k===k)||{}).l||k;
-  T.content.querySelectorAll(".cc[data-cid]").forEach(el=>{const c=L.find(x=>String(x.id)===el.dataset.cid);const q=c&&c.doc_req;if(!q)return;
+  T.content.querySelectorAll(".cc[data-cid]").forEach(el=>{const c=L.find(x=>String(x.id)===el.dataset.cid);if(!c)return;const q=c.doc_req||{};
     const d=new Date(q.at),md=isNaN(d)?"":`${d.getMonth()+1}/${d.getDate()} 요청`;const docs=(q.docs||[]).map(lb).map(s=>s.replace(/\s*\(.*\)\s*$/,""));
-    const x=document.createElement("div");x.className="cc-dr";x.innerHTML=(docs.length?`<b>다시 받을 서류</b> ${esc(docs.join(", "))}`:"")+(q.note?`<p>${esc(q.note)}</p>`:(docs.length?"":"<p>보완 내용이 적혀 있지 않아요.</p>"))+(md?`<small>${md}</small>`:"");
+    const x=document.createElement("div");x.className="cc-dr";x.innerHTML=(docs.length?`<b>다시 받을 서류</b> ${esc(docs.join(", "))}`:"")+(q.note?`<p>${esc(q.note)}</p>`:(docs.length?"":"<p>보완 내용이 적혀 있지 않아요.</p>"))+(md?`<small>${md}</small>`:"")+ctHTML(c);
     const top=el.querySelector(".cc-top");(top||el.firstElementChild).after(x)});return T.innerHTML}
+/* 보완중 카드 연락 체크 (11/18): 누르면 바로 서버에 쌓임 */
+const CT={},CTS=["연락함","부재","문자 보냄","회신 대기"];
+const ctFmt=x=>{const d=new Date(x.at);return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} ${x.s}${x.by?" ("+x.by+")":""}`};
+function ctLast(c){const a=c.contact||[];return a.length?a[a.length-1]:null}
+function ctHTML(c){CT[c.id]=c;const l=ctLast(c);return `<div class="cc-ct">${CTS.map(s=>`<button type="button" data-ct="${s}" data-cid="${esc(c.id)}"${l&&l.s===s?' class="on"':""}>${s==="연락함"?"☎ ":""}${s}</button>`).join("")}</div><small class="cc-ctl" data-ctl="${esc(c.id)}">${l?"마지막: "+esc(ctFmt(l)):"연락 기록 없음"}</small>`}
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-ct]");if(!b)return;e.stopPropagation();e.preventDefault();if(b.disabled)return;
+  const id=b.dataset.cid,s=b.dataset.ct,box=b.parentNode,lab=document.querySelector(`[data-ctl="${CSS.escape(id)}"]`);box.querySelectorAll("button").forEach(x=>x.disabled=true);
+  try{const r=await rpcS("oncool_ed_contact_add",{p_token:sessionStorage.oc_etok,p_case:id,p_status:s});if(CT[id])CT[id].contact=r;const cur=window.CSE&&CSE.current();if(cur&&cur.id===id)cur.contact=r;
+    box.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));const l=r[r.length-1];if(lab&&l)lab.textContent="마지막: "+ctFmt(l)}
+  catch(x){if(lab)lab.textContent="저장하지 못했어요: "+(x.message||x)}finally{box.querySelectorAll("button").forEach(x=>x.disabled=false)}},true);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function hook(){if(!window.CS||CS.__stg)return;CS.__stg=1;const orig=CS.listHTML;
   CS.listHTML=function(cases,refs){tabs(cases);if(!cases.length)return orig(cases,refs);const S=split(cases);let out="";
@@ -53,7 +63,7 @@ function hook(){if(!window.CS||CS.__stg)return;CS.__stg=1;const orig=CS.listHTML
 .sg1{--k:#7c4dde}.sg2{--k:#3b5bdb}.sg3{--k:#159a5c}.sg4{--k:#b07d0a}.sgb{--k:#d9730d}.sgz{--k:#7d8699}.sgx{--k:#d0505a}
 .cc.sg1,.cc.sg2,.cc.sg3,.cc.sg4,.cc.sgb,.cc.sgz,.cc.sgx{border-left:5px solid var(--k);background:color-mix(in srgb,var(--k) 5%,var(--surface,#fff))}
 .cc.sg1 .stg,.cc.sg2 .stg,.cc.sg3 .stg,.cc.sg4 .stg,.cc.sgb .stg,.cc.sgz .stg,.cc.sgx .stg{background:color-mix(in srgb,var(--k) 14%,transparent);color:var(--k);font-weight:800}
-.cc-dr{margin:6px 0 2px;padding:7px 9px;border-radius:8px;background:color-mix(in srgb,var(--k) 10%,var(--surface,#fff));font-size:12.5px;line-height:1.5;color:var(--ink)}.cc-dr b{color:var(--k);margin-right:4px}.cc-dr p{margin:2px 0 0;white-space:pre-line}.cc-dr small{display:block;color:var(--mute);font-size:11.5px;margin-top:2px}
+.cc-dr{margin:6px 0 2px;padding:7px 9px;border-radius:8px;background:color-mix(in srgb,var(--k) 10%,var(--surface,#fff));font-size:12.5px;line-height:1.5;color:var(--ink)}.cc-dr b{color:var(--k);margin-right:4px}.cc-dr p{margin:2px 0 0;white-space:pre-line}.cc-dr small{display:block;color:var(--mute);font-size:11.5px;margin-top:2px}.cc-ct{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.cc-ct button{font:inherit;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.2px solid color-mix(in srgb,var(--k) 45%,var(--line));background:var(--surface,#fff);color:var(--ink);cursor:pointer;height:auto;min-height:0;line-height:1.4}.cc-ct button.on{background:var(--k);border-color:var(--k);color:#fff}.cc-ct button:disabled{opacity:.6}.stg-log{font-size:12.5px;color:var(--mute);line-height:1.6}
 .cc-h.sg1,.cc-h.sg2,.cc-h.sg3,.cc-h.sg4,.cc-h.sgb,.cc-h.sgx{color:var(--k)}`;document.head.appendChild(st)}
 const key=c=>(c.stage||"")+"|"+(c.kaswc_approved||"");
 function setStage(v){const s=document.getElementById("c_stage");if(!s)return;s.value=v;s.dispatchEvent(new Event("change",{bubbles:true}));document.getElementById("c_save").click()}
@@ -79,7 +89,8 @@ function panel(){const box0=document.getElementById("cedit");const c=window.CSE&
   else if(n===2){msg="<b>사례판정위원회 결과를 넣어 주세요.</b>";btn=`<button type="button" class="sbtn pri" data-stg="선정">복지관 선정 완료 → 3단계</button><button type="button" class="sbtn" data-stg="보류">보류</button><button type="button" class="sbtn" data-stg="탈락">탈락</button>`}
   else if(n===3){msg="<b>협회 승인이 나면 ‘협회 승인일’을 넣고 저장해 주세요.</b><br>그러면 4단계(협회 선정 완료)로 바뀌어요.";btn=`<button type="button" class="sbtn pri" data-stg="kaswc">협회 승인일 넣기</button>`}
   else{msg=`<b>협회 선정 완료</b> · 승인일 ${esc(c.kaswc_approved)}`}
-  box.innerHTML=`<div class="stg-steps">${sh}</div><div class="stg-act${off?" off":""}"><p>${msg}</p>${btn}</div>`;
+  const lg=(c.contact||[]).slice().reverse();
+  box.innerHTML=`<div class="stg-steps">${sh}</div><div class="stg-act${off?" off":""}"><p>${msg}</p>${btn}</div>`+(lg.length?`<div class="stg-log"><b>연락 기록</b> · ${lg.map(x=>esc(ctFmt(x))).join(" · ")}</div>`:"");
   box.onclick=e=>{const b=e.target.closest("[data-stg]");if(!b)return;const a=b.dataset.stg;
     if(a==="chk"){const d=document.getElementById("dc_btn");if(d)d.click();else setStage("서류완비");return}
     if(a==="req"){const d=document.getElementById("dr_btn");if(d){d.click();d.scrollIntoView({block:"center"})}return}
