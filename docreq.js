@@ -18,17 +18,17 @@ function staff(rpcS,tok,onDone){style();const _o=CSE.open;CSE.open=function(c,r)
     const b=document.createElement("button");b.type="button";b.className="sbtn";b.id="dr_btn";b.textContent="보완 요청";acts.insertBefore(b,document.getElementById("c_msg"));
     b.onclick=()=>{let p=document.getElementById("dr_pan");if(p){p.remove();return}p=document.createElement("div");p.id="dr_pan";p.className="dr-pan";
       p.innerHTML=`<b>보완할 서류</b><div class="dr-ck">${CS.DOCS.filter(d=>d.k!=="confirm").map(d=>`<label><input type="checkbox" value="${d.k}"> ${esc(d.l)}</label>`).join("")}</div>
-      <label style="flex-direction:column!important;align-items:stretch">요청 사유<textarea id="dr_note" maxlength="300" placeholder="예) 건강보험료 납부확인서가 발급한 지 3개월이 지났습니다. 새로 발급받아 올려 주세요."></textarea></label>
+      <label style="flex-direction:column!important;align-items:stretch">보완할 내용 <span style="color:var(--warm);font-size:12px">필수</span><textarea id="dr_note" maxlength="300" placeholder="예) 건강보험료 납부확인서가 발급한 지 3개월이 지났습니다. 새로 발급받아 올려 주세요."></textarea></label>
       <div class="dr-row"><button type="button" class="sbtn pri" id="dr_send">보완 요청 보내기</button><span class="msg" id="dr_msg"></span></div>
       <p class="hint" style="margin:0">보내면 단계가 ‘보완중’으로 바뀌고, 고른 서류는 ‘받음’이 해제됩니다.<br>보낸 뒤 선생님께 보낼 문자가 준비돼요.</p>`;acts.after(p);
       document.getElementById("dr_send").onclick=async e=>{const docs=[...p.querySelectorAll(".dr-ck input:checked")].map(i=>i.value),note=document.getElementById("dr_note").value.trim(),m=document.getElementById("dr_msg");
-        if(!docs.length&&!note){m.textContent="다시 받을 서류를 고르거나 사유를 적어 주세요.";return}e.target.disabled=true;
-        try{const nc=await rpcS("oncool_ed_doc_request",{p_token:tok(),p_case:c.id,p_docs:docs,p_note:note});const cur=CSE.current()||c;Object.assign(cur,nc);m.textContent="보완 요청을 보냈습니다.";onDone&&onDone(cur);smsPanel(p,r,docs,()=>CSE.open(cur,r))}
+        if(!note){m.textContent="보완할 내용을 적어 주세요.";document.getElementById("dr_note").focus();return}e.target.disabled=true;
+        try{const nc=await rpcS("oncool_ed_doc_request",{p_token:tok(),p_case:c.id,p_docs:docs,p_note:note});const cur=CSE.current()||c;Object.assign(cur,nc);m.textContent="보완 요청을 보냈습니다.";onDone&&onDone(cur);smsPanel(p,r,docs,()=>CSE.open(cur,r),note)}
         catch(x){e.target.disabled=false;m.textContent="보내지 못했습니다: "+(/locked/.test(x.message)?"선정이 끝난 가구는 요청할 수 없습니다.":x.message)}}}}catch(e){console.error(e)}return x}}
 /* 반자동 문자: 번호·문구를 채운 문자 버튼 + 복사 (전송은 직원이 직접) */
-function smsPanel(p,r,docs,done){const d=String(r.worker_phone||"").replace(/\D/g,""),ok=/^01\d{8,9}$/.test(d);
+function smsPanel(p,r,docs,done,note){const d=String(r.worker_phone||"").replace(/\D/g,""),ok=/^01\d{8,9}$/.test(d);
   const nm=String(r.elder_name||"");const mk=nm?nm[0]+"○○":"";
-  const body=`[만안복지관 온앤쿨케어]\n${r.worker_name||""} 선생님, 추천하신 ${mk} 님 가구에 서류 보완이 필요해요.\n${docs.length?"보완할 서류: "+docs.map(lbl).map(s=>s.replace(/\s*\(.*\)\s*$/,"")).join(", ")+"\n":""}아래 링크에서 확인하고 다시 올려 주세요.\nhttps://vinnieheo.github.io/oncool-care/\n문의 070-8978-7710`;
+  const body=`[만안복지관 온앤쿨케어]\n${r.worker_name||""} 선생님, 추천하신 ${mk} 님 가구에 서류 보완이 필요해요.\n${docs.length?"보완할 서류: "+docs.map(lbl).map(s=>s.replace(/\s*\(.*\)\s*$/,"")).join(", ")+"\n":""}${note?"보완할 내용: "+note+"\n":""}아래 링크에서 확인하고 다시 올려 주세요.\nhttps://vinnieheo.github.io/oncool-care/\n문의 070-8978-7710`;
   const f=ok?d.replace(/(\d{3})(\d{3,4})(\d{4})/,"$1-$2-$3"):"";
   p.innerHTML=`<b>선생님께 문자 보내기</b><p class="hint" style="margin:0">${ok?`받는 사람: ${esc(r.worker_name||"")} 선생님 · ${f}`:"선생님 휴대폰 번호가 없어요. 문구를 복사해서 보내 주세요."}</p>
    <textarea id="dr_sms" style="min-height:150px">${esc(body)}</textarea>
