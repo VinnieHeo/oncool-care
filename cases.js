@@ -6,7 +6,7 @@ window.CS=(function(){
     {k:"income",l:"소득 증빙",dated:1,req:"t1234",h:"1유형: 건강보험료 납부확인서(최근 3개월)\n의료급여 수급자는 수급자증명서\n2·3·4유형: 건보료 납부확인서 또는 수급자증명서\n건보료는 낸 돈이 아니라 ‘고지금액’으로 봐요.\n기초연금 받는 단독·부부 가구는 소득 기준을 채운 것으로 봐요.\n국가유공자(건보료 없음): 소득금액증명원 + 보훈급여금 지급 확인서\n외국인: 소득금액증명원 또는 근로소득 원천징수 영수증\n발급 3개월 이내"},
     {k:"hifam",l:"건보 자격확인서 + 가족관계증명서",dated:1,req:0,h:"가족이 건강보험료를 내는 경우만\n소득은 납부자의 자격확인(통보)서 인원으로 판단해요.\n지원금은 실제로 같이 사는 인원으로 줘요."},
     {k:"voucher",l:"에너지바우처 확인",dated:0,req:"t23",h:"2유형: 2026년 에너지이용권 지급 결정 통지서\n행정복지센터에서 이 이름으로 재발급을 요청해 주세요.\n2025년 소진은 서류가 없어 1600-3190에 함께 전화해 확인해 주세요.\n확인 결과는 확인서(별첨 2)에 직인을 찍어 제출해요.\n3유형: 에너지이용권 지급 결정 통지서 또는 바우처 대상 증빙\n바우처를 쓰기 어려운 환경은 사진·상담 메모로 남겨 주세요.\n통지서를 못 떼면 아래 화면 캡처도 돼요.\n에너지바우처 챗봇 대화, 누리집 잔액 조회, 행정복지센터 명단"},
-    {k:"confirm",l:"유형별 확인서 (협회 별첨 2·3·4)",dated:0,req:"t234",h:"복지관이 작성하고 직인을 찍어요.\n2유형 별첨 2 · 3유형 별첨 3 · 4유형 별첨 4\n협회 시스템에 증빙으로 등록해요."},
+    {k:"confirm",l:"유형별 확인서 (협회 별첨 3·4)",dated:0,req:"t34",h:"복지관이 작성하고 직인을 찍어요.\n3유형 별첨 3 · 4유형 별첨 4\n2유형 별첨 2는 위 ‘2025년 바우처 잔액 확인’ 기록으로 만들어요.\n협회 시스템에 증빙으로 등록해요."},
     {k:"bank",l:"대상자 본인 명의 통장 사본",dated:0,req:"t123",h:"세대주가 아니어도 대상자 본인 명의\n압류방지 통장이면 같이 사는 직계가족 통장도 돼요.\n4유형은 연료를 직접 사서 드려서 필요 없어요."},
     {k:"consent_own",l:"개인정보 동의서 (복지관 자체 · 온앤쿨 시스템)",dated:1,req:1,h:"가정방문 때 받아 주세요.\n기록·증빙을 올리기 전에 필요해요.\n원본은 복지관 보관"},
     {k:"consent",l:"개인정보 수집·이용·제공 동의서 (협회 양식)",dated:0,req:1,h:"협회 시스템에 입력하기 전에 꼭 받아 주세요.\n원본은 복지관 보관"},
@@ -46,7 +46,9 @@ window.CS=(function(){
     DOCS.forEach(x=>{const req=typeof x.req==="string"?(!t||x.req.includes(t)):!!x.req;if(!req)return;need++;const v=d[x.k]||{};
       let good=!!v.got;if(good&&x.dated&&v.date){{const dt=new Date(v.date);const lim=new Date(today);lim.setMonth(lim.getMonth()-3);if(dt<lim){good=false;stale.push(x.l)}}}
       if(good)ok++});
+    if(t==="2"){need++;if(vcOK(c))ok++}
     return {need,ok,full:need>0&&ok===need,stale}}
+  function vcOK(c){const v=c.vcall||{};return !!(v.ok&&v.res==="소진 확인"&&v.date)}
   function goal(cases){const sel=cases.filter(c=>["선정","위원회상정","서류완비"].includes(c.stage));
     const by={"1":0,"2":0,"3":0,"4":0};sel.forEach(c=>{const t=typeOf(c);if(by[t]!==undefined)by[t]++});
     const tot=sel.length,pct=Math.min(100,tot/40*100);
@@ -114,7 +116,7 @@ window.CS=(function(){
     const head=["가구코드","대상자","생년월일","성별","지원 기간","사업 참여 이력","돌봄단 발굴","연락처","거주동","주소","세대주 본인","세대주","가구원 수","소득 구분","수급 종류","바우처","바우처 대상 세대원","바우처 쓰기 어려운 환경","난방","유형","동절기 지원액","월별 지급","서류","3개월 지난 서류","방문일","방문자","방문 메모","효율 개선","단계","위원회 결과","판정일","협회 승인","추천자"];
     const lines=[head.map(q).join(",")].concat(cases.map(c=>{const r=R[c.referral_id]||{},a=amounts(c),ds=docState(c);return [c.household_code,r.elder_name,c.v_birth||r.birth,c.v_gender||r.gender,c.period,c.participation,c.care_found,r.phone,r.dong,(r.address||"").replace(" | ",", "),c.v_is_head,[c.v_head_name,c.v_head_birth].filter(Boolean).join(" "),c.v_household_size,c.v_income,(c.v_recipient_kinds||[]).join("·"),c.v_voucher,c.v_voucher_target,c.v_env,c.v_heating,typeOf(c)?typeOf(c)+"유형 "+TYPES[typeOf(c)]:"",a?a.tot:"",a?a.list.map(([m,v])=>m+" "+v).join(" / "):"",`${ds.ok}/${ds.need}`,ds.stale.join("·"),c.visit_date,c.visitor,c.visit_note,(c.eff_needs||[]).join("·"),c.stage,c.committee_result,c.committee_date,c.kaswc_approved,`${r.worker_org||"생활지원사"} ${r.worker_name||""}`].map(q).join(",")}));
     const b=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});const el=document.createElement("a");el.href=URL.createObjectURL(b);el.download=`온앤쿨_선정심사_${new Date().toISOString().slice(0,10)}.csv`;el.click();URL.revokeObjectURL(el.href)}
-  return {TYPES,ENV,DOCS,STAGES,typeFrom,proposed,typeOf,amounts,docState,goal,listHTML,viewHTML,csv,fmt,esc,printSheet};
+  return {TYPES,ENV,DOCS,STAGES,typeFrom,proposed,typeOf,amounts,docState,vcOK,goal,listHTML,viewHTML,csv,fmt,esc,printSheet};
 })();
 
 /* 심사 카드 편집기 (백엔드 B, 훅 H 주입) */
@@ -133,7 +135,7 @@ const effHint=r=>{const L=[];if(r&&r.heater_broken==="예")L.push("난방기구 
 const effHas=(L,x)=>(L||[]).includes(x)||(x===EFF[0]&&(L||[]).includes("방풍·단열 물품"));
 /* 2유형: 2025년 바우처 소진은 서류가 없어 1600-3190 공동 청취로 확인 → 복지관이 별첨 2 작성 (협회 확인 11/12) */
 const VC_ON=v=>!!v&&v!=="안 받음";
-function vcallHTML(c,r){const v=c.vcall||{},e=CS.esc,show=v.ok||v.res||VC_ON(c.v_voucher||(r||{}).voucher),res=v.res||(v.ok?"소진 확인":"");
+function vcallHTML(c,r){const v=c.vcall||{},e=CS.esc,show=v.ok||v.res||VC_ON(c.v_voucher||(r||{}).voucher)||CS.typeOf(c)==="2",res=v.res||(v.ok?"소진 확인":"");
   const B=[["소진 확인","1만 원 이하","다 썼어요 · 2유형"],["1만 원 초과","1만 원 넘게 남음","2유형 아님"],["조회 안 됨","조회 안 됨","다시 확인 필요"]];
   return `<div class="vcall" id="c_vcall"${show?"":" hidden"}><b>2025년 바우처 잔액 확인 (2유형)</b><p>2025년 사용 내역은 따로 발급되는 서류가 없습니다.<br>대상자가 에너지바우처 콜센터(1600-3190)에 전화하고 담당자가 함께 들어 주세요.<br>들은 결과를 아래에서 골라 주세요.</p>
    <div class="vc-res">${B.map(([k,a,b])=>`<button type="button" data-vres="${k}" class="${res===k?"on":""}${k==="소진 확인"?"":" warn"}"><b>${a}</b><small>${b}</small></button>`).join("")}</div>
@@ -234,7 +236,7 @@ function formCase(){const c=curCase,g=id=>$("#c_"+id),docs={};
     eff_needs:[...document.querySelectorAll("[data-eff]:checked")].map(x=>x.dataset.eff),eff_note:g("eff_note").value.trim()||null,eff_etc:(g("eff_etc")&&document.querySelector('[data-eff="기타"]:checked')?g("eff_etc").value.trim():"")||null,
     members:g("members").value.trim()||null,hi_premium:g("hi_premium").value.trim()||null,cool_equip:g("cool_equip").value||null,bill_avg:g("bill_avg").value.trim()||null,bill_checked:g("bill_checked").value||null,arrears_months:g("arrears_months").value.trim()||null,cutoff:g("cutoff").value.trim()||null,equip_owner:g("equip_owner").value||null,heat_risk:g("heat_risk").value||null,guardian:g("guardian").value.trim()||null,
     stage:g("stage").value,household_code:g("household_code").value.trim()||null,committee_result:g("committee_result").value||null,committee_date:g("committee_date").value||null,committee_note:g("committee_note").value.trim()||null,kaswc_approved:g("kaswc_approved").value||null,...($("#c_annex_reason")?{annex_reason:$("#c_annex_reason").value.trim()||null}:{})}}
-function refreshCalc(){if(!curCase)return;const t=Object.assign({},curCase,formCase());paintDocs(t);requestAnimationFrame(growAll);{const vb=$("#c_vcall");if(vb)vb.hidden=!(t.vcall&&(t.vcall.ok||t.vcall.res))&&!VC_ON(t.v_voucher||curRef.voucher)}const a=CS.amounts(t),ds=CS.docState(t);
+function refreshCalc(){if(!curCase)return;const t=Object.assign({},curCase,formCase());paintDocs(t);requestAnimationFrame(growAll);{const vb=$("#c_vcall");if(vb)vb.hidden=!(t.vcall&&(t.vcall.ok||t.vcall.res))&&!VC_ON(t.v_voucher||curRef.voucher)&&CS.typeOf(t)!=="2"}const a=CS.amounts(t),ds=CS.docState(t);
   $("#c_prop").textContent=CS.proposed(t)||"정보 부족";if(!B.worker)kaswc(t);
   $("#c_amt").innerHTML=a?`<div class="amt-box">${a.list.map(([m,v])=>`<div>${m}<b>${CS.fmt(v)}</b></div>`).join("")}<div class="tot">동절기 합계<b>${CS.fmt(a.tot)}</b></div></div>`:'<p class="dv-empty">유형과 가구원 수를 넣으면 계산됩니다</p>';
   $("#c_chips").innerHTML=`<span class="stg stg-${CS.esc(t.stage)}">${CS.esc(t.stage)}</span><span class="chip2 ${ds.full?"ok":"amber"}">서류 ${ds.ok}/${ds.need}</span>${ds.stale.length?`<span class="chip2 warn">신청일 기준 3개월 넘음: ${CS.esc(ds.stale.join(", "))}</span>`:""}${ds.full&&["조사중","업로드완료"].includes(t.stage)?'<span class="chip2 info">서류가 다 모였습니다 → 단계를 ‘서류완비’로</span>':""}`}
