@@ -18,12 +18,19 @@ function tabs(cases){const cl=document.getElementById("clist");if(!cl)return;let
     t.onclick=e=>{const b=e.target.closest("[data-tab]");if(!b)return;TAB=b.dataset.tab;try{sessionStorage.setItem("oc_stab",TAB)}catch(_){}const fs=document.getElementById("cfs");if(fs)fs.dispatchEvent(new Event("change"))}}
   const S=split(cases);if(TAB&&!G.some((g,i)=>g[5]===TAB&&S[i].length))TAB="";
   t.innerHTML=`<button type="button" data-tab="" class="${TAB?"":"on"}" style="--k:var(--ink)">전체 <b>${cases.length}</b></button>`+G.map((g,i)=>S[i].length?`<button type="button" data-tab="${g[5]}" class="${g[5]}${TAB===g[5]?" on":""}">${bd(g[3])}${esc(g[6])} <b>${S[i].length}</b></button>`:"").join("")}
+/* 보완중 카드에 보완 요청 내용 (11/18) */
+function drNote(h,L){const T=document.createElement("template");T.innerHTML=h;const lb=k=>((window.CS&&CS.DOCS||[]).find(x=>x.k===k)||{}).l||k;
+  T.content.querySelectorAll(".cc[data-cid]").forEach(el=>{const c=L.find(x=>String(x.id)===el.dataset.cid);const q=c&&c.doc_req;if(!q)return;
+    const d=new Date(q.at),md=isNaN(d)?"":`${d.getMonth()+1}/${d.getDate()} 요청`;const docs=(q.docs||[]).map(lb).map(s=>s.replace(/\s*\(.*\)\s*$/,""));
+    const x=document.createElement("div");x.className="cc-dr";x.innerHTML=(docs.length?`<b>다시 받을 서류</b> ${esc(docs.join(", "))}`:"")+(q.note?`<p>${esc(q.note)}</p>`:(docs.length?"":"<p>보완 내용이 적혀 있지 않아요.</p>"))+(md?`<small>${md}</small>`:"");
+    const top=el.querySelector(".cc-top");(top||el.firstElementChild).after(x)});return T.innerHTML}
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function hook(){if(!window.CS||CS.__stg)return;CS.__stg=1;const orig=CS.listHTML;
   CS.listHTML=function(cases,refs){tabs(cases);if(!cases.length)return orig(cases,refs);const S=split(cases);let out="";
     G.forEach(([t,f,top,gn,gt,cls],i)=>{const L=S[i];if(!L.length||(TAB&&TAB!==cls))return;
       let h=orig(L,refs).replace(/<h3 class="cc-h">[\s\S]*?<\/h3>/g,"").replace(/<\/div><div class="cgrid">/g,"").replace(/<div class="cc" /g,`<div class="cc ${cls}" `);
       h=h.replace(/<span class="stg stg-([^"]*)">[^<]*<\/span>/g,(m,s)=>{const c=L.find(x=>x.stage===s)||{stage:s};return `<span class="stg stg-${s}${step(c)===4?" stg-k4":""}">${bd(step(c))}${esc(short(c))}</span>`});
+      if(cls==="sgb")h=drNote(h,L);
       out+=`<h3 class="cc-h ${cls}${top?" cc-top1":""}">${esc(t)}${bd(gn)}${esc(gt||"")} <b>${L.length}</b></h3>`+h});
     const used=new Set(S.flat()),rest=cases.filter(c=>!used.has(c));if(rest.length&&!TAB)out+=orig(rest,refs);return out||'<p class="cc-empty">이 단계에 해당하는 가구가 없어요.</p>'};
   const fs=document.getElementById("cfs");if(fs){fs.value="";fs.style.display="none"}if(fs)[...fs.options].forEach(o=>{if(!o.hasAttribute("value"))o.value=o.textContent;if(o.value==="위원회상정")o.remove();else if(N[o.value]&&o.value)o.textContent=N[o.value]});
@@ -46,6 +53,7 @@ function hook(){if(!window.CS||CS.__stg)return;CS.__stg=1;const orig=CS.listHTML
 .sg1{--k:#7c4dde}.sg2{--k:#3b5bdb}.sg3{--k:#159a5c}.sg4{--k:#b07d0a}.sgb{--k:#d9730d}.sgz{--k:#7d8699}.sgx{--k:#d0505a}
 .cc.sg1,.cc.sg2,.cc.sg3,.cc.sg4,.cc.sgb,.cc.sgz,.cc.sgx{border-left:5px solid var(--k);background:color-mix(in srgb,var(--k) 5%,var(--surface,#fff))}
 .cc.sg1 .stg,.cc.sg2 .stg,.cc.sg3 .stg,.cc.sg4 .stg,.cc.sgb .stg,.cc.sgz .stg,.cc.sgx .stg{background:color-mix(in srgb,var(--k) 14%,transparent);color:var(--k);font-weight:800}
+.cc-dr{margin:6px 0 2px;padding:7px 9px;border-radius:8px;background:color-mix(in srgb,var(--k) 10%,var(--surface,#fff));font-size:12.5px;line-height:1.5;color:var(--ink)}.cc-dr b{color:var(--k);margin-right:4px}.cc-dr p{margin:2px 0 0;white-space:pre-line}.cc-dr small{display:block;color:var(--mute);font-size:11.5px;margin-top:2px}
 .cc-h.sg1,.cc-h.sg2,.cc-h.sg3,.cc-h.sg4,.cc-h.sgb,.cc-h.sgx{color:var(--k)}`;document.head.appendChild(st)}
 const key=c=>(c.stage||"")+"|"+(c.kaswc_approved||"");
 function setStage(v){const s=document.getElementById("c_stage");if(!s)return;s.value=v;s.dispatchEvent(new Event("change",{bubbles:true}));document.getElementById("c_save").click()}
