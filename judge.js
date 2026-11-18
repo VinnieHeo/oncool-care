@@ -51,7 +51,7 @@ function summary(c,r){const t=CS.typeOf(c),a=CS.amounts(c),d=c.docs||{},sg=c.sig
   <tr><th>단전·단가스</th><td>${esc(c.cutoff||"")}</td><th>난방</th><td>${esc(c.v_heating||r.heating||"")}</td></tr>
   <tr><th>냉방 설비</th><td>${esc(c.cool_equip||"")}</td><th>설비 소유</th><td>${esc(c.equip_owner||"")}</td></tr>
   <tr><th>한랭·온열 취약</th><td>${esc(c.heat_risk||"")}</td><th>안부 보호자</th><td>${esc(noPhone(c.guardian))}</td></tr></table>
-  <h2>4. 선정 기준 확인</h2><div class="g2"><table><tr><th>소득</th><td>${esc(inc)}${v(r.recipient_kinds)?" ("+esc(v(r.recipient_kinds))+")":""}${c.hi_premium?"<br><small>건보료 "+esc(c.hi_premium)+"</small>":""}</td></tr>
+  <h2>4. 선정 기준 확인</h2><div class="g2"><table><tr><th>소득</th><td>${esc(inc)}${inc==="기초생활수급자"&&v(c.v_recipient_kinds||r.recipient_kinds)?" ("+esc(v(c.v_recipient_kinds||r.recipient_kinds))+")":""}${c.hi_premium?"<br><small>건보료 "+esc(c.hi_premium)+"</small>":""}</td></tr>
   <tr><th>바우처</th><td>${esc(vou)}${r.voucher_reason?"<br><small>미신청 사유: "+esc(r.voucher_reason)+"</small>":""}${c.v_voucher_target?" · 대상 세대원 "+esc(c.v_voucher_target):""}${c.v_env&&c.v_env!=="해당 없음"?"<br><small>"+esc(c.v_env)+"</small>":""}</td></tr>
   <tr><th>제안 유형</th><td><b>${t?t+"유형":"판단 필요"}</b>${p?"<br><small>"+esc(p)+"</small>":""}</td></tr></table>
   ${a?amtHTML(c,t,a):""}${a?``:`<div class="txt">유형과 가구원 수가 정해지면 지원 금액이 나와요</div>`}</div>
