@@ -34,7 +34,8 @@ async function photo(blob){const bm=await createImageBitmap(blob);const s=Math.m
 function split(html,sel){const doc=new DOMParser().parseFromString(html,"text/html");const css=[...doc.querySelectorAll("style")].map(s=>s.textContent).join("\n");doc.querySelectorAll(".bar,script").forEach(e=>e.remove());
   const els=sel?[...doc.querySelectorAll(sel)]:[doc.body];return {css,pages:els.map(e=>sel?e.outerHTML:e.innerHTML)}}
 
-async function build(c,r,say){const P=[],note=[],cnt={sheet:0,judge:0,sign:0,annex:0,up:0},sg=c.signs||{},SIGNED=JUDGE.SIGNED||["consent_own","consent","pledge"];
+/* 받을 서류 고르기 (11/18): plan()으로 목록만 만들고, build()에 고른 key를 넘김 */
+async function plan(c,r){const P=[],sg=c.signs||{},SIGNED=JUDGE.SIGNED||["consent_own","consent","pledge"];
   /* 1. 순서 정하기 (아직 그리지 않음) */
   P.push({l:"초기상담지",t:"sheet",run:async()=>{const s=split(CS.printSheet(c,r,true));return [await shot(s.css,s.pages[0])]}});
   P.push({l:"사례판정 자료",t:"judge",run:async()=>[await shot(JUDGE.CSS,JUDGE.summary(c,r).replace(/<span class="attn">[^<]*<\/span>/,"<span>서류 전체 묶음 · 증빙은 뒤쪽</span>"))]});
@@ -44,6 +45,8 @@ async function build(c,r,say){const P=[],note=[],cnt={sheet:0,judge:0,sign:0,ann
   {const k=window.ANNEX&&ANNEX.kindOf?ANNEX.kindOf(c):0;if(k&&ANNEX.readyK(c,k)&&!(files.confirm||[]).length)
     P.push({l:`${ANNEX.K[k].t} (별첨 ${k})`,t:"annex",run:async()=>{let g={};try{g=await RPC("oncool_ed_annex_cfg",{p_token:TOK()})||{}}catch(_){}return [await shot(ANNEX.CSS,ANNEX.page(c,r,g,k))]}})}
   for(const x of CS.DOCS){if(SIGNED.includes(x.k)&&sg[x.k])continue;for(const f of files[x.k])P.push({l:x.l,t:"up",f,k:x.k})}
+  P.forEach(p=>p.key=p.t==="up"?"up:"+p.k:p.t);return P}
+async function build(c,r,say,sel){let P=await plan(c,r);if(sel)P=P.filter(p=>sel.has(p.key));const note=[],cnt={sheet:0,judge:0,sign:0,annex:0,up:0};if(!P.length)throw new Error("고른 서류가 없어요");
   /* 2. 차례로 만들기 */
   await lib();const {PDFDocument}=PDFLib,out=await PDFDocument.create(),PW=595.28,PH=841.89;
   const addJpg=async bytes=>{const im=await out.embedJpg(bytes),land=im.width>im.height*1.05,W=land?PH:PW,H=land?PW:PH,s=Math.min(W/im.width,H/im.height),w=im.width*s,h=im.height*s;
@@ -59,11 +62,26 @@ async function build(c,r,say){const P=[],note=[],cnt={sheet:0,judge:0,sign:0,ann
 
 /* 관리 화면에서만 ‘서류 전체 PDF로 받기’를 이 방식으로 (추천자 화면은 기존대로) */
 document.addEventListener("click",async e=>{const b=e.target.closest("#c_pdf");if(!b||!B||B.worker||!RPC||!TOK())return;const c=CSE.current();if(!c)return;
-  e.stopImmediatePropagation();e.preventDefault();if(b.dataset.busy)return;b.dataset.busy="1";b.disabled=true;
-  const msg=$("#c_pdfmsg");const say=(t,f)=>{msg.innerHTML=`<span style="display:block;line-height:1.6">${t}</span>`+(f!=null?`<i style="display:block;height:6px;border-radius:9px;background:var(--line);overflow:hidden;margin-top:6px;max-width:360px"><b style="display:block;height:100%;width:${Math.round(f*100)}%;background:var(--pri)"></b></i>`:"")};
-  const r=CUR_R||{};say("모으는 중… 조금 걸릴 수 있어요. 창을 닫지 말아 주세요.",0);
-  try{const name=(r.elder_name||(document.querySelector("#cedit .dv-head h2")||{}).textContent||"가구").trim();const x=await build(c,Object.assign({elder_name:name},r),say);
-    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([x.bytes],{type:"application/pdf"}));a.download=`온앤쿨_${name}_서류전체_${new Date().toISOString().slice(0,10)}.pdf`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
-    const C=x.cnt;say(`<b style="color:var(--green)">${x.pages}쪽을 PDF 한 파일로 받았어요.</b><br>상담지 ${C.sheet} · 판정자료 ${C.judge} · 서명본 ${C.sign} · 확인서 ${C.annex} · 올린 서류 ${C.up}`+(x.note.length?`<br><span style="color:var(--warm)">못 넣은 것: ${CS.esc(x.note.join(", "))} · 따로 열어 확인해 주세요.</span>`:""))}
-  catch(err){say("PDF를 만들지 못했어요: "+CS.esc(err.message||String(err)))}finally{b.disabled=false;delete b.dataset.busy}},true);
-return {build,shot,lib,photo,B:()=>B,RPC:()=>RPC,TOK:()=>TOK()}})();
+  e.stopImmediatePropagation();e.preventDefault();if(b.dataset.busy)return;
+  const old=document.getElementById("c_pdfsel");if(old){old.remove();return}
+  const msg=$("#c_pdfmsg"),r=CUR_R||{};msg.textContent="서류 목록을 불러오는 중…";b.disabled=true;let P=[];
+  try{P=await plan(c,r)}catch(err){msg.textContent="목록을 불러오지 못했어요: "+(err.message||err);b.disabled=false;return}b.disabled=false;msg.textContent="";
+  const G=[];const add=(key,l,n)=>{const g=G.find(x=>x.key===key);if(g)g.n++;else G.push({key,l,n:1})};
+  P.forEach(p=>add(p.key,p.t==="sign"?"동의서·약정서 서명본":p.t==="up"?p.l.replace(/\s*\(.*\)\s*$/,""):p.l));
+  const ev=k=>k.startsWith("up:")||k==="annex";
+  const box=document.createElement("div");box.id="c_pdfsel";box.style.cssText="border:1px dashed var(--line);border-radius:12px;padding:12px;margin:8px 0;display:flex;flex-direction:column;gap:8px";
+  box.innerHTML=`<b style="font-size:14px">받을 서류를 골라 주세요</b><div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="sbtn" data-ps="all">전체</button><button type="button" class="sbtn" data-ps="ev">증빙만</button></div>
+   <div style="display:flex;flex-direction:column;gap:5px">${G.map(g=>`<label style="display:flex;flex-direction:row;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin:0"><input type="checkbox" data-pk="${CS.esc(g.key)}" checked style="width:18px;height:18px;-webkit-appearance:auto;appearance:auto;accent-color:var(--pri)"> ${CS.esc(g.l)} <small style="color:var(--mute);font-weight:400">${g.key.startsWith("up:")?g.n+"장":g.n>1?"("+g.n+")":""}</small></label>`).join("")}</div>
+   <div><button type="button" class="sbtn pri" data-ps="go">PDF 받기</button></div>`;
+  (b.closest(".pdfrow")||b).after(box);
+  box.onclick=async ev2=>{const t=ev2.target.closest("[data-ps]");if(!t)return;const m=t.dataset.ps,cks=[...box.querySelectorAll("[data-pk]")];
+    if(m==="all"){cks.forEach(x=>x.checked=true);return}if(m==="ev"){cks.forEach(x=>x.checked=ev(x.dataset.pk));return}
+    const sel=new Set(cks.filter(x=>x.checked).map(x=>x.dataset.pk));if(!sel.size){msg.textContent="받을 서류를 하나 이상 골라 주세요.";return}
+    const whole=sel.size===cks.length;box.remove();b.dataset.busy="1";b.disabled=true;
+    const say=(t,f)=>{msg.innerHTML=`<span style="display:block;line-height:1.6">${t}</span>`+(f!=null?`<i style="display:block;height:6px;border-radius:9px;background:var(--line);overflow:hidden;margin-top:6px;max-width:360px"><b style="display:block;height:100%;width:${Math.round(f*100)}%;background:var(--pri)"></b></i>`:"")};
+    say("모으는 중… 조금 걸릴 수 있어요. 창을 닫지 말아 주세요.",0);
+    try{const name=(r.elder_name||(document.querySelector("#cedit .dv-head h2")||{}).textContent||"가구").trim();const x=await build(c,Object.assign({elder_name:name},r),say,whole?null:sel);
+      const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([x.bytes],{type:"application/pdf"}));a.download=`온앤쿨_${name}_${whole?"서류전체":"서류선택"}_${new Date().toISOString().slice(0,10)}.pdf`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
+      const C=x.cnt;say(`<b style="color:var(--green)">${x.pages}쪽을 PDF 한 파일로 받았어요.</b><br>상담지 ${C.sheet} · 판정자료 ${C.judge} · 서명본 ${C.sign} · 확인서 ${C.annex} · 올린 서류 ${C.up}`+(x.note.length?`<br><span style="color:var(--warm)">못 넣은 것: ${CS.esc(x.note.join(", "))} · 따로 열어 확인해 주세요.</span>`:""))}
+    catch(err){say("PDF를 만들지 못했어요: "+CS.esc(err.message||String(err)))}finally{b.disabled=false;delete b.dataset.busy}}},true);
+return {build,plan,shot,lib,photo,B:()=>B,RPC:()=>RPC,TOK:()=>TOK()}})();
