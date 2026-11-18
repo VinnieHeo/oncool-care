@@ -28,9 +28,9 @@ function drNote(h,L){const T=document.createElement("template");T.innerHTML=h;co
 const CT={},CTS=["연락함","부재","문자 보냄","회신 대기"];
 const ctFmt=x=>{const d=new Date(x.at);return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} ${x.s}${x.by?" ("+x.by+")":""}`};
 function ctLast(c){const a=c.contact||[];return a.length?a[a.length-1]:null}
-function ctHTML(c){CT[c.id]=c;const l=ctLast(c);return `<div class="cc-ct">${CTS.map(s=>`<button type="button" data-ct="${s}" data-cid="${esc(c.id)}"${l&&l.s===s?' class="on"':""}>${s==="연락함"?"☎ ":""}${s}</button>`).join("")}</div><small class="cc-ctl" data-ctl="${esc(c.id)}">${l?"마지막: "+esc(ctFmt(l)):"연락 기록 없음"}</small>`}
+function ctHTML(c){CT[c.id]=c;const l=ctLast(c);return `<div class="cc-ct">${CTS.map(s=>`<button type="button" data-ct="${s}" data-ctid="${esc(c.id)}"${l&&l.s===s?' class="on"':""}>${s==="연락함"?"☎ ":""}${s}</button>`).join("")}</div><small class="cc-ctl" data-ctl="${esc(c.id)}">${l?"마지막: "+esc(ctFmt(l)):"연락 기록 없음"}</small>`}
 document.addEventListener("click",async e=>{const b=e.target.closest("[data-ct]");if(!b)return;e.stopPropagation();e.preventDefault();if(b.disabled)return;
-  const id=b.dataset.cid,s=b.dataset.ct,box=b.parentNode,lab=document.querySelector(`[data-ctl="${CSS.escape(id)}"]`);box.querySelectorAll("button").forEach(x=>x.disabled=true);
+  const id=b.dataset.ctid,s=b.dataset.ct,box=b.parentNode,lab=document.querySelector(`[data-ctl="${CSS.escape(id)}"]`);box.querySelectorAll("button").forEach(x=>x.disabled=true);
   try{const r=await rpcS("oncool_ed_contact_add",{p_token:sessionStorage.oc_etok,p_case:id,p_status:s});if(CT[id])CT[id].contact=r;const cur=window.CSE&&CSE.current();if(cur&&cur.id===id)cur.contact=r;
     box.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));const l=r[r.length-1];if(lab&&l)lab.textContent="마지막: "+ctFmt(l)}
   catch(x){if(lab)lab.textContent="저장하지 못했어요: "+(x.message||x)}finally{box.querySelectorAll("button").forEach(x=>x.disabled=false)}},true);
