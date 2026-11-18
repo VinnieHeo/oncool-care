@@ -296,5 +296,14 @@ document.addEventListener("click",async e=>{const b=e.target.closest("#c_pdf");i
     msg.textContent=`${items.length}장을 PDF 한 파일로 받았습니다`+(skipped.length?` · PDF로 올린 ${skipped.length}건(${[...new Set(skipped)].join(", ")})은 따로 열어 주세요`:"")}
   catch(x){msg.textContent="PDF를 만들지 못했습니다: "+(x.message||x)}finally{b.disabled=false}});
 
-return {init(b,h){B=b;H=Object.assign(H,h||{});if(!b.worker)document.body.classList.add("staff-ui")},open:openCase,current:()=>curCase};
+/* 세대주 본인 ‘예’ → 세대주 성함·생년월일을 대상자 정보로 채우고 잠금 (11/18, 직원 화면) */
+function headSync(init){const q=id=>document.getElementById(id),ih=q("c_v_is_head"),hn=q("c_v_head_name"),hb=q("c_v_head_birth");if(!ih||!hn||!hb||(B&&B.worker))return;
+  let tip=q("c_head_tip");if(!tip){tip=document.createElement("small");tip.id="c_head_tip";tip.style.cssText="color:var(--mute);margin-top:-4px";hb.closest(".cs-row2").after(tip)}
+  const set=(el,v)=>{if(el.value===v)return;el.value=v;el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))};
+  if(ih.value==="예"){const nm=((curRef||{}).elder_name)||hn.value,b6=String((q("c_v_birth")||{}).value||"").replace(/\D/g,"").slice(2,8);
+    if(nm)set(hn,nm);if(b6.length===6)set(hb,b6);hn.readOnly=hb.readOnly=true;hn.dataset.auto=hb.dataset.auto="1";hn.style.opacity=hb.style.opacity=".7";
+    tip.textContent=b6.length===6?"대상자 본인 정보로 채웠어요.":"대상자 본인 정보로 채웠어요. 위쪽 생년월일을 넣으면 세대주 생년월일도 채워져요.";tip.hidden=false}
+  else{if(!init&&hn.dataset.auto){set(hn,"");set(hb,"")}hn.readOnly=hb.readOnly=false;delete hn.dataset.auto;delete hb.dataset.auto;hn.style.opacity=hb.style.opacity="";tip.hidden=true}}
+document.addEventListener("change",e=>{const id=e.target&&e.target.id;if(id==="c_v_is_head"||id==="c_v_birth")try{headSync(false)}catch(x){console.error(x)}});
+return {init(b,h){B=b;H=Object.assign(H,h||{});if(!b.worker)document.body.classList.add("staff-ui")},open(){const x=openCase.apply(this,arguments);try{headSync(true)}catch(e){console.error(e)}return x},current:()=>curCase};
 })();
