@@ -137,7 +137,7 @@ a.sbtn{text-decoration:none;display:inline-block}
 <p class="foot">들어오면 가정방문 기록과 증빙 서류를 고칠 수 있고, 고친 사람 이름이 남아요. 내용은 외부에 공유하지 말아 주세요.</p>
 </div>
 <script src="detail.js?v=12"></script>
-<script src="upd.js?v=1"></script><script src="scan.js?v=7"></script><script src="cases.js?v=50"></script><script src="acct.js?v=3"></script><script src="docdate.js?v=7"></script><script src="sign.js?v=8"></script><script src="judge.js?v=4"></script><script src="annex.js?v=3"></script><script src="bundle.js?v=2"></script><script src="subm.js?v=2"></script><script src="chk.js?v=3"></script><script src="docreq.js?v=4"></script><script src="pay.js?v=6"></script><script src="faqs.js?v=1"></script>
+<script src="upd.js?v=1"></script><script src="scan.js?v=7"></script><script src="cases.js?v=51"></script><script src="acct.js?v=3"></script><script src="docdate.js?v=7"></script><script src="sign.js?v=8"></script><script src="judge.js?v=4"></script><script src="annex.js?v=3"></script><script src="bundle.js?v=2"></script><script src="subm.js?v=2"></script><script src="chk.js?v=3"></script><script src="docreq.js?v=4"></script><script src="pay.js?v=6"></script><script src="faqs.js?v=1"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const $=s=>document.querySelector(s);
@@ -316,7 +316,13 @@ function nblock(c){const r=rows.find(x=>x.id===c.referral_id)||{};const el=docum
     b.onclick=()=>{const cur=Object.assign({},CSE.current()||c),d={};CS.DOCS.forEach(k=>{const g=document.querySelector(`#cedit [data-got="${k.k}"]`);d[k.k]=Object.assign({},(cur.docs||{})[k.k]||{},g?{got:g.checked}:{})});cur.docs=d;
       const t=CS.typeOf(cur),miss=CS.DOCS.filter(k=>{const q=typeof k.req==="string"?(!t||k.req.includes(t)):!!k.req;return q&&!(d[k.k]||{}).got}).map(k=>k.l).concat(t==="2"&&!CS.vcOK({vcall:vcallForm()})?["2025년 바우처 잔액 확인 (2유형)"]:[]),st=CS.docState(cur).stale;
       const w=[miss.length?"빠진 필수 서류: "+miss.join(", "):"",st.length?"발급 3개월 지남: "+st.join(", "):""].filter(Boolean);
-      if(w.length&&!confirm(w.join("\n")+"\n\n그래도 서류 확인 완료로 할까요?"))return;
+      /* 판정 유형·가구원 수 필수 + 유형·금액 확인 (11/18) */
+      const q=id=>document.getElementById(id),tf=q("c_type_final"),hs=q("c_v_household_size"),sm=q("c_start_month");
+      const need=!tf||!tf.value?[tf,"판정 유형을 먼저 골라 주세요."]:!hs||!(+hs.value)?[hs,"가구원 수(실제로 같이 사는 사람)를 먼저 적어 주세요."]:null;
+      if(need){alert(need[1]+"\n협회 입력과 지원금 산정에 쓰여요.");if(need[0]){need[0].scrollIntoView({block:"center"});need[0].focus();const cd=need[0].closest(".cs-card");if(cd){cd.style.outline="3px solid var(--warm,#c77a12)";cd.style.outlineOffset="2px";setTimeout(()=>{cd.style.outline="";cd.style.outlineOffset=""},3000)}}return}
+      const cc=Object.assign({},cur,{type_final:tf.value,v_household_size:hs.value,start_month:sm?+sm.value:cur.start_month}),am=CS.amounts(cc),pr=((q("c_prop")||{}).textContent||"").trim(),txt=el=>el&&el.selectedIndex>=0?el.options[el.selectedIndex].text:"";
+      const S=["· 판정 유형: "+txt(tf),pr&&pr!=="정보 부족"?"   (확인한 정보로 본 제안: "+pr+")":"",pr&&pr!=="정보 부족"&&pr.indexOf(tf.value)!==0?"   ※ 제안과 달라요. 다시 확인해 주세요.":"","· 가구원 수: "+hs.value+"명","· 지원 시작: "+txt(sm),am?"· 동절기 합계: "+CS.fmt(am.tot)+"원":""].filter(Boolean);
+      if(!confirm("이 내용으로 서류 확인 완료할까요?\n\n"+S.join("\n")+"\n\n협회 입력과 지원금 산정에 이 내용이 그대로 쓰여요."+(w.length?"\n\n⚠ "+w.join("\n⚠ "):"")))return;
       const s=document.getElementById("c_stage");if(!s)return;s.value="서류완비";s.dispatchEvent(new Event("change",{bubbles:true}));document.getElementById("c_save").click();b.remove()}}}catch(e){console.error(e)}return x}}
 /* 선정 심사: 카드를 열면 왼쪽은 카드 한 줄, 오른쪽은 내용 (11/13) */
 {let CUR=null;const vw=$("#vw-case"),cl=$("#clist");
