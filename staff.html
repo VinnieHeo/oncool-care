@@ -137,7 +137,7 @@ a.sbtn{text-decoration:none;display:inline-block}
 <p class="foot">들어오면 가정방문 기록과 증빙 서류를 고칠 수 있고, 고친 사람 이름이 남아요. 내용은 외부에 공유하지 말아 주세요.</p>
 </div>
 <script src="detail.js?v=12"></script>
-<script src="upd.js?v=1"></script><script src="scan.js?v=7"></script><script src="cases.js?v=52"></script><script src="acct.js?v=3"></script><script src="docdate.js?v=7"></script><script src="sign.js?v=8"></script><script src="judge.js?v=5"></script><script src="annex.js?v=3"></script><script src="bundle.js?v=5"></script><script src="subm.js?v=2"></script><script src="chk.js?v=3"></script><script src="docreq.js?v=5"></script><script src="pay.js?v=6"></script><script src="faqs.js?v=1"></script>
+<script src="upd.js?v=1"></script><script src="scan.js?v=7"></script><script src="cases.js?v=53"></script><script src="acct.js?v=3"></script><script src="docdate.js?v=7"></script><script src="sign.js?v=8"></script><script src="judge.js?v=5"></script><script src="annex.js?v=3"></script><script src="bundle.js?v=5"></script><script src="subm.js?v=2"></script><script src="chk.js?v=3"></script><script src="docreq.js?v=5"></script><script src="pay.js?v=6"></script><script src="faqs.js?v=1"></script>
 <script>
 const SB="https://ssqktlqwkhvuxduimsyd.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWt0bHF3a2h2dXhkdWltc3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDY0ODAsImV4cCI6MjEwMjY4MjQ4MH0.YYxe7jJIUw6nq94hsbV0lwXIJXjCERlYOvQAYvL9l2M";
 const $=s=>document.querySelector(s);
@@ -314,7 +314,7 @@ function nblock(c){const r=rows.find(x=>x.id===c.referral_id)||{};const el=docum
 {const _o2=CSE.open;CSE.open=function(c,r){const x=_o2.apply(this,arguments);try{const acts=document.querySelector("#cedit .acts");
   if(ETOK&&acts&&!document.getElementById("dc_btn")&&["조사중","업로드완료","보완중"].includes(c.stage)){const b=document.createElement("button");b.type="button";b.className="sbtn pri";b.id="dc_btn";b.textContent="서류완비 처리";acts.insertBefore(b,document.getElementById("c_msg"));
     b.onclick=()=>{const cur=Object.assign({},CSE.current()||c),d={};CS.DOCS.forEach(k=>{const g=document.querySelector(`#cedit [data-got="${k.k}"]`);d[k.k]=Object.assign({},(cur.docs||{})[k.k]||{},g?{got:g.checked}:{})});cur.docs=d;
-      const t=CS.typeOf(cur),miss=CS.DOCS.filter(k=>{const q=typeof k.req==="string"?(!t||k.req.includes(t)):!!k.req;return q&&!(d[k.k]||{}).got}).map(k=>k.l).concat(t==="2"&&!CS.vcOK({vcall:(()=>{const g=id=>document.getElementById(id),k=g("c_vc_ok");return k?{ok:k.checked,res:(g("c_vc_res")||{}).value,date:(g("c_vc_date")||{}).value}:cur.vcall})()})?["2025년 바우처 잔액 확인 (2유형)"]:[]),st=CS.docState(cur).stale;
+      const t=CS.typeOf(cur),miss=CS.DOCS.filter(k=>{const q=typeof k.req==="string"?(!t||k.req.includes(t)):!!k.req;return q&&!(d[k.k]||{}).got&&!(k.k==="confirm"&&(t==="3"||t==="4")&&String(((document.getElementById("c_annex_reason")||{}).value)||cur.annex_reason||"").trim())}).map(k=>k.l).concat(t==="2"&&!CS.vcOK({vcall:(()=>{const g=id=>document.getElementById(id),k=g("c_vc_ok");return k?{ok:k.checked,res:(g("c_vc_res")||{}).value,date:(g("c_vc_date")||{}).value}:cur.vcall})()})?["2025년 바우처 잔액 확인 (2유형)"]:[]),st=CS.docState(cur).stale;
       const w=[miss.length?"빠진 필수 서류: "+miss.join(", "):"",st.length?"발급 3개월 지남: "+st.join(", "):""].filter(Boolean);
       /* 판정 유형·가구원 수 필수 + 유형·금액 확인 (11/18) */
       const q=id=>document.getElementById(id),tf=q("c_type_final"),hs=q("c_v_household_size"),sm=q("c_start_month");
