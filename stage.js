@@ -9,8 +9,8 @@ const name=c=>step(c)===4?"4. 협회 선정 완료":(N[c.stage]||c.stage||"");
 const bd=n=>n?`<i class="stg-n">${n}</i>`:"";
 const nameH=c=>{const n=step(c);return bd(n)+esc(n===4?"협회 선정 완료":String(N[c.stage]||c.stage||"").replace(/^\d\. /,""))};
 const short=c=>step(c)===4?"협회 선정":(S[c.stage]||c.stage||"");
-const G=[["",c=>c.stage==="서류완비"||c.stage==="위원회상정",0,2,"담당자 서류 확인 완료","sg2","확인 완료"],["확인할 차례 · ",c=>c.stage==="업로드완료",1,1,"추천자 제출 완료","sg1","제출 완료"],["",c=>c.stage==="선정"&&!c.kaswc_approved,0,3,"복지관 선정 완료","sg3","복지관 선정"],["",c=>c.stage==="선정"&&!!c.kaswc_approved,0,4,"협회 선정 완료","sg4","협회 선정"],
-  ["보완중 · 서류 다시 받는 중",c=>c.stage==="보완중",0,0,"","sgb","보완중"],["조사중 · 가나다순",c=>!c.stage||c.stage==="조사중",0,0,"","sgz","조사중"],["보류 · 탈락",c=>c.stage==="보류"||c.stage==="탈락",0,0,"","sgx","보류·탈락"]];
+const G=[["보완중 · 서류 다시 받는 중",c=>c.stage==="보완중",0,0,"","sgb","보완중"],["",c=>c.stage==="서류완비"||c.stage==="위원회상정",0,2,"담당자 서류 확인 완료","sg2","확인 완료"],["확인할 차례 · ",c=>c.stage==="업로드완료",1,1,"추천자 제출 완료","sg1","제출 완료"],["",c=>c.stage==="선정"&&!c.kaswc_approved,0,3,"복지관 선정 완료","sg3","복지관 선정"],["",c=>c.stage==="선정"&&!!c.kaswc_approved,0,4,"협회 선정 완료","sg4","협회 선정"],
+  ["조사중 · 가나다순",c=>!c.stage||c.stage==="조사중",0,0,"","sgz","조사중"],["보류 · 탈락",c=>c.stage==="보류"||c.stage==="탈락",0,0,"","sgx","보류·탈락"]];
 /* 단계 탭 (11/18): 누르면 그 단계만 · 기본 '전체' */
 let TAB="";try{TAB=sessionStorage.getItem("oc_stab")||""}catch(_){}
 function split(cases){const used=new Set();return G.map(g=>{const L=cases.filter(c=>!used.has(c)&&g[1](c));L.forEach(c=>used.add(c));return L})}
