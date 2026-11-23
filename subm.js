@@ -6,7 +6,8 @@
    모두 이 브라우저 안에서 만듭니다(외부 전송 없음). */
 window.SUBM=(function(){
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let getC=()=>[],getR=()=>[],TOK=()=>"",RPC=null,FILES={},BUSY=false;
+let getC=()=>[],getR=()=>[],TOK=()=>"",RPC=null,FILES={},BUSY=false,FOLD=false;
+try{FOLD=localStorage.getItem("oc-subm-fold")==="1"}catch(_){}
 const EVI={1:["income"],2:["voucher"],3:["voucher"],4:["income"]};
 const EVL={income:"소득 증빙",voucher:"에너지바우처 확인",confirm:"유형별 확인서(올린 파일)"};
 const isTest=c=>{try{return typeof isT==="function"&&isT(c)}catch(_){return false}};
@@ -29,17 +30,18 @@ function shell(){if($("#subm"))return $("#subm");const s=document.createElement(
   s.addEventListener("click",async e=>{const b=e.target.closest("[data-sb]");if(!b)return;const a=b.dataset.sb;
     if(a==="open"){const tr=document.querySelector(`#clist [data-cid="${b.dataset.id}"]`);if(tr)tr.click();return}
     if(a==="refresh"){FILES={};render();return}
+    if(a==="fold"){FOLD=!FOLD;try{localStorage.setItem("oc-subm-fold",FOLD?"1":"0")}catch(_){}const bd=s.querySelector(".sb-body");if(bd)bd.hidden=FOLD;b.textContent=FOLD?"펼치기":"접기";b.setAttribute("aria-expanded",String(!FOLD));return}
     if(a==="one"){const c=getC().find(x=>x.id===b.dataset.id);if(c)await save([c]);return}
     if(a==="all"){const rs=R(),L=[];for(const c of list()){const st=state(c,await files(c));if(st.ok)L.push(c)}if(!L.length){alert("준비된 가구가 없습니다.");return}await save(L);return}
     if(a==="print"){const rs=R(),L=list().map(c=>[c,rs[c.referral_id]||{},ANNEX.kindOf(c)]).filter(([c,,k])=>k&&ANNEX.readyK(c,k));if(!L.length){alert("출력할 확인서가 없습니다.");return}ANNEX.print(L)}});
   return s}
 async function render(){const s=shell();if(!TOK()){s.hidden=true;return}s.hidden=false;const L=list(),rs=R();
   if(!L.length){s.innerHTML=`<div class="sb-h"><h2>협회 제출 준비</h2></div><p class="sb-d">사례판정위원회에서 1차 선정한 가구가 여기에 모입니다.<br>단계를 ‘선정’으로 바꾸면 나타나고, ‘협회 승인일’을 넣으면 빠집니다.</p>`;return}
-  s.innerHTML=`<div class="sb-h"><h2>협회 제출 준비 · 1차 선정 ${L.length}가구</h2><button type="button" class="linkbtn" data-sb="refresh">다시 확인</button></div>
+  s.innerHTML=`<div class="sb-h"><h2>협회 제출 준비 · 1차 선정 ${L.length}가구</h2><span class="sb-hb"><button type="button" class="linkbtn" data-sb="refresh">다시 확인</button><button type="button" class="linkbtn" data-sb="fold" aria-expanded="${!FOLD}">${FOLD?"펼치기":"접기"}</button></span></div><div class="sb-body"${FOLD?" hidden":""}>
   <p class="sb-d">‘협회 제출자료 PDF 저장’을 누르면 유형별 확인서(별첨 2·3·4)와 올린 유형 증빙을 가구마다 PDF 1개로 저장합니다.<br>저장한 파일을 협회 성과관리 시스템 ‘지원유형별 증빙자료’에 첨부해 주세요.<br>협회 승인 후 카드에 ‘협회 승인일’을 넣으면 이 목록에서 빠집니다.</p>
   <div class="sb-bar"><button type="button" class="sbtn pri" data-sb="all" id="sb_all">협회 제출자료 PDF 저장</button><button type="button" class="sbtn" data-sb="print">확인서만 인쇄</button><span class="sb-msg" id="sb_msg"></span></div>
   <div class="tw"><table class="sb-t"><thead><tr><th>가구</th><th>유형</th><th>들어갈 서류</th><th>상태</th><th></th></tr></thead><tbody>${L.map(c=>{const r=rs[c.referral_id]||{};
-    return `<tr data-sid="${c.id}"><td><button type="button" class="linkbtn" data-sb="open" data-id="${c.id}"><b>${esc(r.elder_name||"")}</b></button><br><small>${esc(c.household_code||"")}</small></td><td class="sb-k">…</td><td class="sb-docs"><small>확인하는 중입니다.</small></td><td class="sb-st"></td><td><button type="button" class="sbtn" data-sb="one" data-id="${c.id}" disabled>PDF 저장</button></td></tr>`}).join("")}</tbody></table></div>`;
+    return `<tr data-sid="${c.id}"><td><button type="button" class="linkbtn" data-sb="open" data-id="${c.id}"><b>${esc(r.elder_name||"")}</b></button><br><small>${esc(c.household_code||"")}</small></td><td class="sb-k">…</td><td class="sb-docs"><small>확인하는 중입니다.</small></td><td class="sb-st"></td><td><button type="button" class="sbtn" data-sb="one" data-id="${c.id}" disabled>PDF 저장</button></td></tr>`}).join("")}</tbody></table></div></div>`;
   let ready=0;for(const c of L){const f=await files(c),st=state(c,f),tr=s.querySelector(`tr[data-sid="${c.id}"]`);if(!tr)continue;
     tr.querySelector(".sb-k").innerHTML=st.k?`<span class="ty t${st.k}">${st.k}유형</span>`:"—";
     tr.querySelector(".sb-docs").innerHTML=[...st.have.map(x=>`<span class="${x[0]==="⚙"?"auto":"ok"}">${esc(x)}</span>`),...st.need.map(x=>`<span class="no">${esc(x)}</span>`)].join("");
@@ -68,7 +70,7 @@ async function save(L){if(BUSY)return;BUSY=true;const m=$("#sb_msg"),rs=R(),bad=
     if(m)m.innerHTML=`<b class="ok">${L.length-fail}가구 PDF를 저장했습니다.</b>`+(bad.length?`<br><span class="no">확인이 필요합니다: ${esc(bad.join(" · "))}</span>`:"")}
   finally{BUSY=false}}
 function hook(gc,gr,tok){getC=gc;getR=gr;TOK=tok;
-  const st=document.createElement("style");st.textContent=`#vw-case.split>#cgoal{grid-row:1}#vw-case.split>#subm{grid-column:1/-1;grid-row:2}#vw-case.split>.bar{grid-row:3}#vw-case.split>#clist{grid-row:4}#vw-case.split>#cedit,#vw-case.split>#cview{grid-row:4}.subm{margin:0 0 12px}.subm .sb-h{display:flex;align-items:center;gap:10px;justify-content:space-between}.subm h2{margin:0;font-size:17px}
+  const st=document.createElement("style");st.textContent=`#vw-case.split>#cgoal{grid-row:1}#vw-case.split>#subm{grid-column:1/-1;grid-row:2}#vw-case.split>.bar{grid-row:3}#vw-case.split>#clist{grid-row:4}#vw-case.split>#cedit,#vw-case.split>#cview{grid-row:4}.subm{margin:0 0 12px}.subm .sb-h{display:flex;align-items:center;gap:10px;justify-content:space-between}.subm .sb-hb{display:flex;gap:12px;align-items:center}.subm .sb-body{margin-top:6px}.subm h2{margin:0;font-size:17px}
   .subm .sb-d{color:var(--mute);font-size:13px;line-height:1.6;margin:6px 0 10px}.sb-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.sb-msg{font-size:13px;line-height:1.5}
   .sb-t{width:100%;border-collapse:collapse;font-size:13.5px}.sb-t th{font-size:12px;color:var(--mute);text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}.sb-t td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
   .sb-docs{display:flex;flex-direction:column;gap:3px}.subm .ok{color:var(--green,#1f7a47)}.subm .no{color:#c0392b;font-weight:700}.subm .auto{color:#2453a6}
