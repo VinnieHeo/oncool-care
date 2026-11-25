@@ -2,7 +2,8 @@
    11월분은 수령증만 필수, 12월분부터 네 가지 모두 필수 · 사진은 올리기 전에 가릴 수 있음
    v2: 첫 화면에 '선정 가구 관리' 버튼 (같은 로그인 → 선정 가구 목록으로 바로 이동, 남은 가구 수 표시)
    v3: 입금 전 선정 가구도 목록에 보이고, 서류 칸은 입금되면 열림
-   v5: 모든 달 네 가지 모두 필수 · 고지서는 사진 + 사용량 + 요금 모두 입력 */
+   v5: 모든 달 네 가지 모두 필수 · 고지서는 사진 + 사용량 + 요금 모두 입력
+   v6: '추천하기'는 추천·가정방문 서류만, '선정 가구 관리'는 선정 가구 목록만 보이게 화면 분리 */
 (function(){
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -13,7 +14,11 @@ const mon=m=>Number(m.slice(5,7))+"월";
 const md=d=>d?Number(String(d).slice(5,7))+"/"+Number(String(d).slice(8,10)):"";
 const won=n=>n||n===0?Number(n).toLocaleString("ko-KR")+"원":"";
 const dot=d=>{const m=/^(\d{4})-(\d\d)-(\d\d)/.exec(d||"");return m?`${m[1]}. ${m[2]}. ${m[3]}.`:""};
-let L=[],C=[],open=null,msg="",WANT=false,LOADED=false;
+let L=[],C=[],open=null,msg="",WANT=false,LOADED=false,MODE="rec";
+/* 화면 나누기: rec = 추천하기(추천·가정방문 서류), sel = 선정 가구 관리 */
+function mode(m){MODE=m;const h=$("#home");if(!h)return;h.classList.toggle("pd-only",m==="sel");
+  const hi=h.querySelector(".hello .hint");if(hi){if(hi.dataset.t0===undefined)hi.dataset.t0=hi.textContent;hi.textContent=m==="sel"?"선정된 가구의 지급 후 서류를 받아 주세요.":hi.dataset.t0}}
+document.addEventListener("click",ev=>{if(ev.target.closest('.mc.go[data-view="go"]'))mode("rec")},true);
 const key=x=>x.case_id+"|"+x.month;
 const left=x=>need(x.month).filter(k=>!(x.docs||{})[k]);
 async function load(){try{L=await rpc("oncool_w_pay_months",{p_token:TOKEN})||[];LOADED=true}catch(e){L=[]}
@@ -26,7 +31,7 @@ function badge(){const b=$("#pdgo-n");if(!b)return;const n=TOKEN&&LOADED?L.filte
 function addBtn(){const g=$(".menu .mc.go");if(!g||$("#pdgo"))return;
   g.insertAdjacentHTML("afterend",`<button class="mc sel" id="pdgo" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg><span><b>선정 가구 관리<em id="pdgo-n" class="pd-n" hidden></em></b><small>수령증 서명 · 고지서 · 모니터링</small></span></button>`);
   g.parentNode.classList.add("has-sel");
-  $("#pdgo").onclick=()=>{WANT=true;mview("go")}}
+  $("#pdgo").onclick=()=>{WANT=true;mode("sel");mview("go")}}
 function rowHTML(x){const n=need(x.month),got=n.filter(k=>(x.docs||{})[k]).length,done=got===n.length,on=open===key(x);
   return `<div class="pd-row${done?" ok":""}${on?" on":""}"><button type="button" class="pd-h" data-pd="${esc(key(x))}"><span><b>${esc(x.elder_name)}</b> <small>${esc(x.dong||"")}</small></span><span class="pd-b">${done?"완료":`서류 ${got}/${n.length}`}</span><span class="pd-s">${mon(x.month)}분 ${won(x.amount)} · 입금 ${md(x.paid_on)}</span></button>${on?panel(x):""}</div>`}
 function item(x,k,l){const d=(x.docs||{})[k],req=need(x.month).includes(k);
@@ -47,7 +52,7 @@ function item(x,k,l){const d=(x.docs||{})[k],req=need(x.month).includes(k);
 function panel(x){return `<div class="pd-p">${K.map(([k,l])=>item(x,k,l)).join("")}<p class="pd-msg" role="status">${esc(msg)}</p></div>`}
 function paint(){let box=$("#pdbox");badge();
   const LK=locked();
-  if(!L.length&&!LK.length&&!WANT){if(box)box.remove();return}
+  if(!L.length&&!LK.length&&!WANT&&MODE!=="sel"){if(box)box.remove();return}
   if(!box){box=document.createElement("div");box.id="pdbox";($("#vlist")||$("#hlist")||$("#golist")).after(box)}
   if(!L.length&&!LK.length){box.innerHTML=`<div class="pd-head"><b>선정 가구 관리</b></div><p class="hint" style="margin:0">아직 선정된 가구가 없어요. 선정되면 여기에 가구가 나타나요.</p>`;return}
   const todo=L.filter(x=>left(x).length).length,cnt=new Set([...L,...C].map(x=>x.case_id)).size;
@@ -114,6 +119,7 @@ const st=document.createElement("style");st.textContent=`
 .pd-n{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;margin-left:6px;border-radius:999px;background:#fff;color:#0f8a5b;font-style:normal;font-size:13px;font-weight:800;vertical-align:2px;box-sizing:border-box}
 @media (max-width:340px){.menu.has-sel{grid-template-columns:1fr}.menu.has-sel>.mc{grid-column:auto}}
 .pd-row.pd-lk{opacity:.9}.pd-hl{cursor:default}.pd-lb{font-size:13px;font-weight:700;color:var(--mute,#666);background:var(--soft,#f3f4f6);border-radius:999px;padding:2px 9px}.pd-ls{font-size:12.5px}
+#home:not(.pd-only) #pdbox{display:none}#home.pd-only .big>:not(#pdbox),#home.pd-only>.card{display:none!important}#home.pd-only #pdbox{margin-top:0}
 #pdbox{margin-top:14px;display:flex;flex-direction:column;gap:8px}.pd-head{display:flex;justify-content:space-between;align-items:center}.pd-head span{font-size:13px;color:var(--mute,#666)}
 .pd-row{background:var(--surface,#fff);border-radius:14px;box-shadow:var(--lift,0 1px 3px rgba(0,0,0,.08))}.pd-row.ok{opacity:.8}
 .pd-h{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:2px 8px;width:100%;padding:12px 14px;cursor:pointer}.pd-h small{color:var(--mute,#666)}
