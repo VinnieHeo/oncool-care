@@ -1,13 +1,14 @@
 /* 월별 지급 서류 (2026-11-25) · 추천 선생님 화면: 입금된 달마다 수령증 서명 · 고지서 · 납부 내역 · 모니터링 메모
    11월분은 수령증만 필수, 12월분부터 네 가지 모두 필수 · 사진은 올리기 전에 가릴 수 있음
    v2: 첫 화면에 '선정 가구 관리' 버튼 (같은 로그인 → 선정 가구 목록으로 바로 이동, 남은 가구 수 표시)
-   v3: 입금 전 선정 가구도 목록에 보이고, 서류 칸은 입금되면 열림 */
+   v3: 입금 전 선정 가구도 목록에 보이고, 서류 칸은 입금되면 열림
+   v5: 모든 달 네 가지 모두 필수 · 고지서는 사진 + 사용량 + 요금 모두 입력 */
 (function(){
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ORG="안양시만안종합사회복지관";
 const K=[["rcpt","수령증 서명"],["bill","전기·가스 고지서"],["paid","납부 내역"],["memo","모니터링 메모"]];
-const need=m=>m<="2026-11"?["rcpt"]:["rcpt","bill","paid","memo"];
+const need=m=>["rcpt","bill","paid","memo"];
 const mon=m=>Number(m.slice(5,7))+"월";
 const md=d=>d?Number(String(d).slice(5,7))+"/"+Number(String(d).slice(8,10)):"";
 const won=n=>n||n===0?Number(n).toLocaleString("ko-KR")+"원":"";
@@ -37,8 +38,8 @@ function item(x,k,l){const d=(x.docs||{})[k],req=need(x.month).includes(k);
     <canvas class="pd-pad" width="600" height="220" aria-label="서명칸"></canvas>
     <div class="pd-a"><button type="button" class="btn sec" data-act="clr">다시 쓰기</button><button type="button" class="btn" data-act="rcpt">서명 완료</button></div></div>`;
   else if(k==="memo")body=`<textarea data-f="memo" rows="3" maxlength="500" placeholder="실내 온도, 난방 사용, 건강 상태, 특이사항을 짧게 적어 주세요">${esc(d&&d.meta&&d.meta.text||"")}</textarea><div class="pd-a"><button type="button" class="btn" data-act="memo">메모 저장</button></div>`;
-  else body=`${k==="paid"?`<p class="pd-tip">납부 영수증이 있으면 그걸 찍어 주세요. 통장은 <b>난방비 입금 줄</b>과 <b>요금 출금 줄</b>만 보이게 찍어 주세요.</p>`:`<p class="pd-tip">이번 달 전기·가스(또는 등유) 고지서를 찍어 주세요.</p>`}
-    ${k==="bill"?`<div class="pd-q"><label>사용량</label><input data-f="usage" maxlength="40" placeholder="예) 310 kWh, 48 m³" value="${esc(d&&d.meta&&d.meta.usage||"")}"></div>`:""}
+  else body=`${k==="paid"?`<p class="pd-tip">납부 영수증이 있으면 그걸 찍어 주세요. 통장은 <b>난방비 입금 줄</b>과 <b>요금 출금 줄</b>만 보이게 찍어 주세요.</p>`:`<p class="pd-tip">이번 달 전기·가스(또는 등유) 고지서를 꼭 찍어 올리고, 사용량과 요금도 적어 주세요.</p>`}
+    ${k==="bill"?`<div class="pd-q"><label>사용량 (필수)</label><input data-f="usage" maxlength="40" placeholder="예) 310 kWh, 48 m³" value="${esc(d&&d.meta&&d.meta.usage||"")}"></div><div class="pd-q"><label>요금 (필수)</label><input data-f="fee" maxlength="20" inputmode="numeric" placeholder="예) 45,600원" value="${esc(d&&d.meta&&d.meta.fee||"")}"></div>`:""}
     <label class="btn sec pd-file">사진 찍기·고르기<input type="file" accept="image/*,application/pdf" data-file="${k}" hidden></label>
     <div class="pd-mask" hidden><p class="pd-tip">가릴 곳(다른 거래, 잔액, 계좌번호 등)을 손가락으로 칠해 주세요.</p><canvas class="pd-mc"></canvas>
       <div class="pd-a"><button type="button" class="btn sec" data-act="undo">처음부터</button><button type="button" class="btn" data-act="up" data-k="${k}">이대로 저장</button></div></div>`;
@@ -51,7 +52,7 @@ function paint(){let box=$("#pdbox");badge();
   if(!L.length&&!LK.length){box.innerHTML=`<div class="pd-head"><b>선정 가구 관리</b></div><p class="hint" style="margin:0">아직 선정된 가구가 없어요. 선정되면 여기에 가구가 나타나요.</p>`;return}
   const todo=L.filter(x=>left(x).length).length,cnt=new Set([...L,...C].map(x=>x.case_id)).size;
   const rows=[...L.map(x=>[x.elder_name+"|"+x.month,rowHTML(x)]),...LK.map(c=>[c.elder_name+"|~",lockHTML(c)])].sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0).map(r=>r[1]).join("");
-  box.innerHTML=`<div class="pd-head"><b>선정 가구 관리</b><span>선정 ${cnt}${todo?` · 할 일 ${todo}`:""}</span></div><p class="hint" style="margin:0 0 6px">방문하실 때 수령증 서명을 받아 주세요. 12월분부터는 고지서·납부 내역·모니터링 메모도 남겨 주세요. 입금 전 가구는 입금되면 서류 칸이 열려요.</p>`+rows;
+  box.innerHTML=`<div class="pd-head"><b>선정 가구 관리</b><span>선정 ${cnt}${todo?` · 할 일 ${todo}`:""}</span></div><p class="hint" style="margin:0 0 6px">방문하실 때 수령증 서명, 고지서(사용량·요금), 납부 내역, 모니터링 메모를 모두 남겨 주세요. 입금 전 가구는 입금되면 서류 칸이 열려요.</p>`+rows;
   box.querySelectorAll(".pd-pad").forEach(pad);
   box.querySelectorAll('select[data-f="rel"]').forEach(s=>s.onchange=()=>{s.parentNode.querySelector('[data-f="who"]').hidden=s.value==="본인"})}
 async function show(){if(!TOKEN)return;await load();paint();
@@ -91,10 +92,12 @@ async function act(x,it,a,btn){const k=it.dataset.k;msg="";
     if(a==="memo"){const t=it.querySelector('[data-f="memo"]').value.trim();if(!t){say(it,"메모를 적어 주세요.");btn.disabled=false;return}
       await mark(x,"memo",{text:t});msg="메모를 저장했어요."}
     if(a==="up"){if(!MK){say(it,"사진을 먼저 골라 주세요.");btn.disabled=false;return}
+      if(k==="bill"){const u=it.querySelector('[data-f="usage"]').value.trim(),f=it.querySelector('[data-f="fee"]').value.trim();
+        if(!u||!f){say(it,"사용량과 요금을 모두 적어 주세요.");btn.disabled=false;return}}
       let blob=MK.file,type=MK.file.type||"image/jpeg";
       if(MK.cv&&!MK.cv.hidden){blob=await blobOf(MK.cv,"image/jpeg",.85);type="image/jpeg"}
       const path=await upload(x,k,blob,type);const meta={path};
-      if(k==="bill"){const u=it.querySelector('[data-f="usage"]');if(u&&u.value.trim())meta.usage=u.value.trim()}
+      if(k==="bill"){meta.usage=it.querySelector('[data-f="usage"]').value.trim();meta.fee=it.querySelector('[data-f="fee"]').value.trim()}
       await mark(x,k,meta);MK=null;msg=(k==="bill"?"고지서":"납부 내역")+"를 저장했어요."}
     await load()}catch(e){msg=/session/.test(e.message)?"다시 로그인해 주세요.":/not_paid/.test(e.message)?"아직 입금 기록이 없는 달이에요.":"저장하지 못했어요: "+e.message}
   paint()}
