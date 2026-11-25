@@ -26,10 +26,16 @@ let ACS={};const ac=c=>ACS[c.id]||null,acM=c=>{const a=ac(c);if(a&&a.kind==="현
 async function load(){try{PAYS=await R("oncool_ed_payments",{p_token:T()})||[];ACS=await R("oncool_ed_accts",{p_token:T()})||{}}catch(x){msg="불러오지 못했습니다: "+x.message}
   try{PDOCS=await R("oncool_ed_pay_docs",{p_token:T()})||[]}catch(_){PDOCS=[]}}
 /* 월별 서류 (11/25): 추천 선생님이 수령증 서명·고지서·납부 내역·모니터링 메모, 직원이 이체확인증 · 11월분은 수령증·이체확인증만 필수 */
-let PDOCS=[];const PDK=[["rcpt","수령증 서명"],["bill","고지서"],["paid","통장·영수증"],["memo","모니터링 메모"],["xfer","이체확인증"]];
+let PDOCS=[];const PDK=[["rcpt","수령증 서명"],["bill","고지서"],["paid","통장·영수증"],["memo","안심 체크"],["xfer","이체확인증"]];
 const pdNeed=m=>["rcpt","bill","paid","memo","xfer"];
 const pdOf=(c,m)=>{const o={};PDOCS.filter(d=>d.case_id===c.id&&d.month===m).forEach(d=>o[d.kind]=d);return o};
-function pdCell(c){const m=TABS[tab][0],o=pdOf(c,m),n=pdNeed(m),g=n.filter(k=>o[k]).length;return g===n.length?'<span class="pk">완료</span>':`<span class="${g?"pw":"pn"}">${g}/${n.length}</span>`}
+/* 안심 체크 (11/26): 추천 선생님이 휴대폰으로 체크 · 확인자 전자서명 → 협회 모니터링 입력 문장 */
+const ckJ=a=>(a||[]).join(", ");
+const chkSum=m=>[m.how,(m.t1||m.t2)?`실내 ${[m.t1&&"거실 "+m.t1+"℃",m.t2&&"침실 "+m.t2+"℃"].filter(Boolean).join("·")}`:"",m.vent?"환기 "+m.vent:"",m.health?"건강 "+m.health:""].filter(Boolean).join(" · ");
+function chkText(m,by){const dt=m.at?new Date(m.at):null,p=n=>String(n).padStart(2,"0"),when=dt&&!isNaN(dt)?`${dt.getFullYear()}-${p(dt.getMonth()+1)}-${p(dt.getDate())} ${p(dt.getHours())}:${p(dt.getMinutes())}`:"";
+  const s=[`실내온도 ${[m.t1&&"거실 "+m.t1+"℃",m.t2&&"침실 "+m.t2+"℃"].filter(Boolean).join(", ")}, 환기 ${m.vent||"-"}.`,`난방기기 ${m.heat||"-"}, 난방 ${m.use||"-"} 사용.`,`건강 ${m.health||"-"}${(m.sym||[]).length?" (증상: "+ckJ(m.sym)+")":""}.`,(m.risk||[]).length?`고위험 요인: ${ckJ(m.risk)}${m.med?" / 복용약: "+m.med:""}.`:"",(m.home||[]).length?`주거: ${ckJ(m.home)}.`:"",`안내: ${ckJ(m.told)}.`,`조치: ${ckJ(m.act)||"-"}.`,`특이사항: ${m.note||"없음"}`].filter(Boolean).join(" ");
+  return [["구분",m.how==="유선"?"유선 안부확인":"가정방문"],["방문 일시",when],["진행 인력",`기타 (생활지원사${by?" "+by:""})`],["활동 내용·상담 요약",s]].map(([a,b])=>a+"\t"+b).join("\n")}
+function pdCell(c){const m=TABS[tab][0],o=pdOf(c,m),n=pdNeed(m),g=n.filter(k=>o[k]).length,al=o.memo&&o.memo.meta&&o.memo.meta.alert?'<span class="pn">확인 필요</span> ':"";return al+(g===n.length?'<span class="pk">완료</span>':`<span class="${g?"pw":"pn"}">${g}/${n.length}</span>`)}
 async function pdOpen(c,m,k){const d=pdOf(c,m)[k],B=BUNDLE.B();let p=d&&d.meta&&d.meta.path;
   if(!p){const f=await B.list(c.id,`m/${m}/${k}`);if(f.length)p=`${c.id}/m/${m}/${k}/${f[f.length-1].name}`}
   if(!p)throw new Error("올린 파일이 없습니다");return B.open(c.id,p)}
@@ -59,8 +65,8 @@ function formHTML(c,r){const p=Object.assign(defaults(c),rec(c)||{});const rad=(
   <div class="py-a"><button type="button" class="sbtn pri" data-psave>저장</button><button type="button" class="sbtn" data-prc>수령증 출력</button><button type="button" class="sbtn" data-pcopy>협회 입력용 복사</button><span class="msg">${esc(msg)}</span></div></div>`}
 function pdHTML(c){const m=TABS[tab][0],o=pdOf(c,m),n=pdNeed(m),md2=d=>d?String(d).slice(5,10).replace("-","/"):"";
   return `<div class="py-pd"><b>${TABS[tab][1]}분 서류</b>${PDK.map(([k,l])=>{const d=o[k],req=n.includes(k);
-    const info=d?(k==="rcpt"&&d.meta&&d.meta.rel&&d.meta.rel!=="본인"?`대리(${esc(d.meta.who||d.meta.rel)}) · `:"")+(k==="bill"&&d.meta&&d.meta.usage?esc(d.meta.usage)+" · ":"")+(k==="memo"&&d.meta?esc(String(d.meta.text||"").slice(0,60))+" · ":"")+md2(d.at)+" "+esc(d.by||""):"";
-    return `<div class="py-pdr"><span>${l}</span><span>${d?'<span class="pk">받음</span> '+info:(req?'<span class="pn">필수 · 아직</span>':'<span class="pm">선택</span>')}</span><span>${d&&k!=="memo"?`<button type="button" class="sbtn" data-pdv="${k}">보기</button>`:""}${k==="xfer"?`<label class="sbtn">파일 올리기<input type="file" accept="image/*,application/pdf" data-pdx hidden></label>`:""}</span></div>`}).join("")}</div>`}
+    const info=d?(k==="rcpt"&&d.meta&&d.meta.rel&&d.meta.rel!=="본인"?`대리(${esc(d.meta.who||d.meta.rel)}) · `:"")+(k==="bill"&&d.meta&&d.meta.usage?esc(d.meta.usage)+" · ":"")+(k==="memo"&&d.meta?(d.meta.alert?'<span class="pn">확인 필요</span> ':"")+esc(d.meta.chk?chkSum(d.meta):String(d.meta.text||"").slice(0,60))+" · "+(typeof d.meta.sig==="string"&&d.meta.sig.startsWith("data:image/png;base64,")?`<img class="py-sig" alt="확인자 서명" src="${esc(d.meta.sig)}"> `:""):"")+md2(d.at)+" "+esc(d.by||""):"";
+    return `<div class="py-pdr"><span>${l}</span><span>${d?'<span class="pk">받음</span> '+info:(req?'<span class="pn">필수 · 아직</span>':'<span class="pm">선택</span>')}</span><span>${d&&k!=="memo"?`<button type="button" class="sbtn" data-pdv="${k}">보기</button>`:""}${d&&k==="memo"&&d.meta&&d.meta.chk?`<button type="button" class="sbtn" data-pdchk>협회 문장 복사</button>`:""}${k==="xfer"?`<label class="sbtn">파일 올리기<input type="file" accept="image/*,application/pdf" data-pdx hidden></label>`:""}</span></div>`}).join("")}</div>`}
 function formVal(c){const v=n=>(document.querySelector(`input[name="py_${n}"]:checked`)||{}).value||"";
   return {case_id:c.id,season:"난방",month:TABS[tab][0],amount:String($("#py_amount").value).replace(/[^0-9]/g,""),paid_on:$("#py_paid_on").value,method:v("method"),receipt:v("receipt"),energy:v("energy"),usage:$("#py_usage").value.trim(),note:$("#py_note").value.trim(),kaswc:$("#py_kwc").checked}}
 function kwText(c,p){return [["지원 구분","난방"],["지원 대상 월",TABS[tab][0].replace("-","년 ")+"월"],["지원 금액",String(p.amount||"")],["지급 일자",p.paid_on||""],["지급 방식",p.method||""],["수령증 수취 여부",p.receipt||""],["에너지 비용 주 사용처",p.energy||""],["에너지 사용량",p.usage||""],["지원 상세 내용",p.note||""],["수행 담당자",ME()]].map(([a,b])=>a+"\t"+b).join("\n")}
@@ -119,6 +125,7 @@ function setup(){if($("#vt-pay"))return;const tabs=document.querySelector(".vtab
     const cur=L.find(([c])=>c.id===sel);
     if(e.target.closest("[data-psave]")&&cur){e.target.disabled=true;try{await save(formVal(cur[0]));msg="저장되었습니다."}catch(x){msg="저장하지 못했습니다: "+x.message}paint();return}
     if(e.target.closest("[data-prc]")&&cur){printRc([cur]);return}
+    if(e.target.closest("[data-pdchk]")&&cur){const d=pdOf(cur[0],TABS[tab][0]).memo;try{await navigator.clipboard.writeText(chkText(d.meta,d.by));msg="협회 모니터링 문장을 복사했습니다."}catch(_){msg="복사하지 못했습니다."}paint();return}
     const pv=e.target.closest("[data-pdv]");if(pv&&cur){const w=window.open("","_blank");try{const u=await pdOpen(cur[0],TABS[tab][0],pv.dataset.pdv);if(w)w.location=u;else location.href=u}catch(x){if(w)w.close();msg=x.message;paint()}return}
     if(e.target.closest("[data-pcopy]")&&cur){const t=kwText(cur[0],formVal(cur[0]));try{await navigator.clipboard.writeText(t);msg="복사했습니다."}catch(_){msg="복사하지 못했습니다."}const m=e.target.parentNode.querySelector(".msg");if(m)m.textContent=msg;return}
     if(e.target.closest("[data-pcsv]")){csv(L);return}
@@ -132,7 +139,7 @@ function setup(){if($("#vt-pay"))return;const tabs=document.querySelector(".vtab
 .py-sum{display:flex;gap:8px;flex-wrap:wrap}.py-sum div{background:var(--surface);border-radius:12px;padding:8px 14px;box-shadow:var(--lift);font-size:12.5px;color:var(--mute)}.py-sum b{display:block;font-size:18px;color:var(--ink)}
 .py-tw{overflow-x:auto;background:var(--surface);border-radius:12px;box-shadow:var(--lift)}.py-t{border-collapse:collapse;width:100%;font-size:13px}.py-t th,.py-t td{padding:8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}.py-t th{font-size:12px;color:var(--mute)}.py-t tr[data-pc]{cursor:pointer}.py-t tr.on td{background:color-mix(in srgb,var(--pri) 10%,transparent)}
 .pb{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700}.pb.ok{background:color-mix(in srgb,var(--green) 14%,transparent);color:var(--green)}.pb.wt{background:color-mix(in srgb,var(--amber) 16%,transparent);color:var(--amber)}.pb.bk{background:color-mix(in srgb,var(--pri) 12%,transparent);color:var(--pri)}
-.py-pd{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px}.py-pdr{display:grid;grid-template-columns:110px 1fr auto;gap:8px;align-items:center;font-size:13px}.py-pdr .sbtn{cursor:pointer}
+.py-pd{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px}.py-pdr{display:grid;grid-template-columns:110px 1fr auto;gap:8px;align-items:center;font-size:13px}.py-pdr .sbtn{cursor:pointer}.py-sig{height:28px;vertical-align:middle;border:1px solid var(--line);border-radius:4px;background:#fff}
 .pk{color:var(--green);font-weight:700}.pn{color:#c0392b;font-weight:700}.pw{color:var(--amber);font-weight:700}.pm{color:var(--mute)}.py-e{color:var(--mute);margin:6px 2px}
 .py-a{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.py-f{display:flex;flex-direction:column;gap:10px}.py-fh{display:flex;justify-content:space-between;align-items:center}
 .py-g{display:grid;grid-template-columns:130px 1fr;gap:8px 12px;align-items:center;font-size:13.5px}.py-g>span{color:var(--mute);font-weight:700}.py-g input:not([type=radio]){width:auto;min-width:200px;font:inherit}.py-g small{color:var(--mute);margin-left:6px}
