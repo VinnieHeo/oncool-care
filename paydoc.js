@@ -1,5 +1,6 @@
 /* 월별 지급 서류 (2026-11-25) · 추천 선생님 화면: 입금된 달마다 수령증 서명 · 고지서 · 납부 내역 · 모니터링 메모
-   11월분은 수령증만 필수, 12월분부터 네 가지 모두 필수 · 사진은 올리기 전에 가릴 수 있음 */
+   11월분은 수령증만 필수, 12월분부터 네 가지 모두 필수 · 사진은 올리기 전에 가릴 수 있음
+   v2: 첫 화면에 '선정 가구 관리' 버튼 (같은 로그인 → 선정 가구 목록으로 바로 이동, 남은 가구 수 표시) */
 (function(){
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -10,10 +11,16 @@ const mon=m=>Number(m.slice(5,7))+"월";
 const md=d=>d?Number(String(d).slice(5,7))+"/"+Number(String(d).slice(8,10)):"";
 const won=n=>n||n===0?Number(n).toLocaleString("ko-KR")+"원":"";
 const dot=d=>{const m=/^(\d{4})-(\d\d)-(\d\d)/.exec(d||"");return m?`${m[1]}. ${m[2]}. ${m[3]}.`:""};
-let L=[],open=null,msg="";
+let L=[],open=null,msg="",WANT=false,LOADED=false;
 const key=x=>x.case_id+"|"+x.month;
 const left=x=>need(x.month).filter(k=>!(x.docs||{})[k]);
-async function load(){try{L=await rpc("oncool_w_pay_months",{p_token:TOKEN})||[]}catch(e){L=[]}}
+async function load(){try{L=await rpc("oncool_w_pay_months",{p_token:TOKEN})||[];LOADED=true}catch(e){L=[]}badge()}
+/* 첫 화면 버튼 */
+function badge(){const b=$("#pdgo-n");if(!b)return;const n=TOKEN&&LOADED?L.filter(x=>left(x).length).length:0;b.textContent=n?String(n):"";b.hidden=!n}
+function addBtn(){const g=$(".menu .mc.go");if(!g||$("#pdgo"))return;
+  g.insertAdjacentHTML("afterend",`<button class="mc sel" id="pdgo" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg><span><b>선정 가구 관리<em id="pdgo-n" class="pd-n" hidden></em></b><small>수령증 서명 · 고지서 · 모니터링</small></span></button>`);
+  g.parentNode.classList.add("has-sel");
+  $("#pdgo").onclick=()=>{WANT=true;mview("go")}}
 function rowHTML(x){const n=need(x.month),got=n.filter(k=>(x.docs||{})[k]).length,done=got===n.length,on=open===key(x);
   return `<div class="pd-row${done?" ok":""}${on?" on":""}"><button type="button" class="pd-h" data-pd="${esc(key(x))}"><span><b>${esc(x.elder_name)}</b> <small>${esc(x.dong||"")}</small></span><span class="pd-b">${done?"완료":`서류 ${got}/${n.length}`}</span><span class="pd-s">${mon(x.month)}분 ${won(x.amount)} · 입금 ${md(x.paid_on)}</span></button>${on?panel(x):""}</div>`}
 function item(x,k,l){const d=(x.docs||{})[k],req=need(x.month).includes(k);
@@ -32,14 +39,16 @@ function item(x,k,l){const d=(x.docs||{})[k],req=need(x.month).includes(k);
       <div class="pd-a"><button type="button" class="btn sec" data-act="undo">처음부터</button><button type="button" class="btn" data-act="up" data-k="${k}">이대로 저장</button></div></div>`;
   return `<div class="pd-it" data-k="${k}"><div class="pd-ih"><b>${l}</b>${st}</div>${body}</div>`}
 function panel(x){return `<div class="pd-p">${K.map(([k,l])=>item(x,k,l)).join("")}<p class="pd-msg" role="status">${esc(msg)}</p></div>`}
-function paint(){let box=$("#pdbox");
-  if(!L.length){if(box)box.remove();return}
+function paint(){let box=$("#pdbox");badge();
+  if(!L.length&&!WANT){if(box)box.remove();return}
   if(!box){box=document.createElement("div");box.id="pdbox";($("#vlist")||$("#hlist")||$("#golist")).after(box)}
+  if(!L.length){box.innerHTML=`<div class="pd-head"><b>지급 후 서류 받기</b></div><p class="hint" style="margin:0">아직 난방비가 입금된 선정 가구가 없어요. 입금되면 여기에 가구가 나타나요.</p>`;return}
   const todo=L.filter(x=>left(x).length).length;
   box.innerHTML=`<div class="pd-head"><b>지급 후 서류 받기</b><span>${todo?`남은 가구 ${todo}`:"모두 완료"}</span></div><p class="hint" style="margin:0 0 6px">방문하실 때 수령증 서명을 받고, 12월분부터는 고지서·납부 내역·모니터링 메모도 남겨 주세요.</p>`+L.map(rowHTML).join("");
   box.querySelectorAll(".pd-pad").forEach(pad);
   box.querySelectorAll('select[data-f="rel"]').forEach(s=>s.onchange=()=>{s.parentNode.querySelector('[data-f="who"]').hidden=s.value==="본인"})}
-async function show(){if(!TOKEN)return;await load();paint()}
+async function show(){if(!TOKEN)return;await load();paint();
+  if(WANT){WANT=false;const b=$("#pdbox");if(b)setTimeout(()=>b.scrollIntoView({behavior:"smooth",block:"start"}),60)}}
 /* 서명칸 */
 function pad(c){const g=c.getContext("2d");g.lineWidth=4;g.lineCap="round";g.lineJoin="round";g.strokeStyle="#111";c._ink=false;
   const pt=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};
@@ -87,6 +96,13 @@ document.addEventListener("click",ev=>{const h=ev.target.closest("[data-pd]");if
 document.addEventListener("change",ev=>{const f=ev.target.closest("#pdbox [data-file]");if(!f||!f.files[0])return;maskStart(f.closest(".pd-it"),f.files[0])});
 const _gh=goHome;goHome=async function(){const r=await _gh.apply(this,arguments);show();return r};
 const st=document.createElement("style");st.textContent=`
+.menu.has-sel{grid-template-columns:repeat(6,1fr)}.menu.has-sel>.mc{grid-column:span 2}.menu.has-sel>.mc.go,.menu.has-sel>.mc.sel{grid-column:span 3}
+.menu.has-sel>.mc.who,.menu.has-sel>.mc.about,.menu.has-sel>.mc.call{min-height:0;padding:14px 10px;align-items:center;text-align:center;gap:6px}
+.menu.has-sel>.mc.who small,.menu.has-sel>.mc.about small,.menu.has-sel>.mc.call small{font-size:12px}
+.mc.sel{background:linear-gradient(150deg,#22b37a 0%,#16a06a 55%,#0f8a5b 100%);color:#fff;border-color:transparent;box-shadow:0 18px 34px -16px rgba(22,160,106,.75)}
+.mc.sel svg{background:rgba(255,255,255,.18);color:#fff}.mc.sel small{color:inherit;opacity:.85}
+.pd-n{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;margin-left:6px;border-radius:999px;background:#fff;color:#0f8a5b;font-style:normal;font-size:13px;font-weight:800;vertical-align:2px;box-sizing:border-box}
+@media (max-width:340px){.menu.has-sel{grid-template-columns:1fr}.menu.has-sel>.mc{grid-column:auto}}
 #pdbox{margin-top:14px;display:flex;flex-direction:column;gap:8px}.pd-head{display:flex;justify-content:space-between;align-items:center}.pd-head span{font-size:13px;color:var(--mute,#666)}
 .pd-row{background:var(--surface,#fff);border-radius:14px;box-shadow:var(--lift,0 1px 3px rgba(0,0,0,.08))}.pd-row.ok{opacity:.8}
 .pd-h{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:2px 8px;width:100%;padding:12px 14px;cursor:pointer}.pd-h small{color:var(--mute,#666)}
@@ -100,5 +116,6 @@ const st=document.createElement("style");st.textContent=`
 .pd-tip{margin:0;font-size:13px;color:var(--mute,#666)}.pd-file{text-align:center;min-height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .pd-msg{margin:0;font-size:13px;font-weight:700;color:var(--pri,#1769d6)}.pd-msg:empty{display:none}`;
 document.head.appendChild(st);
-if(TOKEN)setTimeout(show,800);
+addBtn();
+if(TOKEN)setTimeout(()=>{if($("#v-menu")&&!$("#v-menu").hidden)load();else show()},800);
 })();
