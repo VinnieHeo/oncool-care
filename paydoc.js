@@ -19,7 +19,7 @@ async function load(){try{L=await rpc("oncool_w_pay_months",{p_token:TOKEN})||[]
   try{C=await rpc("oncool_w_pay_cases",{p_token:TOKEN})||[]}catch(e){C=[]}badge()}
 const locked=()=>C.filter(c=>!L.some(x=>x.case_id===c.case_id));
 function lockHTML(c){const nx=c.next||{};const sub=[c.approved?`선정 ${md(c.approved)}`:"선정",nx.paid_on?`입금 예정 ${md(nx.paid_on)}`:"입금 전"].join(" · ");
-  return `<div class="pd-row lk"><div class="pd-h pd-hl"><span><b>${esc(c.elder_name)}</b> <small>${esc(c.dong||"")}</small></span><span class="pd-lb">입금 전</span><span class="pd-s">${sub}</span><span class="pd-s pd-ls">수령증 서명 · 고지서 · 납부 내역 · 메모는 입금되면 열려요</span></div></div>`}
+  return `<div class="pd-row pd-lk"><div class="pd-h pd-hl"><span><b>${esc(c.elder_name)}</b> <small>${esc(c.dong||"")}</small></span><span class="pd-lb">입금 전</span><span class="pd-s">${sub}</span><span class="pd-s pd-ls">수령증 서명 · 고지서 · 납부 내역 · 메모는 입금되면 열려요</span></div></div>`}
 /* 첫 화면 버튼 */
 function badge(){const b=$("#pdgo-n");if(!b)return;const n=TOKEN&&LOADED?L.filter(x=>left(x).length).length:0;b.textContent=n?String(n):"";b.hidden=!n}
 function addBtn(){const g=$(".menu .mc.go");if(!g||$("#pdgo"))return;
@@ -110,7 +110,7 @@ const st=document.createElement("style");st.textContent=`
 .mc.sel svg{background:rgba(255,255,255,.18);color:#fff}.mc.sel small{color:inherit;opacity:.85}
 .pd-n{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;margin-left:6px;border-radius:999px;background:#fff;color:#0f8a5b;font-style:normal;font-size:13px;font-weight:800;vertical-align:2px;box-sizing:border-box}
 @media (max-width:340px){.menu.has-sel{grid-template-columns:1fr}.menu.has-sel>.mc{grid-column:auto}}
-.pd-row.lk{opacity:.9}.pd-hl{cursor:default}.pd-lb{font-size:13px;font-weight:700;color:var(--mute,#666);background:var(--soft,#f3f4f6);border-radius:999px;padding:2px 9px}.pd-ls{font-size:12.5px}
+.pd-row.pd-lk{opacity:.9}.pd-hl{cursor:default}.pd-lb{font-size:13px;font-weight:700;color:var(--mute,#666);background:var(--soft,#f3f4f6);border-radius:999px;padding:2px 9px}.pd-ls{font-size:12.5px}
 #pdbox{margin-top:14px;display:flex;flex-direction:column;gap:8px}.pd-head{display:flex;justify-content:space-between;align-items:center}.pd-head span{font-size:13px;color:var(--mute,#666)}
 .pd-row{background:var(--surface,#fff);border-radius:14px;box-shadow:var(--lift,0 1px 3px rgba(0,0,0,.08))}.pd-row.ok{opacity:.8}
 .pd-h{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:2px 8px;width:100%;padding:12px 14px;cursor:pointer}.pd-h small{color:var(--mute,#666)}
