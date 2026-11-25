@@ -6,7 +6,8 @@
    v6: '추천하기'는 추천·가정방문 서류만, '선정 가구 관리'는 선정 가구 목록만 보이게 화면 분리
    v7: '납부 내역' → '통장 사진 또는 납부 영수증' · 사진 가리기(칠하기) 기능 뺌, 고른 사진을 확인하고 저장
    v8: '모니터링 메모' → '안심 체크' (온·쿨 안심 체크리스트를 휴대폰으로, 확인자 전자서명)
-   v10: 고지서 · 통장/영수증을 온쿨체크로 합침 (한 번 올리면 신호등 판정에 바로 쓰임, 금액·날짜·사용량 후보 읽기) */
+   v10: 고지서 · 통장/영수증을 온쿨체크로 합침 (한 번 올리면 신호등 판정에 바로 쓰임, 금액·날짜·사용량 후보 읽기)
+   v11: 방문 모드 — 가구별로 수령증 → 고지서 → 통장/영수증 → 안심 체크를 한 화면에 한 단계씩 */
 (function(){
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -17,7 +18,7 @@ const mon=m=>Number(m.slice(5,7))+"월";
 const md=d=>d?Number(String(d).slice(5,7))+"/"+Number(String(d).slice(8,10)):"";
 const won=n=>n||n===0?Number(n).toLocaleString("ko-KR")+"원":"";
 const dot=d=>{const m=/^(\d{4})-(\d\d)-(\d\d)/.exec(d||"");return m?`${m[1]}. ${m[2]}. ${m[3]}.`:""};
-let L=[],C=[],open=null,msg="",WANT=false,LOADED=false,MODE="rec";
+let L=[],C=[],open=null,STEP=0,msg="",WANT=false,LOADED=false,MODE="rec";
 /* 화면 나누기: rec = 추천하기(추천·가정방문 서류), sel = 선정 가구 관리 */
 function mode(m){MODE=m;const h=$("#home");if(!h)return;h.classList.toggle("pd-only",m==="sel");
   const hi=h.querySelector(".hello .hint");if(hi){if(hi.dataset.t0===undefined)hi.dataset.t0=hi.textContent;hi.textContent=m==="sel"?"선정된 가구의 지급 후 서류를 받아 주세요.":hi.dataset.t0}}
@@ -36,8 +37,23 @@ function addBtn(){const g=$(".menu .mc.go");if(!g||$("#pdgo"))return;
   g.insertAdjacentHTML("afterend",`<button class="mc sel" id="pdgo" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg><span><b>선정 가구 관리<em id="pdgo-n" class="pd-n" hidden></em></b><small>수령증 서명 · 고지서 · 모니터링</small></span></button>`);
   g.parentNode.classList.add("has-sel");
   $("#pdgo").onclick=()=>{WANT=true;mode("sel");mview("go")}}
-function rowHTML(x){const n=need(x.month),got=n.filter(k=>(x.docs||{})[k]).length,done=got===n.length,on=open===key(x);
-  return `<div class="pd-row${done?" ok":""}${on?" on":""}"><button type="button" class="pd-h" data-pd="${esc(key(x))}"><span><b>${esc(x.elder_name)}</b> <small>${esc(x.dong||"")}</small></span><span class="pd-b">${done?"완료":`서류 ${got}/${n.length}`}</span><span class="pd-s">${mon(x.month)}분 ${won(x.amount)} · 입금 ${md(x.paid_on)}</span></button>${on?panel(x):""}</div>`}
+function rowHTML(x){const n=need(x.month),got=n.filter(k=>(x.docs||{})[k]).length,done=got===n.length;
+  return `<div class="pd-row${done?" ok":""}"><div class="pd-h pd-hl"><span><b>${esc(x.elder_name)}</b> <small>${esc(x.dong||"")}</small></span><span class="pd-b">${done?"완료":`${got}/${n.length}`}</span><span class="pd-s">${mon(x.month)}분 ${won(x.amount)} · 입금 ${md(x.paid_on)}</span><span class="pd-s">${wbar(x,-1)}</span></div><div class="pd-go"><button type="button" class="btn${got&&!done?"":" sec"}" data-pd="${esc(key(x))}">${done?"다시 보기":got?"이어서 하기":"시작하기"}</button></div></div>`}
+const STEPS=["rcpt","bill","paid","memo"];
+function wbar(x,cur){return `<span class="wz-bar">${STEPS.map((k,i)=>`<i class="${(x.docs||{})[k]?"ok":i===cur?"cur":""}"></i>`).join("")}</span>`}
+function firstStep(x){const i=STEPS.findIndex(k=>!(x.docs||{})[k]);return i<0?4:i}
+function wizard(x){const s=STEP,lab=Object.fromEntries(K);
+  const top=`<div class="wz-top"><button type="button" class="pd-lk" data-wz="list">‹ 목록</button><span>${esc(x.elder_name)} · ${mon(x.month)}분${s<4?` · ${s+1}/4`:""}</span></div>${wbar(x,s)}`;
+  if(s>=4)return `<div class="pd-p wz">${top}<div class="wz-done"><b>${esc(x.elder_name)} 님 ${mon(x.month)}분 완료</b><p class="pd-tip">수령증 · 고지서 · 통장/영수증 · 안심 체크를 모두 받았어요. 복지관에서 확인한 뒤 신호등이 정해져요.</p></div><div class="pd-a"><button type="button" class="btn sec" data-wz="0">처음부터 다시 보기</button><button type="button" class="btn" data-wz="list">다음 가구로</button></div><p class="pd-msg" role="status">${esc(msg)}</p></div>`;
+  const k=STEPS[s],dn=!!(x.docs||{})[k];
+  return `<div class="pd-p wz">${top}<h3 class="wz-h">${lab[k]}</h3>${item(x,k,lab[k])}
+   ${k==="paid"&&!dn?`<details class="wz-none"><summary>이번 달은 통장·영수증이 없어요</summary><textarea data-f="none" rows="2" maxlength="200" placeholder="사유를 적어 주세요 (예: 현금으로 내고 영수증을 잃어버림)"></textarea><button type="button" class="btn sec" data-wz="none">사유 저장하고 다음</button></details>`:""}
+   <div class="pd-a wz-nav">${s>0?`<button type="button" class="btn sec" data-wz="${s-1}">이전</button>`:""}${dn?`<button type="button" class="btn" data-wz="${s+1}">다음</button>`:""}</div><p class="pd-msg" role="status">${esc(msg)}</p></div>`}
+async function wz(b){const v=b.dataset.wz,x=L.find(y=>key(y)===open);msg="";
+  if(v==="list"){open=null;paint();return}
+  if(v==="none"){if(!x)return;const t=(($("#pdbox [data-f=\"none\"]")||{}).value||"").trim();if(!t){msg="사유를 적어 주세요.";paint();return}
+    b.disabled=true;try{await mark(x,"paid",{none:1,reason:t});await load();STEP=3;msg="사유를 저장했어요."}catch(e){msg="저장하지 못했어요: "+e.message}paint();return}
+  STEP=+v;paint();const bx=$("#pdbox");if(bx)bx.scrollIntoView({block:"start"})}
 function item(x,k,l){const d=(x.docs||{})[k],req=need(x.month).includes(k);
   const st=d?`<span class="pd-ok">완료 ${md(d.at)}</span>`:(req?`<span class="pd-need">필수</span>`:`<span class="pd-opt">선택</span>`);
   let body="";
@@ -83,10 +99,12 @@ function paint(){let box=$("#pdbox");badge();
   const LK=locked();
   if(!L.length&&!LK.length&&!WANT&&MODE!=="sel"){if(box)box.remove();return}
   if(!box){box=document.createElement("div");box.id="pdbox";($("#vlist")||$("#hlist")||$("#golist")).after(box)}
+  const wx=open&&L.find(v=>key(v)===open);
+  if(wx){box.innerHTML=wizard(wx);box.querySelectorAll(".pd-pad").forEach(pad);box.querySelectorAll('select[data-f="rel"]').forEach(s=>s.onchange=()=>{s.parentNode.querySelector('[data-f="who"]').hidden=s.value==="본인"});return}
   if(!L.length&&!LK.length){box.innerHTML=`<div class="pd-head"><b>선정 가구 관리</b></div><p class="hint" style="margin:0">아직 선정된 가구가 없어요. 선정되면 여기에 가구가 나타나요.</p>`;return}
   const todo=L.filter(x=>left(x).length).length,cnt=new Set([...L,...C].map(x=>x.case_id)).size;
   const rows=[...L.map(x=>[x.elder_name+"|"+x.month,rowHTML(x)]),...LK.map(c=>[c.elder_name+"|~",lockHTML(c)])].sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0).map(r=>r[1]).join("");
-  box.innerHTML=`<div class="pd-head"><b>선정 가구 관리</b><span>선정 ${cnt}${todo?` · 할 일 ${todo}`:""}</span></div><p class="hint" style="margin:0 0 6px">방문하실 때 수령증 서명, 고지서(사용량·요금), 통장 사진 또는 납부 영수증, 안심 체크를 모두 남겨 주세요. 입금 전 가구는 입금되면 서류 칸이 열려요.</p>`+rows;
+  box.innerHTML=`<div class="pd-head"><b>선정 가구 관리</b><span>선정 ${cnt}${todo?` · 할 일 ${todo}`:""}</span></div><p class="hint" style="margin:0 0 6px">방문하실 가구의 시작하기를 눌러 주세요. 수령증 서명 → 고지서 → 통장·영수증 → 안심 체크 순서로 한 단계씩 나와요. 입금 전 가구는 입금되면 열려요.</p>`+rows;
   box.querySelectorAll(".pd-pad").forEach(pad);
   box.querySelectorAll('select[data-f="rel"]').forEach(s=>s.onchange=()=>{s.parentNode.querySelector('[data-f="who"]').hidden=s.value==="본인"})}
 async function show(){if(!TOKEN)return;await load();paint();
@@ -119,10 +137,10 @@ async function act(x,it,a,btn){const k=it.dataset.k;msg="";
       const rel=it.querySelector('[data-f="rel"]').value,who=it.querySelector('[data-f="who"]').value.trim();
       if(rel!=="본인"&&!who){say(it,"대리 서명은 이름과 관계를 적어 주세요.");btn.disabled=false;return}
       const path=await upload(x,"rcpt",await blobOf(c,"image/png"),"image/png");
-      await mark(x,"rcpt",{path,rel,who,signed_at:new Date().toISOString()});msg="수령증 서명을 저장했어요."}
+      await mark(x,"rcpt",{path,rel,who,signed_at:new Date().toISOString()});msg="수령증 서명을 저장했어요.";STEP=1}
     if(a==="ckadd"){const box=it.querySelector(".pd-ckf");btn.hidden=true;
-      CHK.wAdd(box,x.case_id,x.month,{kinds:CKK[k],needUsage:k==="bill",count:k==="bill"?false:undefined,amountLabel:k==="bill"?"요금 (고지서 청구 금액)":"낸 금액"},async item=>{
-        await mark(x,k,{chk:1,path:item.file,kind:item.kind,use:item.use,amount:item.amount,date:item.date,usage:item.usage});await load();msg=(k==="bill"?"고지서를":"통장 사진·납부 영수증을")+" 저장했어요.";paint()});
+      CHK.wAdd(box,x.case_id,x.month,{cam:true,autofill:true,kinds:CKK[k],needUsage:k==="bill",count:k==="bill"?false:undefined,amountLabel:k==="bill"?"요금 (고지서 청구 금액)":"낸 금액"},async item=>{
+        await mark(x,k,{chk:1,path:item.file,kind:item.kind,use:item.use,amount:item.amount,date:item.date,usage:item.usage});await load();msg=(k==="bill"?"고지서를":"통장 사진·납부 영수증을")+" 저장했어요.";STEP=STEPS.indexOf(k)+1;paint()});
       box.addEventListener("click",e2=>{if(e2.target.closest("[data-ckx]"))btn.hidden=false});btn.disabled=false;return}
     if(a==="ckv"){CHK.view(x.case_id,btn.dataset.path);btn.disabled=false;return}
     if(a==="ckd"){await CHK.wDel(x.case_id,x.month,btn.dataset.id);msg="지웠어요.";paint();return}
@@ -131,7 +149,7 @@ async function act(x,it,a,btn){const k=it.dataset.k;msg="";
       const c=it.querySelector(".pd-pad");if(!c._ink)need.push("확인자 서명");
       if(need.length){say(it,need.join(", ")+" 항목을 채워 주세요.");btn.disabled=false;return}
       m.sig=sigData(c);m.at=new Date().toISOString();m.alert=m.act.includes("긴급 연계(119·병원)")||m.act.includes("직원 상담 필요")||m.health==="나쁨";
-      await mark(x,"memo",m);msg="안심 체크를 저장했어요."+(m.alert?" 직원에게 확인 필요로 표시돼요.":"")}
+      await mark(x,"memo",m);msg="안심 체크를 저장했어요."+(m.alert?" 직원에게 확인 필요로 표시돼요.":"");STEP=4}
     if(a==="memo"){const t=it.querySelector('[data-f="memo"]').value.trim();if(!t){say(it,"메모를 적어 주세요.");btn.disabled=false;return}
       await mark(x,"memo",{text:t});msg="메모를 저장했어요."}
     if(a==="up"){if(!MK){say(it,"사진을 먼저 골라 주세요.");btn.disabled=false;return}
@@ -144,7 +162,8 @@ async function act(x,it,a,btn){const k=it.dataset.k;msg="";
       await mark(x,k,meta);MK=null;msg=(k==="bill"?"고지서를":"통장 사진·납부 영수증을")+" 저장했어요."}
     await load()}catch(e){msg=/session/.test(e.message)?"다시 로그인해 주세요.":/not_paid/.test(e.message)?"아직 입금 기록이 없는 달이에요.":"저장하지 못했어요: "+e.message}
   paint()}
-document.addEventListener("click",ev=>{const h=ev.target.closest("[data-pd]");if(h){open=open===h.dataset.pd?null:h.dataset.pd;msg="";MK=null;paint();return}
+document.addEventListener("click",ev=>{const h=ev.target.closest("[data-pd]");if(h){open=h.dataset.pd;const wx=L.find(v=>key(v)===open);STEP=wx?firstStep(wx):0;msg="";MK=null;paint();const bx=$("#pdbox");if(bx)bx.scrollIntoView({block:"start"});return}
+  const w=ev.target.closest("#pdbox [data-wz]");if(w){wz(w);return}
   const b=ev.target.closest("#pdbox [data-act]");if(!b)return;const it=b.closest(".pd-it"),x=L.find(v=>key(v)===open);if(x&&it)act(x,it,b.dataset.act,b)});
 document.addEventListener("change",ev=>{const f=ev.target.closest("#pdbox [data-file]");if(!f||!f.files[0])return;maskStart(f.closest(".pd-it"),f.files[0])});
 const _gh=goHome;goHome=async function(){const r=await _gh.apply(this,arguments);show();return r};
@@ -162,7 +181,11 @@ const st=document.createElement("style");st.textContent=`
 .ck-o{display:flex;flex-wrap:wrap;gap:6px}.ck{position:relative;cursor:pointer}.ck input{position:absolute;opacity:0;width:1px;height:1px}.ck span{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border:1px solid var(--line,#ccc);border-radius:999px;font-size:14px;background:var(--surface,#fff)}
 .ck input:checked+span{background:var(--pri,#1769d6);border-color:var(--pri,#1769d6);color:#fff;font-weight:700}.ck input:focus-visible+span{outline:2px solid var(--pri,#1769d6);outline-offset:2px}
 .ck-t{display:flex;align-items:center;gap:6px;font-size:14px}.ck-t input{width:64px;font:inherit;font-size:16px;text-align:center}
-#chkw{display:none!important}.pd-ck{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.pd-ck li{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:14px;background:var(--soft,#f6f7fb);border-radius:10px;padding:8px 10px}
+#chkw{display:none!important}.wz-bar{display:flex;gap:4px;width:100%;margin-top:4px}.wz-bar i{flex:1;height:6px;border-radius:3px;background:var(--line,#ddd)}.wz-bar i.ok{background:var(--green,#16a06a)}.wz-bar i.cur{background:var(--pri,#4a63e7)}
+.pd-go{padding:0 14px 12px}.pd-go .btn{width:100%;min-height:44px}.wz{background:var(--surface,#fff);border-radius:16px;padding:14px;box-shadow:var(--lift,0 1px 3px rgba(0,0,0,.08))}
+.wz-top{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--mute,#666)}.wz-h{margin:6px 0 0;font-size:20px}.wz .pd-it{border-top:0;padding-top:0}.wz .pd-ih b{display:none}
+.wz-done{text-align:center;padding:24px 0 8px}.wz-done b{font-size:19px}.wz-nav .btn{flex:1;min-height:48px}.wz-none summary{cursor:pointer;color:var(--pri,#1769d6);font-size:14px;font-weight:700}.wz-none textarea{width:100%;box-sizing:border-box;font:inherit;font-size:16px;margin:8px 0}
+.pd-ck{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.pd-ck li{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:14px;background:var(--soft,#f6f7fb);border-radius:10px;padding:8px 10px}
 .pd-lk{all:unset;cursor:pointer;color:var(--pri,#1769d6);font-weight:700;font-size:13px;padding:4px 6px}.pd-ckf:empty{display:none}
 #pdbox{margin-top:14px;display:flex;flex-direction:column;gap:8px}.pd-head{display:flex;justify-content:space-between;align-items:center}.pd-head span{font-size:13px;color:var(--mute,#666)}
 .pd-row{background:var(--surface,#fff);border-radius:14px;box-shadow:var(--lift,0 1px 3px rgba(0,0,0,.08))}.pd-row.ok{opacity:.8}
