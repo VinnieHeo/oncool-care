@@ -1,0 +1,104 @@
+/* 월별 지급 서류 (2026-11-25) · 추천 선생님 화면: 입금된 달마다 수령증 서명 · 고지서 · 납부 내역 · 모니터링 메모
+   11월분은 수령증만 필수, 12월분부터 네 가지 모두 필수 · 사진은 올리기 전에 가릴 수 있음 */
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ORG="안양시만안종합사회복지관";
+const K=[["rcpt","수령증 서명"],["bill","전기·가스 고지서"],["paid","납부 내역"],["memo","모니터링 메모"]];
+const need=m=>m<="2026-11"?["rcpt"]:["rcpt","bill","paid","memo"];
+const mon=m=>Number(m.slice(5,7))+"월";
+const md=d=>d?Number(String(d).slice(5,7))+"/"+Number(String(d).slice(8,10)):"";
+const won=n=>n||n===0?Number(n).toLocaleString("ko-KR")+"원":"";
+const dot=d=>{const m=/^(\d{4})-(\d\d)-(\d\d)/.exec(d||"");return m?`${m[1]}. ${m[2]}. ${m[3]}.`:""};
+let L=[],open=null,msg="";
+const key=x=>x.case_id+"|"+x.month;
+const left=x=>need(x.month).filter(k=>!(x.docs||{})[k]);
+async function load(){try{L=await rpc("oncool_w_pay_months",{p_token:TOKEN})||[]}catch(e){L=[]}}
+function rowHTML(x){const n=need(x.month),got=n.filter(k=>(x.docs||{})[k]).length,done=got===n.length,on=open===key(x);
+  return `<div class="pd-row${done?" ok":""}${on?" on":""}"><button type="button" class="pd-h" data-pd="${esc(key(x))}"><span><b>${esc(x.elder_name)}</b> <small>${esc(x.dong||"")}</small></span><span class="pd-b">${done?"완료":`서류 ${got}/${n.length}`}</span><span class="pd-s">${mon(x.month)}분 ${won(x.amount)} · 입금 ${md(x.paid_on)}</span></button>${on?panel(x):""}</div>`}
+function item(x,k,l){const d=(x.docs||{})[k],req=need(x.month).includes(k);
+  const st=d?`<span class="pd-ok">완료 ${md(d.at)}</span>`:(req?`<span class="pd-need">필수</span>`:`<span class="pd-opt">선택</span>`);
+  let body="";
+  if(k==="rcpt")body=`<div class="pd-rc"><p>본인은 ‘온(溫) 앤 쿨(cool)’ 사업 참여 지원가구의 가구원으로서 기관으로부터 아래와 같이 본 사업 참여에 따른 냉·난방비 지원을 받았음을 확인합니다.</p>
+    <dl><dt>수령인</dt><dd>${esc(x.elder_name)}</dd><dt>지원구분</dt><dd>난방비 (${mon(x.month)}분)</dd><dt>수령일</dt><dd>${dot(x.paid_on)}</dd><dt>지원금액</dt><dd>${won(x.amount)}</dd><dt>지원기관</dt><dd>${ORG}</dd></dl>
+    <div class="pd-q"><label>서명하는 분</label><select data-f="rel"><option>본인</option><option>가족 대리</option><option>기타 대리</option></select><input data-f="who" maxlength="20" placeholder="대리 서명이면 이름과 관계를 적어 주세요" hidden></div>
+    <canvas class="pd-pad" width="600" height="220" aria-label="서명칸"></canvas>
+    <div class="pd-a"><button type="button" class="btn sec" data-act="clr">다시 쓰기</button><button type="button" class="btn" data-act="rcpt">서명 완료</button></div></div>`;
+  else if(k==="memo")body=`<textarea data-f="memo" rows="3" maxlength="500" placeholder="실내 온도, 난방 사용, 건강 상태, 특이사항을 짧게 적어 주세요">${esc(d&&d.meta&&d.meta.text||"")}</textarea><div class="pd-a"><button type="button" class="btn" data-act="memo">메모 저장</button></div>`;
+  else body=`${k==="paid"?`<p class="pd-tip">납부 영수증이 있으면 그걸 찍어 주세요. 통장은 <b>난방비 입금 줄</b>과 <b>요금 출금 줄</b>만 보이게 찍어 주세요.</p>`:`<p class="pd-tip">이번 달 전기·가스(또는 등유) 고지서를 찍어 주세요.</p>`}
+    ${k==="bill"?`<div class="pd-q"><label>사용량</label><input data-f="usage" maxlength="40" placeholder="예) 310 kWh, 48 m³" value="${esc(d&&d.meta&&d.meta.usage||"")}"></div>`:""}
+    <label class="btn sec pd-file">사진 찍기·고르기<input type="file" accept="image/*,application/pdf" data-file="${k}" hidden></label>
+    <div class="pd-mask" hidden><p class="pd-tip">가릴 곳(다른 거래, 잔액, 계좌번호 등)을 손가락으로 칠해 주세요.</p><canvas class="pd-mc"></canvas>
+      <div class="pd-a"><button type="button" class="btn sec" data-act="undo">처음부터</button><button type="button" class="btn" data-act="up" data-k="${k}">이대로 저장</button></div></div>`;
+  return `<div class="pd-it" data-k="${k}"><div class="pd-ih"><b>${l}</b>${st}</div>${body}</div>`}
+function panel(x){return `<div class="pd-p">${K.map(([k,l])=>item(x,k,l)).join("")}<p class="pd-msg" role="status">${esc(msg)}</p></div>`}
+function paint(){let box=$("#pdbox");
+  if(!L.length){if(box)box.remove();return}
+  if(!box){box=document.createElement("div");box.id="pdbox";($("#vlist")||$("#hlist")||$("#golist")).after(box)}
+  const todo=L.filter(x=>left(x).length).length;
+  box.innerHTML=`<div class="pd-head"><b>지급 후 서류 받기</b><span>${todo?`남은 가구 ${todo}`:"모두 완료"}</span></div><p class="hint" style="margin:0 0 6px">방문하실 때 수령증 서명을 받고, 12월분부터는 고지서·납부 내역·모니터링 메모도 남겨 주세요.</p>`+L.map(rowHTML).join("");
+  box.querySelectorAll(".pd-pad").forEach(pad);
+  box.querySelectorAll('select[data-f="rel"]').forEach(s=>s.onchange=()=>{s.parentNode.querySelector('[data-f="who"]').hidden=s.value==="본인"})}
+async function show(){if(!TOKEN)return;await load();paint()}
+/* 서명칸 */
+function pad(c){const g=c.getContext("2d");g.lineWidth=4;g.lineCap="round";g.lineJoin="round";g.strokeStyle="#111";c._ink=false;
+  const pt=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};
+  let on=false;c.style.touchAction="none";
+  c.onpointerdown=e=>{on=true;c.setPointerCapture(e.pointerId);const[x,y]=pt(e);g.beginPath();g.moveTo(x,y)};
+  c.onpointermove=e=>{if(!on)return;const[x,y]=pt(e);g.lineTo(x,y);g.stroke();c._ink=true};
+  c.onpointerup=c.onpointercancel=()=>{on=false}}
+/* 가리기 */
+let MK=null;
+function maskStart(it,file){const cv=it.querySelector(".pd-mc"),box=it.querySelector(".pd-mask");
+  if(file.type==="application/pdf"){MK={file};box.hidden=false;cv.hidden=true;return}
+  const img=new Image();img.onload=()=>{const s=Math.min(1,1600/Math.max(img.width,img.height));cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);
+    const g=cv.getContext("2d");g.drawImage(img,0,0,cv.width,cv.height);cv.hidden=false;box.hidden=false;MK={file,img,cv};
+    g.lineWidth=Math.max(18,cv.width/25);g.lineCap="round";g.strokeStyle="#000";cv.style.touchAction="none";let on=false;
+    const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]};
+    cv.onpointerdown=e=>{on=true;cv.setPointerCapture(e.pointerId);const[x,y]=pt(e);g.beginPath();g.moveTo(x,y);g.lineTo(x+.1,y);g.stroke()};
+    cv.onpointermove=e=>{if(!on)return;const[x,y]=pt(e);g.lineTo(x,y);g.stroke()};cv.onpointerup=cv.onpointercancel=()=>{on=false}};
+  img.onerror=()=>{MK={file};box.hidden=false;cv.hidden=true};img.src=URL.createObjectURL(file)}
+const blobOf=(cv,t,q)=>new Promise(r=>cv.toBlob(r,t,q));
+async function upload(x,k,blob,type){const u=await wefn({action:"upload_url",case_id:x.case_id,doc:`m/${x.month}/${k}`,content_type:type});
+  const r=await fetch(u.signedUrl,{method:"PUT",headers:{"Content-Type":type},body:blob});if(!r.ok)throw new Error("업로드 실패 "+r.status);return u.path}
+async function mark(x,k,meta){await rpc("oncool_w_pay_mark",{p_token:TOKEN,p_case:x.case_id,p_month:x.month,p_kind:k,p_meta:meta})}
+const say=(it,t)=>{const m=it.closest(".pd-p").querySelector(".pd-msg");if(m)m.textContent=t};
+async function act(x,it,a,btn){const k=it.dataset.k;msg="";
+  try{btn.disabled=true;
+    if(a==="clr"){const c=it.querySelector(".pd-pad");c.getContext("2d").clearRect(0,0,c.width,c.height);c._ink=false;btn.disabled=false;return}
+    if(a==="undo"){if(MK&&MK.img){const g=MK.cv.getContext("2d");g.drawImage(MK.img,0,0,MK.cv.width,MK.cv.height)}btn.disabled=false;return}
+    if(a==="rcpt"){const c=it.querySelector(".pd-pad");if(!c._ink){say(it,"서명을 해 주세요.");btn.disabled=false;return}
+      const rel=it.querySelector('[data-f="rel"]').value,who=it.querySelector('[data-f="who"]').value.trim();
+      if(rel!=="본인"&&!who){say(it,"대리 서명은 이름과 관계를 적어 주세요.");btn.disabled=false;return}
+      const path=await upload(x,"rcpt",await blobOf(c,"image/png"),"image/png");
+      await mark(x,"rcpt",{path,rel,who,signed_at:new Date().toISOString()});msg="수령증 서명을 저장했어요."}
+    if(a==="memo"){const t=it.querySelector('[data-f="memo"]').value.trim();if(!t){say(it,"메모를 적어 주세요.");btn.disabled=false;return}
+      await mark(x,"memo",{text:t});msg="메모를 저장했어요."}
+    if(a==="up"){if(!MK){say(it,"사진을 먼저 골라 주세요.");btn.disabled=false;return}
+      let blob=MK.file,type=MK.file.type||"image/jpeg";
+      if(MK.cv&&!MK.cv.hidden){blob=await blobOf(MK.cv,"image/jpeg",.85);type="image/jpeg"}
+      const path=await upload(x,k,blob,type);const meta={path};
+      if(k==="bill"){const u=it.querySelector('[data-f="usage"]');if(u&&u.value.trim())meta.usage=u.value.trim()}
+      await mark(x,k,meta);MK=null;msg=(k==="bill"?"고지서":"납부 내역")+"를 저장했어요."}
+    await load()}catch(e){msg=/session/.test(e.message)?"다시 로그인해 주세요.":/not_paid/.test(e.message)?"아직 입금 기록이 없는 달이에요.":"저장하지 못했어요: "+e.message}
+  paint()}
+document.addEventListener("click",ev=>{const h=ev.target.closest("[data-pd]");if(h){open=open===h.dataset.pd?null:h.dataset.pd;msg="";MK=null;paint();return}
+  const b=ev.target.closest("#pdbox [data-act]");if(!b)return;const it=b.closest(".pd-it"),x=L.find(v=>key(v)===open);if(x&&it)act(x,it,b.dataset.act,b)});
+document.addEventListener("change",ev=>{const f=ev.target.closest("#pdbox [data-file]");if(!f||!f.files[0])return;maskStart(f.closest(".pd-it"),f.files[0])});
+const _gh=goHome;goHome=async function(){const r=await _gh.apply(this,arguments);show();return r};
+const st=document.createElement("style");st.textContent=`
+#pdbox{margin-top:14px;display:flex;flex-direction:column;gap:8px}.pd-head{display:flex;justify-content:space-between;align-items:center}.pd-head span{font-size:13px;color:var(--mute,#666)}
+.pd-row{background:var(--surface,#fff);border-radius:14px;box-shadow:var(--lift,0 1px 3px rgba(0,0,0,.08))}.pd-row.ok{opacity:.8}
+.pd-h{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:2px 8px;width:100%;padding:12px 14px;cursor:pointer}.pd-h small{color:var(--mute,#666)}
+.pd-b{font-size:13px;font-weight:700;color:var(--pri,#1769d6)}.pd-row.ok .pd-b{color:var(--green,#17864a)}.pd-s{grid-column:1/-1;font-size:13px;color:var(--mute,#666)}
+.pd-p{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px}.pd-it{border-top:1px solid var(--line,#eee);padding-top:10px;display:flex;flex-direction:column;gap:8px}
+.pd-ih{display:flex;justify-content:space-between;align-items:center}.pd-ok{color:var(--green,#17864a);font-size:13px;font-weight:700}.pd-need{color:#c0392b;font-size:13px;font-weight:700}.pd-opt{color:var(--mute,#666);font-size:13px}
+.pd-rc p{margin:0 0 6px;font-size:14px;line-height:1.6}.pd-rc dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 8px;font-size:14px}.pd-rc dt{color:var(--mute,#666)}.pd-rc dd{margin:0}
+.pd-pad{width:100%;height:auto;aspect-ratio:600/220;border:2px dashed var(--line,#ccc);border-radius:12px;background:#fff}
+.pd-mc{width:100%;height:auto;border-radius:8px;background:#fff}.pd-a{display:flex;gap:8px;flex-wrap:wrap}.pd-a .btn{flex:1;min-height:44px}
+.pd-q{display:flex;flex-direction:column;gap:4px}.pd-q label{font-size:13px;color:var(--mute,#666)}.pd-q select,.pd-q input,.pd-it textarea{font:inherit;font-size:16px}
+.pd-tip{margin:0;font-size:13px;color:var(--mute,#666)}.pd-file{text-align:center;min-height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.pd-msg{margin:0;font-size:13px;font-weight:700;color:var(--pri,#1769d6)}.pd-msg:empty{display:none}`;
+document.head.appendChild(st);
+if(TOKEN)setTimeout(show,800);
+})();
