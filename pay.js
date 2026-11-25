@@ -26,7 +26,7 @@ let ACS={};const ac=c=>ACS[c.id]||null,acM=c=>{const a=ac(c);if(a&&a.kind==="현
 async function load(){try{PAYS=await R("oncool_ed_payments",{p_token:T()})||[];ACS=await R("oncool_ed_accts",{p_token:T()})||{}}catch(x){msg="불러오지 못했습니다: "+x.message}
   try{PDOCS=await R("oncool_ed_pay_docs",{p_token:T()})||[]}catch(_){PDOCS=[]}}
 /* 월별 서류 (11/25): 추천 선생님이 수령증 서명·고지서·납부 내역·모니터링 메모, 직원이 이체확인증 · 11월분은 수령증·이체확인증만 필수 */
-let PDOCS=[];const PDK=[["rcpt","수령증 서명"],["bill","고지서"],["paid","납부 내역"],["memo","모니터링 메모"],["xfer","이체확인증"]];
+let PDOCS=[];const PDK=[["rcpt","수령증 서명"],["bill","고지서"],["paid","통장·영수증"],["memo","모니터링 메모"],["xfer","이체확인증"]];
 const pdNeed=m=>["rcpt","bill","paid","memo","xfer"];
 const pdOf=(c,m)=>{const o={};PDOCS.filter(d=>d.case_id===c.id&&d.month===m).forEach(d=>o[d.kind]=d);return o};
 function pdCell(c){const m=TABS[tab][0],o=pdOf(c,m),n=pdNeed(m),g=n.filter(k=>o[k]).length;return g===n.length?'<span class="pk">완료</span>':`<span class="${g?"pw":"pn"}">${g}/${n.length}</span>`}
