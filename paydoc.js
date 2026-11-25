@@ -5,7 +5,8 @@
    v5: 모든 달 네 가지 모두 필수 · 고지서는 사진 + 사용량 + 요금 모두 입력
    v6: '추천하기'는 추천·가정방문 서류만, '선정 가구 관리'는 선정 가구 목록만 보이게 화면 분리
    v7: '납부 내역' → '통장 사진 또는 납부 영수증' · 사진 가리기(칠하기) 기능 뺌, 고른 사진을 확인하고 저장
-   v8: '모니터링 메모' → '안심 체크' (온·쿨 안심 체크리스트를 휴대폰으로, 확인자 전자서명) */
+   v8: '모니터링 메모' → '안심 체크' (온·쿨 안심 체크리스트를 휴대폰으로, 확인자 전자서명)
+   v10: 고지서 · 통장/영수증을 온쿨체크로 합침 (한 번 올리면 신호등 판정에 바로 쓰임, 금액·날짜·사용량 후보 읽기) */
 (function(){
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -24,6 +25,7 @@ document.addEventListener("click",ev=>{if(ev.target.closest('.mc.go[data-view="g
 const key=x=>x.case_id+"|"+x.month;
 const left=x=>need(x.month).filter(k=>!(x.docs||{})[k]);
 async function load(){try{L=await rpc("oncool_w_pay_months",{p_token:TOKEN})||[];LOADED=true}catch(e){L=[]}
+  if(window.CHK&&CHK.wFetch)await CHK.wFetch();
   try{C=await rpc("oncool_w_pay_cases",{p_token:TOKEN})||[]}catch(e){C=[]}badge()}
 const locked=()=>C.filter(c=>!L.some(x=>x.case_id===c.case_id));
 function lockHTML(c){const nx=c.next||{};const sub=[c.approved?`선정 ${md(c.approved)}`:"선정",nx.paid_on?`입금 예정 ${md(nx.paid_on)}`:"입금 전"].join(" · ");
@@ -45,12 +47,15 @@ function item(x,k,l){const d=(x.docs||{})[k],req=need(x.month).includes(k);
     <canvas class="pd-pad" width="600" height="220" aria-label="서명칸"></canvas>
     <div class="pd-a"><button type="button" class="btn sec" data-act="clr">다시 쓰기</button><button type="button" class="btn" data-act="rcpt">서명 완료</button></div></div>`;
   else if(k==="memo")body=chkHTML(x,d&&d.meta&&d.meta.chk?d.meta:null);
-  else body=`${k==="paid"?`<p class="pd-tip">통장 사진이나 납부 영수증 중 하나를 찍어 주세요. 통장은 <b>난방비 입금 줄</b>과 <b>요금 출금 줄</b>이 보이게 찍어 주세요.</p>`:`<p class="pd-tip">이번 달 전기·가스(또는 등유) 고지서를 꼭 찍어 올리고, 사용량과 요금도 적어 주세요.</p>`}
-    ${k==="bill"?`<div class="pd-q"><label>사용량 (필수)</label><input data-f="usage" maxlength="40" placeholder="예) 310 kWh, 48 m³" value="${esc(d&&d.meta&&d.meta.usage||"")}"></div><div class="pd-q"><label>요금 (필수)</label><input data-f="fee" maxlength="20" inputmode="numeric" placeholder="예) 45,600원" value="${esc(d&&d.meta&&d.meta.fee||"")}"></div>`:""}
-    <label class="btn sec pd-file">사진 찍기·고르기<input type="file" accept="image/*,application/pdf" data-file="${k}" hidden></label>
-    <div class="pd-mask" hidden><p class="pd-tip">사진이 잘 보이는지 확인하고 저장해 주세요.</p><canvas class="pd-mc"></canvas>
-      <div class="pd-a"><button type="button" class="btn" data-act="up" data-k="${k}">이대로 저장</button></div></div>`;
+  else body=ckBody(x,k);
   return `<div class="pd-it" data-k="${k}"><div class="pd-ih"><b>${l}</b>${st}</div>${body}</div>`}
+/* 온쿨체크 (고지서 · 통장/영수증): 올린 사진은 온쿨체크 증빙으로 저장되어 직원 화면 신호등 판정에 쓰임 */
+const CKK={bill:["고지서"],paid:["영수증","통장 내역"]};
+function ckBody(x,k){if(!(window.CHK&&CHK.wAdd))return `<p class="pd-tip">온쿨체크를 불러오지 못했어요. 새로고침해 주세요.</p>`;
+  const k0=CHK.wItems(x.case_id,x.month),its=(k0.items||[]).filter(i=>CKK[k].includes(i.kind)),lock=!!k0.confirmed,me=CHK.me();
+  const tip=k==="bill"?`이번 달 전기·가스(또는 등유) 고지서를 찍어 올려 주세요. 요금과 사용량은 사진에서 찾아 드려요.`:`통장 사진이나 납부 영수증을 찍어 주세요. 통장은 <b>난방비 입금 줄</b>과 <b>요금 출금 줄</b>이 보이게 찍어 주세요.`;
+  return `<p class="pd-tip">${tip}</p>${its.length?`<ul class="pd-ck">${its.map(i=>`<li><span><b>${esc(i.use||"")} ${esc(i.kind)}</b> ${won(i.amount)}${i.date?" · "+md(i.date):""}${i.usage?" · "+esc(i.usage):""}</span><span>${i.file?`<button type="button" class="pd-lk" data-act="ckv" data-path="${esc(i.file)}">보기</button>`:""}${!lock&&i.by===me?`<button type="button" class="pd-lk" data-act="ckd" data-id="${esc(i.id)}">지우기</button>`:""}</span></li>`).join("")}</ul>`:""}
+    ${lock?`<p class="pd-tip">복지관이 확인을 마친 달이에요.</p>`:`<button type="button" class="btn sec pd-file" data-act="ckadd">${its.length?"한 장 더 올리기":"사진 올리기"}</button>`}<div class="pd-ckf"></div>`}
 /* 안심 체크 */
 const CK={how:["가정방문","유선"],vent:["함","안 함"],heat:["정상","고장","사용 안 함"],use:["충분히","아껴서","거의 안 함"],health:["좋음","보통","나쁨"],
   sym:["없음","오한·떨림","감기","손발 저림·창백","어지럼"],risk:["65세 이상","혼자 생활","만성질환","거동 불편","음주 잦음"],
@@ -115,6 +120,12 @@ async function act(x,it,a,btn){const k=it.dataset.k;msg="";
       if(rel!=="본인"&&!who){say(it,"대리 서명은 이름과 관계를 적어 주세요.");btn.disabled=false;return}
       const path=await upload(x,"rcpt",await blobOf(c,"image/png"),"image/png");
       await mark(x,"rcpt",{path,rel,who,signed_at:new Date().toISOString()});msg="수령증 서명을 저장했어요."}
+    if(a==="ckadd"){const box=it.querySelector(".pd-ckf");btn.hidden=true;
+      CHK.wAdd(box,x.case_id,x.month,{kinds:CKK[k],needUsage:k==="bill",count:k==="bill"?false:undefined,amountLabel:k==="bill"?"요금 (고지서 청구 금액)":"낸 금액"},async item=>{
+        await mark(x,k,{chk:1,path:item.file,kind:item.kind,use:item.use,amount:item.amount,date:item.date,usage:item.usage});await load();msg=(k==="bill"?"고지서를":"통장 사진·납부 영수증을")+" 저장했어요.";paint()});
+      box.addEventListener("click",e2=>{if(e2.target.closest("[data-ckx]"))btn.hidden=false});btn.disabled=false;return}
+    if(a==="ckv"){CHK.view(x.case_id,btn.dataset.path);btn.disabled=false;return}
+    if(a==="ckd"){await CHK.wDel(x.case_id,x.month,btn.dataset.id);msg="지웠어요.";paint();return}
     if(a==="chk"){const m=chkRead(it),need=[];
       if(!m.how)need.push("방법");if(!m.t1&&!m.t2)need.push("실내온도");if(!m.vent)need.push("환기");if(!m.told.includes("예방수칙 안내"))need.push("예방수칙 안내");if(!m.note)need.push("특이사항");
       const c=it.querySelector(".pd-pad");if(!c._ink)need.push("확인자 서명");
@@ -151,6 +162,8 @@ const st=document.createElement("style");st.textContent=`
 .ck-o{display:flex;flex-wrap:wrap;gap:6px}.ck{position:relative;cursor:pointer}.ck input{position:absolute;opacity:0;width:1px;height:1px}.ck span{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border:1px solid var(--line,#ccc);border-radius:999px;font-size:14px;background:var(--surface,#fff)}
 .ck input:checked+span{background:var(--pri,#1769d6);border-color:var(--pri,#1769d6);color:#fff;font-weight:700}.ck input:focus-visible+span{outline:2px solid var(--pri,#1769d6);outline-offset:2px}
 .ck-t{display:flex;align-items:center;gap:6px;font-size:14px}.ck-t input{width:64px;font:inherit;font-size:16px;text-align:center}
+#chkw{display:none!important}.pd-ck{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.pd-ck li{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:14px;background:var(--soft,#f6f7fb);border-radius:10px;padding:8px 10px}
+.pd-lk{all:unset;cursor:pointer;color:var(--pri,#1769d6);font-weight:700;font-size:13px;padding:4px 6px}.pd-ckf:empty{display:none}
 #pdbox{margin-top:14px;display:flex;flex-direction:column;gap:8px}.pd-head{display:flex;justify-content:space-between;align-items:center}.pd-head span{font-size:13px;color:var(--mute,#666)}
 .pd-row{background:var(--surface,#fff);border-radius:14px;box-shadow:var(--lift,0 1px 3px rgba(0,0,0,.08))}.pd-row.ok{opacity:.8}
 .pd-h{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:2px 8px;width:100%;padding:12px 14px;cursor:pointer}.pd-h small{color:var(--mute,#666)}
