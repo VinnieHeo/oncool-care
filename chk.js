@@ -44,7 +44,7 @@ function formHTML(o){o=o||{};const KL=o.kinds||KINDS;const seg=(n,L,v)=>`<div cl
    <div class="ck-l">어디에 낸 돈인가요</div>${seg("use",USES,"")}
    <div class="ck-l">${esc(o.amountLabel||"낸 금액")}</div><div class="ck-c" data-cc="amount"></div><input class="ck-in" data-ck="amount" inputmode="numeric" placeholder="예) 84300">
    <div class="ck-l">낸 날짜</div><div class="ck-c" data-cc="date"></div><input class="ck-in" type="date" data-ck="date">
-   <div class="ck-l">사용량 <small>${o.needUsage?"꼭 넣어 주세요":"있으면"}</small></div><div class="ck-c" data-cc="usage"></div><input class="ck-in" data-ck="usage" maxlength="40" placeholder="예) 310 kWh, 48 ㎥ · 등유는 대략 (20L 중 1/3)">
+   <div class="ck-l"${o.noUsage?" hidden":""}>사용량 <small>${o.needUsage?"꼭 넣어 주세요":"있으면"}</small></div><div class="ck-c" data-cc="usage"${o.noUsage?" hidden":""}></div><input class="ck-in" data-ck="usage"${o.noUsage?" hidden":""} maxlength="40" placeholder="예) 310 kWh, 48 ㎥ · 등유는 대략 (20L 중 1/3)">
    <div class="ck-act"><button type="button" class="sbtn pri" data-cksave>저장</button><button type="button" class="sbtn" data-ckx>닫기</button><span class="ck-msg" aria-live="polite"></span></div></div>`}
 function mountForm(box,cid,month,onSaved,opts){opts=opts||{};box.innerHTML=formHTML(opts);const f=box.querySelector(".ck-form");let file=null,run=0;const msg=t=>f.querySelector(".ck-msg").textContent=t||"";
   const chips=(k,L,fmt)=>{const c=f.querySelector(`[data-cc="${k}"]`);c.innerHTML=L.length?L.map(v=>`<button type="button" data-cv="${esc(v)}">${esc(fmt?fmt(v):v)}</button>`).join(""):""};
@@ -60,7 +60,7 @@ function mountForm(box,cid,month,onSaved,opts){opts=opts||{};box.innerHTML=formH
     msg("금액을 찾는 중… 조금 걸릴 수 있어요. 그동안 종류를 골라 주세요.");
     try{const t=await ocr(file.cv,()=>{if(my===run)msg("처음 한 번만 준비 중이에요. 와이파이에서 더 빨라요.")});if(my!==run)return;const c=cands(t);
       chips("amount",c.amounts,won);chips("date",c.dates,v=>v.replace(/-/g,"."));chips("usage",c.usages);
-      if(opts.autofill){const put=(k,v)=>{if(v==null||v==="")return;const i=f.querySelector(`[data-ck="${k}"]`);if(i&&!i.value)i.value=v;const b=f.querySelector(`[data-cc="${k}"] button`);if(b)b.classList.add("on")};put("amount",c.amounts[0]);put("date",c.dates[0]);put("usage",c.usages[0]);
+      if(opts.autofill){const put=(k,v)=>{if(v==null||v==="")return;const i=f.querySelector(`[data-ck="${k}"]`);if(i&&!i.value)i.value=v;const b=f.querySelector(`[data-cc="${k}"] button`);if(b)b.classList.add("on")};put("amount",c.amounts[0]);put("date",c.dates[0]);if(!opts.noUsage)put("usage",c.usages[0]);
         const u=/도시가스|가스요금|㎥|m3|MJ/i.test(t)?"도시가스":/전기|한전|kWh/i.test(t)?"전기":/관리비/.test(t)?"관리비":/등유|LPG|연탄/i.test(t)?"등유·LPG·연탄":"";if(u&&!f.querySelector('[data-seg="use"] .on')){const sb=f.querySelector(`[data-seg="use"] [data-v="${u}"]`);if(sb)sb.classList.add("on")}}
       msg(c.amounts.length?"찾은 금액 중 실제로 낸 금액을 눌러 주세요.\n없으면 직접 넣어 주세요.":"금액을 찾지 못했어요. 직접 넣어 주세요.");if(opts.autofill&&c.amounts.length)msg("사진에서 찾은 값을 채웠어요. 맞는지 보고 틀린 것만 고쳐 주세요.")}catch(x){if(my===run)msg("글자를 읽지 못했어요. 직접 넣어 주세요.")}});
   async function save(b){const v=k=>f.querySelector(`[data-ck="${k}"]`).value.trim(),sg=n=>(f.querySelector(`[data-seg="${n}"] .on`)||{}).dataset;
