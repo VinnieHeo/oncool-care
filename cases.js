@@ -61,7 +61,7 @@ window.CS=(function(){
   function cardHTML(c,r){const a=amounts(c),ds=docState(c),t=typeOf(c),pct=ds.need?Math.round(ds.ok/ds.need*100):0;
     return `<div class="cc" data-cid="${c.id}" tabindex="0"><div class="cc-top"><div class="cc-nm"><b>${esc(r.elder_name)}</b><small>${esc(r.dong||"")}${c.v_household_size?" · "+c.v_household_size+"명":""}${c.household_code?" · "+esc(c.household_code):""}</small></div><span class="stg stg-${esc(c.stage)}">${esc(c.stage)}</span></div>
       <div class="cc-mid">${t?`<span class="pill t${t}">${t}유형${c.type_final?"":" (안)"}</span>`:'<span class="pill">유형 미정</span>'}${a?`<span class="cc-amt">${fmt(a.tot)}원</span>`:""}${c.visit_date?`<span class="cc-vd">방문 ${esc(c.visit_date.slice(5).replace("-","/"))}</span>`:""}</div>
-      <div class="cc-doc${ds.full?" full":""}"><span>서류 ${ds.ok}/${ds.need}${ds.stale.length?" ⚠":""}</span><i><b style="width:${pct}%"></b></i></div>
+      ${/^(탈락|보류)$/.test(c.stage||"")?`<div class="cc-why ${c.stage==="탈락"?"no":"hold"}">${c.committee_note?`<b>사유</b>${esc(c.committee_note)}`:"<i>사유 미입력</i>"}</div>`:""}<div class="cc-doc${ds.full?" full":""}"><span>서류 ${ds.ok}/${ds.need}${ds.stale.length?" ⚠":""}</span><i><b style="width:${pct}%"></b></i></div>
       <div class="cc-wk"><b>${esc(r.worker_name||"")}</b><small>${esc(r.worker_org||"")}</small>${tel(r.worker_phone)}</div></div>`}
   function listHTML(cases,refs){const R=Object.fromEntries(refs.map(r=>[r.id,r]));const nm=c=>(R[c.referral_id]||{}).elder_name||"";
     const tt=c=>(R[c.referral_id]||{}).is_test?1:0,L=[...cases].sort((a,b)=>tt(a)-tt(b)||nm(a).localeCompare(nm(b),"ko")),up=L.filter(c=>c.stage==="업로드완료"),rest=L.filter(c=>c.stage!=="업로드완료");
@@ -72,7 +72,7 @@ window.CS=(function(){
 .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
 .cc{background:var(--surface,#fff);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;cursor:pointer;min-width:0}
 .cc:hover,.cc:focus-visible{border-color:var(--pri);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--pri) 15%,transparent)}
-.cc.tst{opacity:.6}.cc-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.cc-nm{min-width:0}.cc-nm b{font-size:16px}.cc-nm small{display:block;color:var(--mute);font-size:12.5px;margin-top:1px}
+.cc.tst{opacity:.6}.cc-why{font-size:13px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all}.cc-why b{margin-right:6px;font-weight:800}.cc-why.no{color:var(--warm)}.cc-why.hold{color:var(--amber)}.cc-why i{color:var(--mute);font-style:normal}.cc-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.cc-nm{min-width:0}.cc-nm b{font-size:16px}.cc-nm small{display:block;color:var(--mute);font-size:12.5px;margin-top:1px}
 .cc-mid{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px}.cc-amt{font-weight:700}.cc-vd{color:var(--mute)}
 .cc-doc{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mute)}.cc-doc i{flex:1;height:6px;border-radius:9px;background:var(--line);overflow:hidden}.cc-doc i b{display:block;height:100%;background:var(--pri)}.cc-doc.full span{color:var(--green);font-weight:700}.cc-doc.full i b{background:var(--green)}
 .cc-wk{border-top:1px dashed var(--line);padding-top:8px;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;font-size:13px}.cc-wk small{color:var(--mute);font-size:12px}.cc-wk .wtel{margin-left:auto;font-size:12.5px;color:var(--pri);font-weight:600;text-decoration:none}
@@ -200,9 +200,9 @@ function openCase(c,r){curCase=c;r=r||{};curRef=r;const e=CS.esc,d=c.docs||{};
      <label class="eff-etc"${effHas(c.eff_needs,"기타")?"":" hidden"}>기타 필요 내역<input type="text" id="c_eff_etc" maxlength="100" placeholder="필요한 물품이나 수리 내용을 입력해 주세요" value="${e(c.eff_etc||"")}"></label>
      <label style="margin-top:8px">메모<textarea id="c_eff_note" maxlength="1000">${e(c.eff_note||"")}</textarea></label></div>
    <div class="cs-card"${B.worker?" hidden":""}><h3>단계 · 판정</h3>
-     <div class="cs-row2"><label>단계<select id="c_stage">${opt(CS.STAGES,c.stage)}</select></label><label>가구코드<input type="text" id="c_household_code" maxlength="10" placeholder="A-01" value="${e(c.household_code||"")}"></label></div>
+     <div class="cs-row2"><label>단계<select id="c_stage" onchange="var n=document.getElementById('c_committee_note');if(n)n.placeholder=/^(탈락|보류)$/.test(this.value)?'탈락·보류 사유를 입력해 주세요':''">${opt(CS.STAGES,c.stage)}</select></label><label>가구코드<input type="text" id="c_household_code" maxlength="10" placeholder="A-01" value="${e(c.household_code||"")}"></label></div>
      <div class="cs-row2"><label>위원회 결과<select id="c_committee_result">${opt(["","선정","보류","탈락"],c.committee_result)}</select></label><label>판정일<input type="date" id="c_committee_date" value="${e(c.committee_date||"")}"></label></div>
-     <label>판정 메모<input type="text" id="c_committee_note" maxlength="300" value="${e(c.committee_note||"")}"></label>
+     <label>판정 메모 · 탈락·보류 사유<input type="text" id="c_committee_note" maxlength="300" placeholder="${/^(탈락|보류)$/.test(c.stage||"")?"탈락·보류 사유를 입력해 주세요":""}" value="${e(c.committee_note||"")}"></label>
      <label>협회 승인일<input type="date" id="c_kaswc_approved" value="${e(c.kaswc_approved||"")}"></label></div>
   </div>
   <div class="acts"><button class="sbtn pri" id="c_save" type="button">저장</button><button class="sbtn" id="c_close" type="button">닫기</button>${B.worker?"":'<button class="sbtn" id="c_print" type="button">상담지 출력</button>'}${B.revert?'<button class="sbtn dan" id="c_rev" type="button">추천 접수로 되돌리기</button>':""}<span class="msg" id="c_msg"></span></div>`;
