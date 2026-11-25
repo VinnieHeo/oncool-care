@@ -37,16 +37,16 @@ function cands(t){const L=String(t||"").split(/\n/),A=new Map(),D=new Set(),U=ne
   return {amounts:[...A.entries()].sort((a,b)=>b[1]-a[1]||b[0]-a[0]).slice(0,8).map(x=>x[0]),dates:[...D].sort().reverse().slice(0,4),usages:[...U].slice(0,4)}}
 
 /* ── 올리기 칸 (선생님·직원 공통) */
-function formHTML(){const seg=(n,L,v)=>`<div class="ck-seg" data-seg="${n}">${L.map(x=>`<button type="button" data-v="${esc(x)}" class="${x===v?"on":""}">${esc(x)}</button>`).join("")}</div>`;
+function formHTML(o){o=o||{};const KL=o.kinds||KINDS;const seg=(n,L,v)=>`<div class="ck-seg" data-seg="${n}">${L.map(x=>`<button type="button" data-v="${esc(x)}" class="${x===v?"on":""}">${esc(x)}</button>`).join("")}</div>`;
   return `<div class="ck-form"><div class="ck-pick"><label class="sbtn pri">카메라로 찍기<input type="file" accept="image/*" capture="environment" data-ckf hidden></label><label class="sbtn">앨범·파일에서 고르기<input type="file" accept="image/*,application/pdf" data-ckf hidden></label></div>
    <div class="ck-prev" hidden></div>
-   <div class="ck-l">증빙 종류</div>${seg("kind",KINDS,"고지서")}
+   <div class="ck-l">증빙 종류</div>${seg("kind",KL,KL[0])}
    <div class="ck-l">어디에 낸 돈인가요</div>${seg("use",USES,"")}
-   <div class="ck-l">낸 금액</div><div class="ck-c" data-cc="amount"></div><input class="ck-in" data-ck="amount" inputmode="numeric" placeholder="예) 84300">
+   <div class="ck-l">${esc(o.amountLabel||"낸 금액")}</div><div class="ck-c" data-cc="amount"></div><input class="ck-in" data-ck="amount" inputmode="numeric" placeholder="예) 84300">
    <div class="ck-l">낸 날짜</div><div class="ck-c" data-cc="date"></div><input class="ck-in" type="date" data-ck="date">
-   <div class="ck-l">사용량 <small>있으면</small></div><div class="ck-c" data-cc="usage"></div><input class="ck-in" data-ck="usage" maxlength="40" placeholder="예) 310 kWh, 48 ㎥ · 등유는 대략 (20L 중 1/3)">
+   <div class="ck-l">사용량 <small>${o.needUsage?"꼭 넣어 주세요":"있으면"}</small></div><div class="ck-c" data-cc="usage"></div><input class="ck-in" data-ck="usage" maxlength="40" placeholder="예) 310 kWh, 48 ㎥ · 등유는 대략 (20L 중 1/3)">
    <div class="ck-act"><button type="button" class="sbtn pri" data-cksave>저장</button><button type="button" class="sbtn" data-ckx>닫기</button><span class="ck-msg" aria-live="polite"></span></div></div>`}
-function mountForm(box,cid,month,onSaved){box.innerHTML=formHTML();const f=box.querySelector(".ck-form");let file=null,run=0;const msg=t=>f.querySelector(".ck-msg").textContent=t||"";
+function mountForm(box,cid,month,onSaved,opts){opts=opts||{};box.innerHTML=formHTML(opts);const f=box.querySelector(".ck-form");let file=null,run=0;const msg=t=>f.querySelector(".ck-msg").textContent=t||"";
   const chips=(k,L,fmt)=>{const c=f.querySelector(`[data-cc="${k}"]`);c.innerHTML=L.length?L.map(v=>`<button type="button" data-cv="${esc(v)}">${esc(fmt?fmt(v):v)}</button>`).join(""):""};
   f.addEventListener("click",e=>{const s=e.target.closest("[data-seg] button");if(s){s.parentNode.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===s));return}
     const cv=e.target.closest("[data-cv]");if(cv){const k=cv.parentNode.dataset.cc;f.querySelector(`[data-ck="${k}"]`).value=cv.dataset.cv;cv.parentNode.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===cv));return}
@@ -63,7 +63,7 @@ function mountForm(box,cid,month,onSaved){box.innerHTML=formHTML();const f=box.q
       msg(c.amounts.length?"찾은 금액 중 실제로 낸 금액을 눌러 주세요.\n없으면 직접 넣어 주세요.":"금액을 찾지 못했어요. 직접 넣어 주세요.")}catch(x){if(my===run)msg("글자를 읽지 못했어요. 직접 넣어 주세요.")}});
   async function save(b){const v=k=>f.querySelector(`[data-ck="${k}"]`).value.trim(),sg=n=>(f.querySelector(`[data-seg="${n}"] .on`)||{}).dataset;
     const it={kind:(sg("kind")||{}).v||"고지서",use:(sg("use")||{}).v||"",amount:v("amount").replace(/[^0-9]/g,""),date:v("date"),usage:v("usage")};
-    if(!file){msg("사진을 먼저 올려 주세요.");return}if(!it.use){msg("어디에 낸 돈인지 골라 주세요.");return}if(!it.amount){msg("낸 금액을 넣어 주세요.");return}
+    if(!file){msg("사진을 먼저 올려 주세요.");return}if(!it.use){msg("어디에 낸 돈인지 골라 주세요.");return}if(!it.amount){msg("낸 금액을 넣어 주세요.");return}if(opts.needUsage&&!it.usage){msg("사용량을 넣어 주세요.");return}if(opts.count===false)it.count=false;
     b.disabled=true;msg("올리는 중…");
     try{const u=await CTX.fn({action:"upload_url",case_id:cid,month,content_type:file.type});const r=await fetch(u.signedUrl,{method:"PUT",headers:{"Content-Type":file.type},body:file.blob});if(!r.ok)throw new Error("업로드 실패 "+r.status);
       it.file=u.path;await onSaved(it);box.innerHTML=""}catch(x){b.disabled=false;msg("저장하지 못했습니다: "+msgOf(x))}}}
@@ -189,4 +189,11 @@ let CSSOK=false;function css(){if(CSSOK)return;CSSOK=true;const st=document.crea
 .ck-it input,.ck-it select{font:inherit;font-size:13px;width:auto;min-width:0;padding:4px 6px;height:auto}.ck-it input[type=checkbox],.ck-scope input,#vw-chk .py-r input{-webkit-appearance:auto;appearance:auto;width:auto;accent-color:var(--pri)}
 .ck-scope summary{cursor:pointer;font-weight:700;font-size:13px}.ck-scope div{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:13px;align-items:center}.ck-scope label{display:flex;flex-direction:row!important;gap:5px;align-items:center;margin:0}
 #ck_note{font:inherit;width:100%;box-sizing:border-box}`;document.head.appendChild(st)}
-return {worker,staff,forPay,ensure,cands,MONTHS}})();
+/* 선정 가구 관리(paydoc.js)에서 쓰는 추천 선생님용 함수 (11/26): 지급 월(YYYY-MM) → 확인 월 */
+const cm=pm=>{const m=MONTHS.find(x=>x[3]===pm);return m?m[0]:null};
+async function wFetch(){if(!W)return [];try{WR=await W.rpc("oncool_w_chks",{p_token:W.tok()})||[]}catch(_){WR=[]}return WR}
+const wItems=(cid,pm)=>WR.find(x=>x.case_id===cid&&x.month===cm(pm))||{items:[]};
+function wAdd(box,cid,pm,opts,done){const mon=cm(pm);if(!mon){box.textContent="이 달은 온쿨체크 기간이 아니에요.";return}
+  mountForm(box,cid,mon,async it=>{const r=await W.rpc("oncool_w_chk_add",{p_token:W.tok(),p_case:cid,p_month:mon,p_item:it});const i=WR.findIndex(x=>x.case_id===cid&&x.month===mon);if(i<0)WR.push(r);else WR[i]=r;if(done)await done(it,r)},opts)}
+async function wDel(cid,pm,id){const mon=cm(pm),r=await W.rpc("oncool_w_chk_del",{p_token:W.tok(),p_case:cid,p_month:mon,p_id:id});const i=WR.findIndex(x=>x.case_id===cid&&x.month===mon);if(i>=0)WR[i]=r;return r}
+return {worker,staff,forPay,ensure,cands,MONTHS,cm,wFetch,wItems,wAdd,wDel,view,me:()=>W&&W.me()}})();
