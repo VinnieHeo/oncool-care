@@ -68,7 +68,7 @@ function chkHTML(x,m){const v=m||{risk:prevRisk(x)},on=(f,o)=>MULTI.includes(f)?
     <div class="pd-q"><label>복용 중인 약</label><input data-f="med" maxlength="60" value="${esc(v.med||"")}"></div>
     ${["home","told","act"].map(grp).join("")}
     <div class="pd-q"><label>특이사항 (필수, 없으면 '없음')</label><textarea data-f="note" rows="3" maxlength="400">${esc(v.note||"")}</textarea></div>
-    <div class="pd-q"><label>확인자 서명</label><canvas class="pd-pad" width="600" height="220" aria-label="확인자 서명칸"></canvas></div>
+    <div class="pd-q"><label>확인자 서명 · <b>추천 선생님이 서명해 주세요</b> (어르신 서명 아님)</label><canvas class="pd-pad" width="600" height="220" aria-label="확인자 서명칸"></canvas></div>
     <div class="pd-a"><button type="button" class="btn sec" data-act="clr">다시 쓰기</button><button type="button" class="btn" data-act="chk">안심 체크 저장</button></div></div>`}
 function chkRead(it){const g=f=>MULTI.includes(f)?[...it.querySelectorAll(`[name="ck_${f}"]:checked`)].map(i=>i.value):((it.querySelector(`[name="ck_${f}"]:checked`)||{}).value||"");
   const m={chk:1};Object.keys(CK).forEach(f=>m[f]=g(f));["t1","t2","med","note"].forEach(f=>m[f]=it.querySelector(`[data-f="${f}"]`).value.trim());return m}
