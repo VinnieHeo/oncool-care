@@ -126,7 +126,7 @@ function setup(){if($("#vt-pay"))return;const tabs=document.querySelector(".vtab
     if(e.target.closest("[data-psave]")&&cur){e.target.disabled=true;try{await save(formVal(cur[0]));msg="저장되었습니다."}catch(x){msg="저장하지 못했습니다: "+x.message}paint();return}
     if(e.target.closest("[data-prc]")&&cur){printRc([cur]);return}
     if(e.target.closest("[data-pdchk]")&&cur){const d=pdOf(cur[0],TABS[tab][0]).memo;try{await navigator.clipboard.writeText(chkText(d.meta,d.by));msg="협회 모니터링 문장을 복사했습니다."}catch(_){msg="복사하지 못했습니다."}paint();return}
-    const pv=e.target.closest("[data-pdv]");if(pv&&cur){const w=window.open("","_blank");try{const u=await pdOpen(cur[0],TABS[tab][0],pv.dataset.pdv);if(w)w.location=u;else location.href=u}catch(x){if(w)w.close();msg=x.message;paint()}return}
+    const pv=e.target.closest("[data-pdv]");if(pv&&cur){const dd=pdOf(cur[0],TABS[tab][0])[pv.dataset.pdv];if(dd&&dd.meta&&dd.meta.chk&&dd.meta.path&&window.CHK&&CHK.view){CHK.view(cur[0].id,dd.meta.path);return}const w=window.open("","_blank");try{const u=await pdOpen(cur[0],TABS[tab][0],pv.dataset.pdv);if(w)w.location=u;else location.href=u}catch(x){if(w)w.close();msg=x.message;paint()}return}
     if(e.target.closest("[data-pcopy]")&&cur){const t=kwText(cur[0],formVal(cur[0]));try{await navigator.clipboard.writeText(t);msg="복사했습니다."}catch(_){msg="복사하지 못했습니다."}const m=e.target.parentNode.querySelector(".msg");if(m)m.textContent=msg;return}
     if(e.target.closest("[data-pcsv]")){csv(L);return}
     if(e.target.closest("[data-prcall]")){printRc(L.filter(([c])=>stOf(c)==="pay"));return}
