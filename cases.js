@@ -38,7 +38,7 @@ window.CS=(function(){
     return ""};
   const typeOf=c=>(c.type_final||"").replace(/[^1-4]/g,"")||typeFrom(c.v_voucher,c.v_heating,c.v_income,c.v_voucher_target,c.v_env);
   function amounts(c){const t=typeOf(c),n=Math.min(4,Math.max(1,+c.v_household_size||0));if(!t||!+c.v_household_size)return null;
-    const tot=W[t][n-1],ms=MONTHS[c.start_month||11]||MONTHS[11],k=ms.length,per=Math.floor(tot/k);/* 11/26 협회 매뉴얼: 절기 총액을 지원 개월 수로 균등(정액) 분할, 나누어 떨어지지 않으면 남는 원 단위만 마지막 달에 */
+    const tot=W[t][n-1],ms=MONTHS[c.start_month||11]||MONTHS[11],k=ms.length,per=Math.ceil(tot/k/1000)*1000;/* 협회 매뉴얼 지원금액 유의사항: 매월 분할 정액 지원, 천원 단위로 절상하여 지급 후 마지막 달에 잔액 지급 (예: 70,000÷3 → 24,000·24,000·22,000) */
     return {tot,list:ms.map((m,i)=>[m,i<k-1?per:tot-per*(k-1)])}}
   const fmt=n=>Number(n).toLocaleString("ko-KR");
   /* 안내문 1쪽: 증빙은 "신청일 기준 3개월 이내 발급" → 기준일 = 가정방문일(신청서 받는 날), 없으면 심사 카드 만든 날 */
